@@ -1,15 +1,33 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# File di build di Gradle
+.gradle/
+build/
+
+# File di configurazione locale (contiene il percorso dell'SDK sul tuo PC)
 local.properties
+
+# File specifici di Android Studio / IntelliJ
+*.iml
+.idea/workspace.xml
+.idea/libraries
+.idea/modules.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/caches
+
+# File di cattura (screenshot, heap dumps, etc.)
+/captures/
+
+# Build nativa (C++)
+.externalNativeBuild
+.cxx/
+
+# File di log
+*.log
+
+# File di sistema OS
+.DS_Store
+Thumbs.db
+
+# Keystore (se li aggiungerai in futuro, non caricarli mai su GitHub!)
+# *.jks
+# *.keystore
