@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@android:drawable/ic_menu_directions"
+        android:title="Home" />
+    <item
+        android:id="@+id/nav_diet"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Diet" />
+    <item
+        android:id="@+id/nav_quick"
+        android:icon="@android:drawable/btn_star_big_on"
+        android:title="Quick" />
+    <item
+        android:id="@+id/nav_workout"
+        android:icon="@android:drawable/ic_popup_reminder"
+        android:title="Workout" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Profile" />
+</menu>
