@@ -145,26 +145,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ll_info_fisiche" />
 
-    <Button
-        android:id="@+id/btn_obiettivi"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="32dp"
-        android:text="Imposta Obiettivi"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_modifica_profilo" />
-
     <LinearLayout
+        android:id="@+id/ll_statistiche"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:gravity="center"
         android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@+id/btn_obiettivi">
+        app:layout_constraintTop_toBottomOf="@+id/btn_modifica_profilo">
 
         <TextView
             android:id="@+id/tv_obiettivo_kcal"
@@ -210,5 +198,17 @@
                 android:textSize="16sp" />
         </LinearLayout>
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_obiettivi"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:text="Imposta Obiettivi"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ll_statistiche" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
