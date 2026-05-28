@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">MuzFit</string>
+    <string name="diet_page_title">Diet Page</string>
+    <string name="add_food_button">Add Food</string>
+    <string name="food_added_toast">Food added!</string>
+    <string name="delete_food">Delete</string>
+    <string name="workout_page_title">Workout</string>
+    <string name="saved_routines_label">Saved routines</string>
+    <string name="start_workout_button">Start workout</string>
+    <string name="create_routine_button">Create new routine</string>
+    <string name="select_routine_toast">Select a routine to start</string>
+    <string name="starting_workout_toast">Starting %1$s…</string>
+    <string name="create_routine_title">New workout routine</string>
+    <string name="routine_name_hint">Routine name</string>
+    <string name="create_routine_exercises_hint">You can add exercises to this routine after saving.</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="routine_created_toast">Routine saved!</string>
+    <string name="routine_name_required_toast">Enter a routine name</string>
 </resources>
