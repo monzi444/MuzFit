@@ -11,17 +11,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DietFragment extends Fragment {
 
     private ListView foodListView;
     private Button addFoodButton;
-    private List<Food> foodList;
     private FoodAdapter adapter;
+    private MainViewModel viewModel;
 
     @Nullable
     @Override
@@ -31,23 +31,23 @@ public class DietFragment extends Fragment {
         foodListView = view.findViewById(R.id.foodListView);
         addFoodButton = view.findViewById(R.id.addFoodButton);
 
-        foodList = new ArrayList<>(Arrays.asList(
-                new Food("Apple", 95),
-                new Food("Banana", 105),
-                new Food("Chicken Breast", 165),
-                new Food("Oatmeal", 150),
-                new Food("Greek Yogurt", 100)
-        ));
+        viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
-        adapter = new FoodAdapter(requireContext(), foodList);
-        foodListView.setAdapter(adapter);
+        viewModel.getFoodList().observe(getViewLifecycleOwner(), foodList -> {
+            if (adapter == null) {
+                adapter = new FoodAdapter(requireContext(), foodList);
+                foodListView.setAdapter(adapter);
+            } else {
+                adapter.clear();
+                adapter.addAll(foodList);
+                adapter.notifyDataSetChanged();
+            }
+        });
 
         addFoodButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // For now, just add a dummy food to show it works
-                foodList.add(new Food("New Food Item", 0));
-                adapter.notifyDataSetChanged();
+                viewModel.addFood(new Food("New Food Item", 100));
                 Toast.makeText(getContext(), getString(R.string.food_added_toast), Toast.LENGTH_SHORT).show();
             }
         });
