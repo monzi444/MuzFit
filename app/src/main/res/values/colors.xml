@@ -3,9 +3,21 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="protein_color">#4CAF50</color>
+    <color name="protein_overflow">#1B5E20</color>
     <color name="carbs_color">#FF9800</color>
+    <color name="carbs_overflow">#E65100</color>
     <color name="fat_color">#F44336</color>
+    <color name="fat_overflow">#B71C1C</color>
     <color name="calorie_color">#2196F3</color>
+    <color name="calorie_overflow">#0D47A1</color>
     <color name="square_empty">#EEEEEE</color>
     <color name="square_filled">#2E7D32</color>
+    <color name="graph_line">#2196F3</color>
+    <color name="graph_dot">#1976D2</color>
+    <color name="graph_grid">#E0E0E0</color>
+
+    <!-- Heatmap Status Colors -->
+    <color name="activity_high">#4CAF50</color> <!-- Green: Goal reached -->
+    <color name="activity_medium">#FFEB3B</color> <!-- Yellow: Partial activity -->
+    <color name="activity_low">#F44336</color> <!-- Red: No activity -->
 </resources>
