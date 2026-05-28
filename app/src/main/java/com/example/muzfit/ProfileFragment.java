@@ -2,6 +2,7 @@ package com.example.muzfit;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,7 +37,6 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        // Inizializzazione viste profilo
         ivAvatar = view.findViewById(R.id.iv_avatar);
         tvNomeUtente = view.findViewById(R.id.tv_nome_utente);
         tvEmailUtente = view.findViewById(R.id.tv_email_utente);
@@ -44,7 +44,6 @@ public class ProfileFragment extends Fragment {
         tvAltezza = view.findViewById(R.id.tv_altezza);
         tvEta = view.findViewById(R.id.tv_eta);
         
-        // Inizializzazione viste obiettivi
         tvObiettivoKcal = view.findViewById(R.id.tv_obiettivo_kcal);
         tvCarbo = view.findViewById(R.id.tv_carbo);
         tvProteine = view.findViewById(R.id.tv_proteine);
@@ -54,22 +53,14 @@ public class ProfileFragment extends Fragment {
         Button btnObiettivi = view.findViewById(R.id.btn_obiettivi);
         View btnSettings = view.findViewById(R.id.btn_settings);
 
-        // Click sull'immagine per caricarne una nuova
         ivAvatar.setOnClickListener(v -> {
             pickMedia.launch(new PickVisualMediaRequest.Builder()
                     .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                     .build());
         });
 
-        // Modifica i dati testuali tramite un Dialog
         btnModificaProfilo.setOnClickListener(v -> showEditDialog());
-
-        // Modifica obiettivi tramite un Dialog
         btnObiettivi.setOnClickListener(v -> showObiettiviDialog());
-
-        btnSettings.setOnClickListener(v -> {
-            // Segnaposto come richiesto
-        });
 
         return view;
     }
@@ -80,45 +71,44 @@ public class ProfileFragment extends Fragment {
 
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(50, 40, 50, 10);
+        layout.setPadding(60, 40, 60, 20);
 
-        final EditText etNome = new EditText(getContext());
-        etNome.setHint("Nome");
-        etNome.setText(tvNomeUtente.getText());
+        final EditText etNome = createStyledEditText("Inserisci il tuo Nome", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        String currentNome = tvNomeUtente.getText().toString();
+        if (!currentNome.equals("Nome Utente")) etNome.setText(currentNome);
         layout.addView(etNome);
 
-        final EditText etEmail = new EditText(getContext());
-        etEmail.setHint("Email");
-        etEmail.setText(tvEmailUtente.getText());
+        final EditText etEmail = createStyledEditText("Inserisci la tua Email", InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        String currentEmail = tvEmailUtente.getText().toString();
+        if (!currentEmail.equals("utente@example.com")) etEmail.setText(currentEmail);
         layout.addView(etEmail);
 
-        final EditText etPeso = new EditText(getContext());
-        etPeso.setHint("Peso (kg)");
-        etPeso.setText(tvPeso.getText().toString().replace(" kg", ""));
+        final EditText etPeso = createStyledEditText("Inserisci il Peso (kg)", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        String pesoText = tvPeso.getText().toString().replace(" kg", "").trim();
+        if (!pesoText.equals("--")) etPeso.setText(pesoText);
         layout.addView(etPeso);
 
-        final EditText etAltezza = new EditText(getContext());
-        etAltezza.setHint("Altezza (cm)");
-        etAltezza.setText(tvAltezza.getText().toString().replace(" cm", ""));
+        final EditText etAltezza = createStyledEditText("Inserisci l'Altezza (cm)", InputType.TYPE_CLASS_NUMBER);
+        String altezzaText = tvAltezza.getText().toString().replace(" cm", "").trim();
+        if (!altezzaText.equals("--")) etAltezza.setText(altezzaText);
         layout.addView(etAltezza);
 
-        final EditText etEta = new EditText(getContext());
-        etEta.setHint("Età");
-        etEta.setText(tvEta.getText().toString().replace(" anni", ""));
+        final EditText etEta = createStyledEditText("Inserisci l'Età", InputType.TYPE_CLASS_NUMBER);
+        String etaText = tvEta.getText().toString().replace(" anni", "").trim();
+        if (!etaText.equals("--")) etEta.setText(etaText);
         layout.addView(etEta);
 
         builder.setView(layout);
 
         builder.setPositiveButton("Salva", (dialog, which) -> {
-            tvNomeUtente.setText(etNome.getText().toString());
-            tvEmailUtente.setText(etEmail.getText().toString());
-            tvPeso.setText(etPeso.getText().toString() + " kg");
-            tvAltezza.setText(etAltezza.getText().toString() + " cm");
-            tvEta.setText(etEta.getText().toString() + " anni");
+            if (hasContent(etNome)) tvNomeUtente.setText(etNome.getText().toString());
+            if (hasContent(etEmail)) tvEmailUtente.setText(etEmail.getText().toString());
+            if (hasContent(etPeso)) tvPeso.setText(etPeso.getText().toString() + " kg");
+            if (hasContent(etAltezza)) tvAltezza.setText(etAltezza.getText().toString() + " cm");
+            if (hasContent(etEta)) tvEta.setText(etEta.getText().toString() + " anni");
         });
 
         builder.setNegativeButton("Annulla", (dialog, which) -> dialog.cancel());
-
         builder.show();
     }
 
@@ -128,39 +118,53 @@ public class ProfileFragment extends Fragment {
 
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(50, 40, 50, 10);
+        layout.setPadding(60, 40, 60, 20);
 
-        final EditText etKcal = new EditText(getContext());
-        etKcal.setHint("Obiettivo Kcal");
-        etKcal.setText(tvObiettivoKcal.getText().toString().replace("OB = ", "").replace(" Kcal", ""));
+        final EditText etKcal = createStyledEditText("Inserisci Kcal (es. 2000)", InputType.TYPE_CLASS_NUMBER);
+        String kcalText = tvObiettivoKcal.getText().toString().replace("OB = ", "").replace(" Kcal", "").trim();
+        if (!kcalText.equals("--") && !kcalText.equals("2000")) etKcal.setText(kcalText);
         layout.addView(etKcal);
 
-        final EditText etCarbo = new EditText(getContext());
-        etCarbo.setHint("Carbo (g)");
-        etCarbo.setText(tvCarbo.getText().toString().replace("Carbo\n", "").replace(" g", ""));
+        final EditText etCarbo = createStyledEditText("Inserisci Carboidrati (g)", InputType.TYPE_CLASS_NUMBER);
+        String carboText = tvCarbo.getText().toString().replace("Carbo\n", "").replace(" g", "").trim();
+        if (!carboText.equals("--")) etCarbo.setText(carboText);
         layout.addView(etCarbo);
 
-        final EditText etProteine = new EditText(getContext());
-        etProteine.setHint("Proteine (g)");
-        etProteine.setText(tvProteine.getText().toString().replace("Proteine\n", "").replace(" g", ""));
+        final EditText etProteine = createStyledEditText("Inserisci Proteine (g)", InputType.TYPE_CLASS_NUMBER);
+        String proteineText = tvProteine.getText().toString().replace("Proteine\n", "").replace(" g", "").trim();
+        if (!proteineText.equals("--")) etProteine.setText(proteineText);
         layout.addView(etProteine);
 
-        final EditText etGrassi = new EditText(getContext());
-        etGrassi.setHint("Grassi (g)");
-        etGrassi.setText(tvGrassi.getText().toString().replace("Grassi\n", "").replace(" g", ""));
+        final EditText etGrassi = createStyledEditText("Inserisci Grassi (g)", InputType.TYPE_CLASS_NUMBER);
+        String grassiText = tvGrassi.getText().toString().replace("Grassi\n", "").replace(" g", "").trim();
+        if (!grassiText.equals("--")) etGrassi.setText(grassiText);
         layout.addView(etGrassi);
 
         builder.setView(layout);
 
         builder.setPositiveButton("Salva", (dialog, which) -> {
-            tvObiettivoKcal.setText("OB = " + etKcal.getText().toString() + " Kcal");
-            tvCarbo.setText("Carbo\n" + etCarbo.getText().toString() + " g");
-            tvProteine.setText("Proteine\n" + etProteine.getText().toString() + " g");
-            tvGrassi.setText("Grassi\n" + etGrassi.getText().toString() + " g");
+            if (hasContent(etKcal)) tvObiettivoKcal.setText("OB = " + etKcal.getText().toString() + " Kcal");
+            if (hasContent(etCarbo)) tvCarbo.setText("Carbo\n" + etCarbo.getText().toString() + " g");
+            if (hasContent(etProteine)) tvProteine.setText("Proteine\n" + etProteine.getText().toString() + " g");
+            if (hasContent(etGrassi)) tvGrassi.setText("Grassi\n" + etGrassi.getText().toString() + " g");
         });
 
         builder.setNegativeButton("Annulla", (dialog, which) -> dialog.cancel());
-
         builder.show();
+    }
+
+    private EditText createStyledEditText(String hint, int inputType) {
+        EditText editText = new EditText(getContext());
+        editText.setHint(hint);
+        editText.setInputType(inputType);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 10, 0, 10);
+        editText.setLayoutParams(lp);
+        return editText;
+    }
+
+    private boolean hasContent(EditText et) {
+        return et.getText() != null && et.getText().toString().trim().length() > 0;
     }
 }
