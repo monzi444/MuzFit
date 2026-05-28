@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MuzFit</string>
+    <string name="diet_page_title">Diet Page</string>
+    <string name="add_food_button">Add Food</string>
+    <string name="food_added_toast">Food added!</string>
+    <string name="delete_food">Delete</string>
 </resources>
