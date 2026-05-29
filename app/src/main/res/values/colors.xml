@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- MuzFit v3.0 Official Palette -->
+    <color name="muz_primary_lime">#c5f701</color>
+    <color name="muz_on_surface">#fefeff</color>
+    <color name="muz_on_surface_variant">#9a9b9b</color>
+    <color name="muz_surface_l0">#0f0e0f</color>
+    <color name="muz_container_l2">#1a1b1b</color>
+
+    <!-- Glassmorphism Surface -->
+    <color name="muz_glass_bg">#991a1b1b</color>
+    <color name="muz_glass_border">#3a3b3b</color>
+
+    <!-- Skeuomorphic Physical Shadows -->
+    <color name="muz_skeuo_shadow_dark">#E6000000</color>
+    <color name="muz_skeuo_shadow_light">#353636</color>
+
+    <!-- Compatibility/Legacy (Required to avoid build errors in residual files) -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="bg_gradient_start">#0f0e0f</color>
+    <color name="bg_gradient_center">#1a1b1b</color>
+    <color name="bg_gradient_end">#0f0e0f</color>
+    <color name="glass_white_15">#26fefeff</color>
+    <color name="glass_white_30">#4Dfefeff</color>
+    <color name="glass_border">#3a3b3b</color>
+    <color name="skeuo_base">#1a1b1b</color>
+    <color name="skeuo_shadow_dark">#E6000000</color>
+    <color name="skeuo_shadow_light">#353636</color>
+    <color name="neon_cyan">#c5f701</color>
 </resources>
