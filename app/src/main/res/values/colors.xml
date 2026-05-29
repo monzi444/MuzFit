@@ -16,8 +16,12 @@
     <color name="graph_dot">#1976D2</color>
     <color name="graph_grid">#E0E0E0</color>
 
-    <!-- Heatmap Status Colors -->
-    <color name="activity_high">#4CAF50</color> <!-- Green: Goal reached -->
-    <color name="activity_medium">#FFEB3B</color> <!-- Yellow: Partial activity -->
-    <color name="activity_low">#F44336</color> <!-- Red: No activity -->
+    <!-- Activity Status Colors (Calendar Style) -->
+    <color name="activity_high">#4CAF50</color> <!-- Green border -->
+    <color name="activity_high_bg">#1A4CAF50</color> <!-- Light green fill (10% opacity) -->
+    <color name="activity_medium">#FF9800</color> <!-- Orange border -->
+    <color name="activity_medium_bg">#1AFF9800</color> <!-- Light orange fill -->
+    <color name="activity_low">#F44336</color> <!-- Red border -->
+    <color name="activity_low_bg">#1AF44336</color> <!-- Light red fill -->
+    <color name="text_grey">#9E9E9E</color>
 </resources>

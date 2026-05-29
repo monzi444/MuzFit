@@ -16,6 +16,7 @@ public class CalorieHistogramView extends View {
     private int[] caloriesData = {420, 720, 580, 1020, 850, 600, 910};
     private final Paint barPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint valuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rectF = new RectF();
     private final String[] days = {"M", "T", "W", "T", "F", "S", "S"};
 
@@ -29,6 +30,9 @@ public class CalorieHistogramView extends View {
         textPaint.setColor(android.graphics.Color.GRAY);
         textPaint.setTextSize(24f);
         textPaint.setTextAlign(Paint.Align.CENTER);
+        valuePaint.setColor(android.graphics.Color.DKGRAY);
+        valuePaint.setTextSize(20f);
+        valuePaint.setTextAlign(Paint.Align.CENTER);
     }
 
     public void setData(int[] data) {
@@ -43,10 +47,10 @@ public class CalorieHistogramView extends View {
 
         float width = getWidth();
         float height = getHeight();
-        float padding = 40f;
+        float padding = 44f;
         float bottomPadding = 60f;
         float graphWidth = width - 2 * padding;
-        float graphHeight = height - padding - bottomPadding;
+        float graphHeight = height - padding - bottomPadding - 24f;
 
         int maxCalories = 0;
         for (int calorie : caloriesData) {
@@ -67,7 +71,7 @@ public class CalorieHistogramView extends View {
             rectF.set(left, top, right, bottom);
             canvas.drawRoundRect(rectF, 10f, 10f, barPaint);
 
-            // Draw day labels
+            canvas.drawText(String.valueOf(caloriesData[i]), left + barWidth / 2, top - 8f, valuePaint);
             canvas.drawText(days[i], left + barWidth / 2, height - 20f, textPaint);
         }
     }
