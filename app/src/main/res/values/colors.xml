@@ -28,4 +28,27 @@
     <color name="skeuo_shadow_dark">#E6000000</color>
     <color name="skeuo_shadow_light">#353636</color>
     <color name="neon_cyan">#c5f701</color>
+
+    <color name="protein_color">#4CAF50</color>
+    <color name="protein_overflow">#1B5E20</color>
+    <color name="carbs_color">#FF9800</color>
+    <color name="carbs_overflow">#E65100</color>
+    <color name="fat_color">#F44336</color>
+    <color name="fat_overflow">#B71C1C</color>
+    <color name="calorie_color">#2196F3</color>
+    <color name="calorie_overflow">#0D47A1</color>
+    <color name="square_empty">#EEEEEE</color>
+    <color name="square_filled">#2E7D32</color>
+    <color name="graph_line">#2196F3</color>
+    <color name="graph_dot">#1976D2</color>
+    <color name="graph_grid">#E0E0E0</color>
+
+    <!-- Activity Status Colors (Calendar Style) -->
+    <color name="activity_high">#4CAF50</color> <!-- Green border -->
+    <color name="activity_high_bg">#1A4CAF50</color> <!-- Light green fill (10% opacity) -->
+    <color name="activity_medium">#FF9800</color> <!-- Orange border -->
+    <color name="activity_medium_bg">#1AFF9800</color> <!-- Light orange fill -->
+    <color name="activity_low">#F44336</color> <!-- Red border -->
+    <color name="activity_low_bg">#1AF44336</color> <!-- Light red fill -->
+    <color name="text_grey">#9E9E9E</color>
 </resources>
