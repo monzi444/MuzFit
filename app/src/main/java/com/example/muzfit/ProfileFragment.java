@@ -1,5 +1,6 @@
 package com.example.muzfit;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -18,6 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class ProfileFragment extends Fragment {
 
@@ -51,6 +53,7 @@ public class ProfileFragment extends Fragment {
 
         Button btnModificaProfilo = view.findViewById(R.id.btn_modifica_profilo);
         Button btnObiettivi = view.findViewById(R.id.btn_obiettivi);
+        Button btnLogout = view.findViewById(R.id.btn_logout);
         View btnSettings = view.findViewById(R.id.btn_settings);
 
         ivAvatar.setOnClickListener(v -> {
@@ -61,8 +64,16 @@ public class ProfileFragment extends Fragment {
 
         btnModificaProfilo.setOnClickListener(v -> showEditDialog());
         btnObiettivi.setOnClickListener(v -> showObiettiviDialog());
+        btnLogout.setOnClickListener(v -> logout());
 
         return view;
+    }
+
+    private void logout() {
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(requireContext(), LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     private void showEditDialog() {
