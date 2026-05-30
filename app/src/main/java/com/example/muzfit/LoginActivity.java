@@ -2,25 +2,23 @@ package com.example.muzfit;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.text.TextUtils;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.credentials.Credential;
-import androidx.credentials.CredentialManager;
-import androidx.credentials.CredentialManagerCallback;
-import androidx.credentials.CustomCredential;
-import androidx.credentials.GetCredentialRequest;
-import androidx.credentials.GetCredentialResponse;
-import androidx.credentials.exceptions.GetCredentialException;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+import com.google.android.gms.auth.api.identity.BeginSignInRequest;
+import com.google.android.gms.auth.api.identity.Identity;
+import com.google.android.gms.auth.api.identity.SignInClient;
+import com.google.android.gms.auth.api.identity.SignInCredential;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthCredential;
@@ -28,12 +26,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import java.util.concurrent.Executors;
-
 public class LoginActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
-    private CredentialManager credentialManager;
+    private SignInClient oneTapClient;
+    private BeginSignInRequest signInRequest;
+    private ActivityResultLauncher<IntentSenderRequest> googleSignInLauncher;
     private TextInputEditText emailInput;
     private TextInputEditText passwordInput;
     private MaterialButton loginButton;
@@ -54,7 +52,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         auth = FirebaseAuth.getInstance();
-        credentialManager = CredentialManager.create(this);
+        setupGoogleSignIn();
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
 
@@ -67,6 +65,53 @@ public class LoginActivity extends AppCompatActivity {
         createAccountButton.setOnClickListener(v -> createAccount());
         googleLoginButton.setOnClickListener(v -> signInWithGoogle());
         continueWithoutLoginButton.setOnClickListener(v -> openMainActivity());
+    }
+
+    private void setupGoogleSignIn() {
+        googleSignInLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartIntentSenderForResult(),
+                result -> {
+                    if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                        setLoading(false);
+                        return;
+                    }
+
+                    try {
+                        SignInCredential credential =
+                                oneTapClient.getSignInCredentialFromIntent(result.getData());
+                        String idToken = credential.getGoogleIdToken();
+                        if (idToken != null) {
+                            firebaseAuthWithGoogle(idToken);
+                        } else {
+                            setLoading(false);
+                            Toast.makeText(this, R.string.google_login_failed_toast, Toast.LENGTH_SHORT).show();
+                            updateUI(null);
+                        }
+                    } catch (ApiException e) {
+                        setLoading(false);
+                        Toast.makeText(this, R.string.google_login_failed_toast, Toast.LENGTH_SHORT).show();
+                        updateUI(null);
+                    }
+                });
+
+        int webClientIdResId = getResources()
+                .getIdentifier("default_web_client_id", "string", getPackageName());
+        if (webClientIdResId == 0) {
+            return;
+        }
+
+        oneTapClient = Identity.getSignInClient(this);
+        signInRequest = BeginSignInRequest.builder()
+                .setPasswordRequestOptions(BeginSignInRequest.PasswordRequestOptions.builder()
+                        .setSupported(true)
+                        .build())
+                .setGoogleIdTokenRequestOptions(BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                        .setSupported(true)
+                        .setServerClientId(getString(webClientIdResId))
+                        .setFilterByAuthorizedAccounts(false)
+                        .build())
+                .setAutoSelectEnabled(true)
+                .build();
     }
 
     @Override
@@ -134,51 +179,23 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        setLoading(true);
-
-        GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(getString(webClientIdResId))
-                .build();
-
-        GetCredentialRequest request = new GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build();
-
-        credentialManager.getCredentialAsync(
-                this,
-                request,
-                new CancellationSignal(),
-                Executors.newSingleThreadExecutor(),
-                new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
-                    @Override
-                    public void onResult(GetCredentialResponse result) {
-                        runOnUiThread(() -> handleGoogleCredential(result.getCredential()));
-                    }
-
-                    @Override
-                    public void onError(GetCredentialException e) {
-                        runOnUiThread(() -> {
-                            setLoading(false);
-                            Toast.makeText(LoginActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                            updateUI(null);
-                        });
-                    }
-                });
-    }
-
-    private void handleGoogleCredential(Credential credential) {
-        if (credential instanceof CustomCredential
-                && GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())) {
-            CustomCredential customCredential = (CustomCredential) credential;
-            GoogleIdTokenCredential googleIdTokenCredential =
-                    GoogleIdTokenCredential.createFrom(customCredential.getData());
-            firebaseAuthWithGoogle(googleIdTokenCredential.getIdToken());
-        } else {
-            setLoading(false);
-            Toast.makeText(this, R.string.google_login_failed_toast, Toast.LENGTH_SHORT).show();
-            updateUI(null);
+        if (oneTapClient == null || signInRequest == null) {
+            Toast.makeText(this, R.string.google_login_not_configured_toast, Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        setLoading(true);
+        oneTapClient.beginSignIn(signInRequest)
+                .addOnSuccessListener(this, result -> {
+                    IntentSenderRequest intentSenderRequest =
+                            new IntentSenderRequest.Builder(result.getPendingIntent()).build();
+                    googleSignInLauncher.launch(intentSenderRequest);
+                })
+                .addOnFailureListener(this, e -> {
+                    setLoading(false);
+                    Toast.makeText(this, R.string.google_login_failed_toast, Toast.LENGTH_SHORT).show();
+                    updateUI(null);
+                });
     }
 
     private void firebaseAuthWithGoogle(String idToken) {
