@@ -147,6 +147,8 @@ public class WorkoutFragment extends Fragment {
         if (routineToEdit != null) {
             etRoutineName.setText(routineToEdit.getName());
             selectedExercises.addAll(routineToEdit.getExercises());
+        } else {
+            etRoutineName.setText(getNextDefaultWorkoutName());
         }
 
         List<Exercise> searchResults = new ArrayList<>();
@@ -266,6 +268,21 @@ public class WorkoutFragment extends Fragment {
                     tvCount.setText(getString(R.string.selected_exercises_count, selectedExercises.size()));
                 })
                 .show();
+    }
+
+    private String getNextDefaultWorkoutName() {
+        int maxNum = 0;
+        String prefix = "Workout ";
+        for (WorkoutRoutine r : routineList) {
+            String name = r.getName();
+            if (name != null && name.startsWith(prefix)) {
+                try {
+                    int num = Integer.parseInt(name.substring(prefix.length()).trim());
+                    if (num > maxNum) maxNum = num;
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return prefix + (maxNum + 1);
     }
 
     private void searchExercises(String query, List<Exercise> results, ExerciseSearchAdapter adapter) {
