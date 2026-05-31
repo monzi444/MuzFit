@@ -29,16 +29,16 @@ Data layer:  Repository  -->  RemoteDataSource (Retrofit Service -> API, Firebas
 
 ## Package layout (under the app's base package)
 
-| Package            | Contents |
-|--------------------|----------|
-| `model`            | POJOs / Room `@Entity` / `Result` |
-| `ui.<feature>`     | `Activity`, `fragment/`, `viewmodel/` |
+| Package                | Contents                                                 |
+|------------------------|----------------------------------------------------------|
+| `model`                | POJOs / Room `@Entity` / `Result`                        |
+| `ui.<feature>`         | `Activity`, `fragment/`, `viewmodel/`                    |
 | `repository.<feature>` | `I<Feature>Repository`, `<Feature>Repository`, callbacks |
-| `source.<feature>` | `Base...DataSource` + concrete remote/local data sources |
-| `service`          | Retrofit interfaces (`<Feature>APIService`) |
-| `database`         | Room `@Dao`, `RoomDatabase`, `TypeConverter` |
-| `utils`            | `ServiceLocator`, `Constants`, helpers |
-| `adapter`          | RecyclerView / Spinner adapters |
+| `source.<feature>`     | `Base...DataSource` + concrete remote/local data sources |
+| `service`              | Retrofit interfaces (`<Feature>APIService`)              |
+| `database`             | Room `@Dao`, `RoomDatabase`, `TypeConverter`             |
+| `utils`                | `ServiceLocator`, `Constants`, helpers                   |
+| `adapter`              | RecyclerView / Spinner adapters                          |
 
 ## Results & constants
 
