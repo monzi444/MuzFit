@@ -51,9 +51,14 @@ public class MainActivity extends AppCompatActivity {
 
         // Set default fragment
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeFragment())
-                    .commit();
+            boolean startQuick = getIntent().getBooleanExtra("START_QUICK", false);
+            if (startQuick) {
+                bottomNav.setSelectedItemId(R.id.nav_quick);
+            } else {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, new HomeFragment())
+                        .commit();
+            }
         }
     }
 }

@@ -1,26 +1,40 @@
 package com.example.muzfit;
 
-public class WorkoutRoutine {
-    private final String name;
-    private final int exerciseCount;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-    public WorkoutRoutine(String name, int exerciseCount) {
+public class WorkoutRoutine implements Serializable {
+    private final String name;
+    private final List<Exercise> exercises;
+
+    public WorkoutRoutine(String name) {
         this.name = name;
-        this.exerciseCount = exerciseCount;
+        this.exercises = new ArrayList<>();
+    }
+
+    public WorkoutRoutine(String name, List<Exercise> exercises) {
+        this.name = name;
+        this.exercises = exercises;
     }
 
     public String getName() {
         return name;
     }
 
+    public List<Exercise> getExercises() {
+        return exercises;
+    }
+
     public int getExerciseCount() {
-        return exerciseCount;
+        return exercises.size();
     }
 
     public String getExerciseSummary() {
-        if (exerciseCount == 1) {
-            return exerciseCount + " exercise";
+        int count = getExerciseCount();
+        if (count == 1) {
+            return count + " exercise";
         }
-        return exerciseCount + " exercises";
+        return count + " exercises";
     }
 }
