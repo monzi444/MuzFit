@@ -19,6 +19,9 @@ public class PastoDto {
     @SerializedName("Proteine")
     private float protein;
 
+    @SerializedName("Grassi")
+    private float fat;
+
     public int getId() {
         return id;
     }
@@ -37,5 +40,9 @@ public class PastoDto {
 
     public float getProtein() {
         return protein;
+    }
+
+    public float getFat() {
+        return fat;
     }
 }

@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.ui.dashboard.fragment;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,6 +8,8 @@ import android.util.AttributeSet;
 import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+
+import com.example.muzfit.R;
 
 /**
  * Custom view to display a histogram of calories burned over the last week.

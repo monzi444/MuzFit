@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.ui.dashboard.fragment;
 
 import android.os.Bundle;
 import android.view.Gravity;
@@ -18,8 +18,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.example.muzfit.R;
+import com.example.muzfit.model.Result;
+import com.example.muzfit.model.WeightEntry;
+import com.example.muzfit.ui.dashboard.viewmodel.DashboardViewModel;
+import com.example.muzfit.ui.dashboard.viewmodel.DashboardViewModelFactory;
+import com.example.muzfit.utils.Constants;
+import com.example.muzfit.utils.ServiceLocator;
+
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -30,12 +42,26 @@ public class HomeFragment extends Fragment {
             "July", "August", "September", "October", "November", "December"
     };
     private static final int YEAR_WINDOW_RADIUS = 50;
+    private static final int CALORIE_GOAL = 2000;
+    private static final int PROTEIN_GOAL = 150;
+    private static final int CARBS_GOAL = 250;
+    private static final int FAT_GOAL = 70;
+    private static final int CALORIES_BURNED_GOAL = 2500;
 
+    private DashboardViewModel viewModel;
     private GridLayout calendarGrid;
     private LinearLayout activityGoalSummaryBar;
     private TextView activityGoalPercent;
     private TextView activityPartialPercent;
     private TextView activityMissedPercent;
+    private NutrientProgressBar calorieBar;
+    private NutrientProgressBar proteinBar;
+    private NutrientProgressBar carbsBar;
+    private NutrientProgressBar fatBar;
+    private TextView caloriesCount;
+    private ProgressBar caloriesProgress;
+    private CalorieHistogramView histogram;
+    private WeightGraphView weightGraph;
     private Spinner monthSpinner;
     private Spinner yearSpinner;
     private int selectedMonth;
@@ -75,9 +101,16 @@ public class HomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
+        DashboardViewModelFactory factory = new DashboardViewModelFactory(
+                ServiceLocator.getInstance().getDashboardRepository()
+        );
+        viewModel = new ViewModelProvider(this, factory).get(DashboardViewModel.class);
+
         setupMacros(view);
         setupCalendarControls(view);
         setupCaloriesBurned(view);
+        setupWeightGraph(view);
+        observeDashboardData();
 
         return view;
     }
@@ -247,57 +280,136 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupMacros(View view) {
-        NutrientProgressBar calorieBar = view.findViewById(R.id.calorie_progress);
+        calorieBar = view.findViewById(R.id.calorie_progress);
         if (calorieBar != null) {
             calorieBar.setColors(
                 ContextCompat.getColor(requireContext(), R.color.calorie_color),
                 ContextCompat.getColor(requireContext(), R.color.calorie_overflow)
             );
-            calorieBar.setProgress(2200, 2000);
+            calorieBar.setProgress(0, CALORIE_GOAL);
         }
 
-        NutrientProgressBar proteinBar = view.findViewById(R.id.protein_progress);
+        proteinBar = view.findViewById(R.id.protein_progress);
         if (proteinBar != null) {
             proteinBar.setColors(
                 ContextCompat.getColor(requireContext(), R.color.protein_color),
                 ContextCompat.getColor(requireContext(), R.color.protein_overflow)
             );
-            proteinBar.setProgress(120, 150);
+            proteinBar.setProgress(0, PROTEIN_GOAL);
         }
 
-        NutrientProgressBar carbsBar = view.findViewById(R.id.carbs_progress);
+        carbsBar = view.findViewById(R.id.carbs_progress);
         if (carbsBar != null) {
             carbsBar.setColors(
                 ContextCompat.getColor(requireContext(), R.color.carbs_color),
                 ContextCompat.getColor(requireContext(), R.color.carbs_overflow)
             );
-            carbsBar.setProgress(300, 250);
+            carbsBar.setProgress(0, CARBS_GOAL);
         }
 
-        NutrientProgressBar fatBar = view.findViewById(R.id.fat_progress);
+        fatBar = view.findViewById(R.id.fat_progress);
         if (fatBar != null) {
             fatBar.setColors(
                 ContextCompat.getColor(requireContext(), R.color.fat_color),
                 ContextCompat.getColor(requireContext(), R.color.fat_overflow)
             );
-            fatBar.setProgress(63, 70);
+            fatBar.setProgress(0, FAT_GOAL);
         }
     }
 
     private void setupCaloriesBurned(View view) {
-        TextView caloriesCount = view.findViewById(R.id.today_calories_count);
-        ProgressBar caloriesProgress = view.findViewById(R.id.today_calories_progress);
-        CalorieHistogramView histogram = view.findViewById(R.id.weekly_calories_histogram);
+        caloriesCount = view.findViewById(R.id.today_calories_count);
+        caloriesProgress = view.findViewById(R.id.today_calories_progress);
+        histogram = view.findViewById(R.id.weekly_calories_histogram);
 
         if (caloriesCount != null) {
-            caloriesCount.setText("1,842");
+            caloriesCount.setText("0");
         }
         if (caloriesProgress != null) {
-            caloriesProgress.setMax(2500);
-            caloriesProgress.setProgress(1842);
+            caloriesProgress.setMax(CALORIES_BURNED_GOAL);
+            caloriesProgress.setProgress(0);
         }
         if (histogram != null) {
-            int[] weeklyData = {420, 720, 580, 1020, 850, 600, 910};
+            histogram.setData(new int[7]);
+        }
+    }
+
+    private void setupWeightGraph(View view) {
+        weightGraph = view.findViewById(R.id.weight_graph);
+    }
+
+    private void observeDashboardData() {
+        viewModel.getCosumedCalories().observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success && calorieBar != null) {
+                Float calories = ((Result.Success<Float>) result).getData();
+                calorieBar.setProgress(calories != null ? calories : 0f, CALORIE_GOAL);
+            }
+        });
+
+        viewModel.getConsumedProteins().observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success && proteinBar != null) {
+                Float proteins = ((Result.Success<Float>) result).getData();
+                proteinBar.setProgress(proteins != null ? proteins : 0f, PROTEIN_GOAL);
+            }
+        });
+
+        viewModel.getConsumedCarbs().observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success && carbsBar != null) {
+                Float carbs = ((Result.Success<Float>) result).getData();
+                carbsBar.setProgress(carbs != null ? carbs : 0f, CARBS_GOAL);
+            }
+        });
+
+        viewModel.getConsumedFats().observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success && fatBar != null) {
+                Float fats = ((Result.Success<Float>) result).getData();
+                fatBar.setProgress(fats != null ? fats : 0f, FAT_GOAL);
+            }
+        });
+
+        viewModel.getWeights(Constants.DEFAULT_USERNAME).observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success && weightGraph != null) {
+                List<WeightEntry> weights = ((Result.Success<List<WeightEntry>>) result).getData();
+                weightGraph.setData(toWeightData(weights));
+            }
+        });
+
+        viewModel.getDailyCaloriesBurned().observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success) {
+                int[] weeklyData = ((Result.Success<int[]>) result).getData();
+                updateCaloriesBurned(weeklyData);
+            }
+        });
+    }
+
+    private float[] toWeightData(List<WeightEntry> weights) {
+        if (weights == null || weights.isEmpty()) {
+            return new float[0];
+        }
+
+        List<WeightEntry> sorted = new ArrayList<>(weights);
+        Collections.sort(sorted, Comparator.comparingLong(WeightEntry::getDateMillis));
+
+        float[] data = new float[sorted.size()];
+        for (int i = 0; i < sorted.size(); i++) {
+            data[i] = sorted.get(i).getWeight();
+        }
+        return data;
+    }
+
+    private void updateCaloriesBurned(int[] weeklyData) {
+        if (weeklyData == null || weeklyData.length == 0) {
+            return;
+        }
+
+        int todayCalories = weeklyData[weeklyData.length - 1];
+        if (caloriesCount != null) {
+            caloriesCount.setText(String.format(Locale.getDefault(), "%,d", todayCalories));
+        }
+        if (caloriesProgress != null) {
+            caloriesProgress.setProgress(Math.min(todayCalories, CALORIES_BURNED_GOAL));
+        }
+        if (histogram != null) {
             histogram.setData(weeklyData);
         }
     }

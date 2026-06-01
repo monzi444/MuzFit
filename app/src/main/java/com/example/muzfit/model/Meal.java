@@ -7,16 +7,18 @@ public class Meal {
     private float calories;
     private float carbs;
     private float protein;
+    private float fat;
 
     public Meal() {
     }
 
-    public Meal(int id, String foodName, float calories, float carbs, float protein) {
+    public Meal(int id, String foodName, float calories, float carbs, float protein, float fat) {
         this.id = id;
         this.foodName = foodName;
         this.calories = calories;
         this.carbs = carbs;
         this.protein = protein;
+        this.fat = fat;
     }
 
     public int getId() {
@@ -57,5 +59,13 @@ public class Meal {
 
     public void setProtein(float protein) {
         this.protein = protein;
+    }
+
+    public float getFat() {
+        return fat;
+    }
+
+    public void setFat(float fat) {
+        this.fat = fat;
     }
 }

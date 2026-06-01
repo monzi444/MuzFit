@@ -3,21 +3,21 @@ package com.example.muzfit.repository.dashboard;
 import androidx.lifecycle.LiveData;
 
 import com.example.muzfit.model.Result;
-import com.example.muzfit.model.User;
-import com.example.muzfit.model.UserMeal;
-import com.example.muzfit.model.Workout;
+import com.example.muzfit.model.WeightEntry;
 
 import java.util.List;
 
 public interface IDashboardRepository {
 
-    LiveData<Result<User>> getUserGoals(String username);
+    LiveData<Result<Float>> getCosumedCalories();
 
-    LiveData<Result<List<UserMeal>>> getMealsLoggedOnDate(String username, long dateMillis);
+    LiveData<Result<Float>> getConsumedCarbs();
 
-    LiveData<Result<List<Workout>>> getWorkoutsOnDate(String username, long dateMillis);
+    LiveData<Result<Float>> getConsumedProteins();
 
-    LiveData<Result<List<UserMeal>>> getMealsLoggedInMonth(String username, int year, int month);
+    LiveData<Result<Float>> getConsumedFats();
 
-    LiveData<Result<List<Workout>>> getWorkoutsInMonth(String username, int year, int month);
+    LiveData<Result<List<WeightEntry>>> getWeights(String username);
+
+    LiveData<Result<int[]>> getDailyCaloriesBurned();
 }

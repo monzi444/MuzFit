@@ -56,7 +56,7 @@ public final class ApiMapper {
             return new Meal();
         }
         String foodName = dto.getFoodName() != null ? dto.getFoodName() : "";
-        return new Meal(dto.getId(), foodName, dto.getCalories(), dto.getCarbs(), dto.getProtein());
+        return new Meal(dto.getId(), foodName, dto.getCalories(), dto.getCarbs(), dto.getProtein(), dto.getFat());
     }
 
     public static List<Meal> toMeals(List<PastoDto> dtos) {
