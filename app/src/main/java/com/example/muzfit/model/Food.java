@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.model;
 
 public class Food {
     public enum Category {

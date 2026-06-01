@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,6 +10,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.example.muzfit.R;
+import com.example.muzfit.model.Food;
 
 import java.util.List;
 

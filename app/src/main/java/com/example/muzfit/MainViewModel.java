@@ -1,5 +1,6 @@
 package com.example.muzfit;
 
+import com.example.muzfit.model.Food;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
