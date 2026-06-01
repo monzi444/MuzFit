@@ -17,4 +17,13 @@
     <string name="cancel">Cancel</string>
     <string name="routine_created_toast">Routine saved!</string>
     <string name="routine_name_required_toast">Enter a routine name</string>
+    <string name="greeting_prefix">Ciao %1$s</string>
+    <string name="your_diet_title">La tua dieta</string>
+    <string name="day_mon">Lun</string>
+    <string name="day_tue">Mar</string>
+    <string name="day_wed">Mer</string>
+    <string name="day_thu">Gio</string>
+    <string name="day_fri">Ven</string>
+    <string name="day_sat">Sab</string>
+    <string name="day_sun">Dom</string>
 </resources>
