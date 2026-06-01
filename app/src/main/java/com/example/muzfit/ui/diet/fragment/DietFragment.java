@@ -121,9 +121,7 @@ public class DietFragment extends Fragment {
                 totalKcal += meal.getCalories();
                 totalCarbs += meal.getCarbs();
                 totalProtein += meal.getProtein();
-                // Meal model doesn't seem to have Fat in the snippet I saw, 
-                // but IDietRepository might imply it or it's missing in Meal.java snippet.
-                // Assuming it's there or just using 0 for now to keep it building.
+                totalFat += meal.getFat();
             }
         }
 
@@ -246,7 +244,7 @@ public class DietFragment extends Fragment {
                         int protein = proteinStr.isEmpty() ? 0 : Integer.parseInt(proteinStr);
                         int fat = fatStr.isEmpty() ? 0 : Integer.parseInt(fatStr);
 
-                        com.example.muzfit.model.Meal newMeal = new com.example.muzfit.model.Meal(0, name, (float)calories, (float)carbs, (float)protein);
+                        com.example.muzfit.model.Meal newMeal = new com.example.muzfit.model.Meal(0, name, (float)calories, (float)carbs, (float)protein, (float)fat);
                         viewModel.addMeal(newMeal);
                         Toast.makeText(getContext(), "Cibo aggiunto!", Toast.LENGTH_SHORT).show();
                     } else {
