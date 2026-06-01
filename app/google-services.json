@@ -12,7 +12,20 @@
           "package_name": "com.example.muzfit"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "24585237676-3d6aqp0j38nah9anq5jn5hceoco9ae88.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.muzfit",
+            "certificate_hash": "65861295af151612c91abfd492de860afdd453c4"
+          }
+        },
+        {
+          "client_id": "24585237676-3s3com24rl6vo9tha1ga4hdur3jk563i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD9ELa6wdDboMaJ3lkNfgaVxOpzFBnQTP4"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "24585237676-3s3com24rl6vo9tha1ga4hdur3jk563i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
