@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.ui.dashboard.fragment;
 
 import android.content.Context;
 import android.graphics.Canvas;

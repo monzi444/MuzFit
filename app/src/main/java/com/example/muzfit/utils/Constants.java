@@ -5,6 +5,8 @@ public final class Constants {
     public static final String BASE_URL =
             "https://fabricate.tonic.ai/api/v1/workspaces/monzi%20444/projects/My%20Project/api/";
     public static final String API_KEY = "an3WkP5TFacbU7A1ekw9DoEp";
+    public static final String EXERCISE_DB_BASE_URL = "https://oss.exercisedb.dev/api/v1/";
+    public static final int EXERCISE_CATALOG_SEARCH_LIMIT = 50;
     public static final String DEFAULT_USERNAME = "bruno.moretti";
 
     public static final String PATH_UTENTE = "utente";
@@ -28,6 +30,7 @@ public final class Constants {
     public static final String ERROR_NOT_SUPPORTED = "Operation not supported by the API";
     public static final String ERROR_USER_NOT_FOUND = "User not found";
     public static final String ERROR_WORKOUT_NOT_FOUND = "Workout not found";
+    public static final String ERROR_FIREBASE_NOT_IMPLEMENTED = "Firebase not implemented yet";
 
     private Constants() {
     }

@@ -4,10 +4,12 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.muzfit.model.Exercise;
+import com.example.muzfit.model.ExerciseDB;
 import com.example.muzfit.model.ExerciseSet;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.Workout;
 import com.example.muzfit.model.WorkoutExercise;
+import com.example.muzfit.model.WorkoutRoutine;
 import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.utils.Constants;
 
@@ -19,6 +21,34 @@ public class TrainingViewModel extends ViewModel {
 
     public TrainingViewModel(ITrainingRepository repository) {
         this.repository = repository;
+    }
+
+    public LiveData<Result<List<ExerciseDB>>> searchExerciseCatalog(String query, String bodyPart) {
+        return repository.searchExerciseCatalog(query, bodyPart);
+    }
+
+    public LiveData<Result<List<WorkoutRoutine>>> getRoutines(String username) {
+        return repository.getRoutines(username);
+    }
+
+    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String username) {
+        return repository.saveRoutine(routine, username);
+    }
+
+    public LiveData<Result<Void>> deleteRoutine(String routineName, String username) {
+        return repository.deleteRoutine(routineName, username);
+    }
+
+    public LiveData<Result<List<WorkoutRoutine>>> getRoutinesForDefaultUser() {
+        return repository.getRoutines(Constants.DEFAULT_USERNAME);
+    }
+
+    public LiveData<Result<Void>> saveRoutineForDefaultUser(WorkoutRoutine routine) {
+        return repository.saveRoutine(routine, Constants.DEFAULT_USERNAME);
+    }
+
+    public LiveData<Result<Void>> deleteRoutineForDefaultUser(String routineName) {
+        return repository.deleteRoutine(routineName, Constants.DEFAULT_USERNAME);
     }
 
     public LiveData<Result<List<Workout>>> getWorkouts(String username) {

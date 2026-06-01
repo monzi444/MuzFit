@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.ui.dashboard.fragment;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,11 +9,13 @@ import android.util.AttributeSet;
 import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+
+import com.example.muzfit.R;
+
 import java.util.Locale;
 
 public class WeightGraphView extends View {
     private float[] data = {75.0f, 74.5f, 74.8f, 74.2f, 73.9f, 73.5f, 73.2f};
-    private static final String[] Y_LABELS = {"72.0 kg", "73.0 kg", "74.0 kg", "75.0 kg", "76.0 kg"};
     private final Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint gridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -42,6 +44,11 @@ public class WeightGraphView extends View {
         textPaint.setTextAlign(Paint.Align.RIGHT);
     }
 
+    public void setData(float[] data) {
+        this.data = data;
+        invalidate();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -50,7 +57,11 @@ public class WeightGraphView extends View {
         float width = getWidth();
         float height = getHeight();
         float labelWidth = 0f;
-        for (String label : Y_LABELS) {
+        float minWeight = getMinWeight();
+        float maxWeight = getMaxWeight(minWeight);
+        float weightRange = maxWeight - minWeight;
+        for (int i = 0; i <= 4; i++) {
+            String label = String.format(Locale.getDefault(), "%.1f kg", minWeight + (i * weightRange / 4));
             labelWidth = Math.max(labelWidth, textPaint.measureText(label));
         }
 
@@ -61,10 +72,6 @@ public class WeightGraphView extends View {
         float graphWidth = Math.max(0f, width - leftPadding - rightPadding);
         float graphHeight = Math.max(0f, height - topPadding - bottomPadding);
 
-        float minWeight = 72f;
-        float maxWeight = 76f;
-        float weightRange = maxWeight - minWeight;
-
         // Draw grid lines and labels
         for (int i = 0; i <= 4; i++) {
             float y = topPadding + graphHeight - (i * graphHeight / 4);
@@ -74,10 +81,10 @@ public class WeightGraphView extends View {
         }
 
         path.reset();
-        float stepX = graphWidth / (data.length - 1);
+        float stepX = data.length > 1 ? graphWidth / (data.length - 1) : 0f;
 
         for (int i = 0; i < data.length; i++) {
-            float x = leftPadding + i * stepX;
+            float x = data.length > 1 ? leftPadding + i * stepX : leftPadding + (graphWidth / 2f);
             float y = topPadding + graphHeight - ((data[i] - minWeight) / weightRange * graphHeight);
 
             if (i == 0) {
@@ -90,9 +97,25 @@ public class WeightGraphView extends View {
 
         // Draw dots
         for (int i = 0; i < data.length; i++) {
-            float x = leftPadding + i * stepX;
+            float x = data.length > 1 ? leftPadding + i * stepX : leftPadding + (graphWidth / 2f);
             float y = topPadding + graphHeight - ((data[i] - minWeight) / weightRange * graphHeight);
             canvas.drawCircle(x, y, 11f, dotPaint);
         }
+    }
+
+    private float getMinWeight() {
+        float min = data[0];
+        for (float value : data) {
+            min = Math.min(min, value);
+        }
+        return (float) Math.floor(min - 1f);
+    }
+
+    private float getMaxWeight(float minWeight) {
+        float max = data[0];
+        for (float value : data) {
+            max = Math.max(max, value);
+        }
+        return Math.max(minWeight + 1f, (float) Math.ceil(max + 1f));
     }
 }

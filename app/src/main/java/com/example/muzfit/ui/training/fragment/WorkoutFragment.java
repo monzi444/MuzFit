@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,21 +29,18 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 import com.example.muzfit.R;
-import com.example.muzfit.RetrofitClient;
-import com.example.muzfit.model.WorkoutRoutine;
-import com.example.muzfit.model.ExerciseDB;
-import com.example.muzfit.model.ExerciseResponse;
-import com.example.muzfit.adapter.WorkoutAdapter;
 import com.example.muzfit.adapter.ExerciseSearchAdapter;
+import com.example.muzfit.adapter.WorkoutAdapter;
+import com.example.muzfit.model.ExerciseDB;
+import com.example.muzfit.model.Result;
+import com.example.muzfit.model.WorkoutRoutine;
 import com.example.muzfit.ui.training.WorkoutSessionActivity;
+import com.example.muzfit.ui.training.viewmodel.TrainingViewModel;
+import com.example.muzfit.ui.training.viewmodel.TrainingViewModelFactory;
+import com.example.muzfit.utils.ServiceLocator;
 
 public class WorkoutFragment extends Fragment {
 
@@ -52,6 +50,7 @@ public class WorkoutFragment extends Fragment {
     private Button deleteRoutineButton;
     private Button createRoutineButton;
     private WorkoutAdapter adapter;
+    private TrainingViewModel viewModel;
     private final List<WorkoutRoutine> routineList = new ArrayList<>();
     private int selectedPosition = -1;
 
@@ -59,6 +58,11 @@ public class WorkoutFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
+
+        TrainingViewModelFactory factory = new TrainingViewModelFactory(
+                ServiceLocator.getInstance().getTrainingRepository()
+        );
+        viewModel = new ViewModelProvider(this, factory).get(TrainingViewModel.class);
 
         routineListView = view.findViewById(R.id.routineListView);
         startWorkoutButton = view.findViewById(R.id.startWorkoutButton);
@@ -299,45 +303,24 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void searchExercises(String query, String bodyPart, List<ExerciseDB> results, ExerciseSearchAdapter adapter) {
-        String normalizedQuery = query.toLowerCase().trim();
-        RetrofitClient.getApiService().getExercisesByName(normalizedQuery, bodyPart, 50).enqueue(new Callback<ExerciseResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<ExerciseResponse> call, @NonNull Response<ExerciseResponse> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                    List<ExerciseDB> apiData = response.body().getData();
-                    
-                    // Sorting by relevance
-                    Collections.sort(apiData, (e1, e2) -> {
-                        String name1 = e1.getName().toLowerCase();
-                        String name2 = e2.getName().toLowerCase();
-                        
-                        boolean starts1 = name1.startsWith(normalizedQuery);
-                        boolean starts2 = name2.startsWith(normalizedQuery);
-                        
-                        if (starts1 && !starts2) return -1;
-                        if (!starts1 && starts2) return 1;
-                        
-                        boolean contains1 = name1.contains(normalizedQuery);
-                        boolean contains2 = name2.contains(normalizedQuery);
-                        
-                        if (contains1 && !contains2) return -1;
-                        if (!contains1 && contains2) return 1;
-                        
-                        return name1.compareTo(name2);
-                    });
-
-                    results.clear();
-                    results.addAll(apiData);
-                    adapter.notifyDataSetChanged();
-                }
+        viewModel.searchExerciseCatalog(query, bodyPart).observe(getViewLifecycleOwner(), result -> {
+            if (!isAdded()) {
+                return;
             }
-
-            @Override
-            public void onFailure(@NonNull Call<ExerciseResponse> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    Toast.makeText(getContext(), "Errore API: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                }
+            if (result.isLoading()) {
+                return;
             }
+            if (result.isError()) {
+                String message = ((Result.Error<List<ExerciseDB>>) result).getMessage();
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            List<ExerciseDB> apiData = ((Result.Success<List<ExerciseDB>>) result).getData();
+            results.clear();
+            if (apiData != null) {
+                results.addAll(apiData);
+            }
+            adapter.notifyDataSetChanged();
         });
     }
 
