@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">MuzFit</string>
+    <string name="greeting_prefix">Ciao, %s!</string>
     <string name="diet_page_title">Diet Page</string>
     <string name="add_food_button">Add Food</string>
     <string name="food_added_toast">Food added!</string>
@@ -55,4 +56,11 @@
     <string name="rest_over_toast">Rest over! Next set!</string>
     <string name="workout_complete_toast">Workout Complete!</string>
     <string name="weight_hint">Kg</string>
+    <string name="day_mon">Mon</string>
+    <string name="day_tue">Tue</string>
+    <string name="day_wed">Wed</string>
+    <string name="day_thu">Thu</string>
+    <string name="day_fri">Fri</string>
+    <string name="day_sat">Sat</string>
+    <string name="day_sun">Sun</string>
 </resources>
