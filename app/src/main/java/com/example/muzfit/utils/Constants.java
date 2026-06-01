@@ -5,6 +5,7 @@ public final class Constants {
     public static final String BASE_URL =
             "https://fabricate.tonic.ai/api/v1/workspaces/monzi%20444/projects/My%20Project/api/";
     public static final String API_KEY = "an3WkP5TFacbU7A1ekw9DoEp";
+    public static final String DEFAULT_USERNAME = "bruno.moretti";
 
     public static final String PATH_UTENTE = "utente";
     public static final String PATH_UTENTE_SINGLE = "utente/single";
