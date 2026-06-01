@@ -1,9 +1,12 @@
 package com.example.muzfit;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,8 +36,7 @@ public class QuickFragment extends Fragment {
         });
 
         view.findViewById(R.id.card_add_food).setOnClickListener(v -> {
-            viewModel.addFood(new Food("Quick Snack", 150));
-            Toast.makeText(getContext(), "Cibo aggiunto alla dieta!", Toast.LENGTH_SHORT).show();
+            showAddFoodDialog();
         });
 
         view.findViewById(R.id.card_work).setOnClickListener(v -> {
@@ -50,5 +52,50 @@ public class QuickFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void showAddFoodDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_food, null);
+        builder.setView(dialogView);
+
+        EditText editTextFoodName = dialogView.findViewById(R.id.editTextFoodName);
+        EditText editTextCalories = dialogView.findViewById(R.id.editTextCalories);
+        EditText editTextCarbs = dialogView.findViewById(R.id.editTextCarbs);
+        EditText editTextProtein = dialogView.findViewById(R.id.editTextProtein);
+        EditText editTextFat = dialogView.findViewById(R.id.editTextFat);
+
+        builder.setTitle("Add New Food")
+                .setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        String name = editTextFoodName.getText().toString();
+                        String caloriesStr = editTextCalories.getText().toString();
+                        String carbsStr = editTextCarbs.getText().toString();
+                        String proteinStr = editTextProtein.getText().toString();
+                        String fatStr = editTextFat.getText().toString();
+
+                        if (!name.isEmpty() && !caloriesStr.isEmpty()) {
+                            int calories = Integer.parseInt(caloriesStr);
+                            int carbs = carbsStr.isEmpty() ? 0 : Integer.parseInt(carbsStr);
+                            int protein = proteinStr.isEmpty() ? 0 : Integer.parseInt(proteinStr);
+                            int fat = fatStr.isEmpty() ? 0 : Integer.parseInt(fatStr);
+
+                            Food newFood = new Food(name, calories, carbs, protein, fat);
+                            viewModel.addFood(newFood);
+                            Toast.makeText(getContext(), "Cibo aggiunto alla dieta!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getContext(), "Per favore inserisci nome e calorie", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        builder.create().show();
     }
 }
