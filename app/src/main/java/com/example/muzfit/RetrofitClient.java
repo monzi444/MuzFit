@@ -2,6 +2,7 @@ package com.example.muzfit;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import com.example.muzfit.service.ExerciseApiService;
 
 public class RetrofitClient {
     private static final String BASE_URL = "https://oss.exercisedb.dev/api/v1/";

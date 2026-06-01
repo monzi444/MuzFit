@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.ui.training.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -34,6 +34,15 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import com.example.muzfit.R;
+import com.example.muzfit.RetrofitClient;
+import com.example.muzfit.model.WorkoutRoutine;
+import com.example.muzfit.model.ExerciseDB;
+import com.example.muzfit.model.ExerciseResponse;
+import com.example.muzfit.adapter.WorkoutAdapter;
+import com.example.muzfit.adapter.ExerciseSearchAdapter;
+import com.example.muzfit.ui.training.WorkoutSessionActivity;
 
 public class WorkoutFragment extends Fragment {
 
@@ -143,7 +152,7 @@ public class WorkoutFragment extends Fragment {
         TextView tvSelectedExercisesCount = dialogView.findViewById(R.id.tvSelectedExercisesCount);
         ChipGroup cgBodyParts = dialogView.findViewById(R.id.cgBodyParts);
 
-        List<Exercise> selectedExercises = new ArrayList<>();
+        List<ExerciseDB> selectedExercises = new ArrayList<>();
         if (routineToEdit != null) {
             etRoutineName.setText(routineToEdit.getName());
             selectedExercises.addAll(routineToEdit.getExercises());
@@ -151,7 +160,7 @@ public class WorkoutFragment extends Fragment {
             etRoutineName.setText(getNextDefaultWorkoutName());
         }
 
-        List<Exercise> searchResults = new ArrayList<>();
+        List<ExerciseDB> searchResults = new ArrayList<>();
         
         ExerciseSearchAdapter searchAdapter = new ExerciseSearchAdapter(searchResults, exercise -> {
             showExercisePreviewDialog(exercise, () -> {
@@ -220,7 +229,7 @@ public class WorkoutFragment extends Fragment {
         builder.show();
     }
 
-    private void showExercisePreviewDialog(Exercise exercise, Runnable onConfirm) {
+    private void showExercisePreviewDialog(ExerciseDB exercise, Runnable onConfirm) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_exercise_preview, null);
         TextView tvPreviewName = dialogView.findViewById(R.id.tvPreviewName);
@@ -243,7 +252,7 @@ public class WorkoutFragment extends Fragment {
         builder.show();
     }
 
-    private void showSelectedExercisesRecap(List<Exercise> selectedExercises, TextView tvCount) {
+    private void showSelectedExercisesRecap(List<ExerciseDB> selectedExercises, TextView tvCount) {
         if (selectedExercises.isEmpty()) return;
 
         String[] names = new String[selectedExercises.size()];
@@ -285,17 +294,17 @@ public class WorkoutFragment extends Fragment {
         return prefix + (maxNum + 1);
     }
 
-    private void searchExercises(String query, List<Exercise> results, ExerciseSearchAdapter adapter) {
+    private void searchExercises(String query, List<ExerciseDB> results, ExerciseSearchAdapter adapter) {
         searchExercises(query, null, results, adapter);
     }
 
-    private void searchExercises(String query, String bodyPart, List<Exercise> results, ExerciseSearchAdapter adapter) {
+    private void searchExercises(String query, String bodyPart, List<ExerciseDB> results, ExerciseSearchAdapter adapter) {
         String normalizedQuery = query.toLowerCase().trim();
         RetrofitClient.getApiService().getExercisesByName(normalizedQuery, bodyPart, 50).enqueue(new Callback<ExerciseResponse>() {
             @Override
             public void onResponse(@NonNull Call<ExerciseResponse> call, @NonNull Response<ExerciseResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                    List<Exercise> apiData = response.body().getData();
+                    List<ExerciseDB> apiData = response.body().getData();
                     
                     // Sorting by relevance
                     Collections.sort(apiData, (e1, e2) -> {

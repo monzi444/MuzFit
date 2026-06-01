@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.ui.training;
 
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -17,6 +17,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 
 import java.util.Locale;
+
+import com.example.muzfit.R;
+import com.example.muzfit.model.WorkoutRoutine;
+import com.example.muzfit.model.ExerciseDB;
 
 public class WorkoutSessionActivity extends AppCompatActivity {
 
@@ -69,7 +73,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
             return;
         }
 
-        Exercise exercise = routine.getExercises().get(index);
+        ExerciseDB exercise = routine.getExercises().get(index);
         tvExerciseName.setText(exercise.getName());
         
         StringBuilder instr = new StringBuilder();
@@ -109,7 +113,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         etReps.setText("3");
 
         // Hide weight field if it's body weight
-        Exercise exercise = routine.getExercises().get(currentExerciseIndex);
+        ExerciseDB exercise = routine.getExercises().get(currentExerciseIndex);
         if ("body weight".equalsIgnoreCase(exercise.getEquipment())) {
             etWeight.setVisibility(View.GONE);
         } else {

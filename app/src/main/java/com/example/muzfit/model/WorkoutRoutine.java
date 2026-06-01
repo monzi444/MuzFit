@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -6,14 +6,14 @@ import java.util.List;
 
 public class WorkoutRoutine implements Serializable {
     private final String name;
-    private final List<Exercise> exercises;
+    private final List<ExerciseDB> exercises;
 
     public WorkoutRoutine(String name) {
         this.name = name;
         this.exercises = new ArrayList<>();
     }
 
-    public WorkoutRoutine(String name, List<Exercise> exercises) {
+    public WorkoutRoutine(String name, List<ExerciseDB> exercises) {
         this.name = name;
         this.exercises = exercises;
     }
@@ -22,7 +22,7 @@ public class WorkoutRoutine implements Serializable {
         return name;
     }
 
-    public List<Exercise> getExercises() {
+    public List<ExerciseDB> getExercises() {
         return exercises;
     }
 

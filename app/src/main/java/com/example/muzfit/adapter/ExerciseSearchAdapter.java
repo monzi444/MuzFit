@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,16 +8,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
+import com.example.muzfit.R;
+import com.example.muzfit.model.ExerciseDB;
+
 public class ExerciseSearchAdapter extends RecyclerView.Adapter<ExerciseSearchAdapter.ViewHolder> {
 
-    private final List<Exercise> exercises;
+    private final List<ExerciseDB> exercises;
     private final OnExerciseClickListener listener;
 
     public interface OnExerciseClickListener {
-        void onExerciseClick(Exercise exercise);
+        void onExerciseClick(ExerciseDB exercise);
     }
 
-    public ExerciseSearchAdapter(List<Exercise> exercises, OnExerciseClickListener listener) {
+    public ExerciseSearchAdapter(List<ExerciseDB> exercises, OnExerciseClickListener listener) {
         this.exercises = exercises;
         this.listener = listener;
     }
@@ -31,7 +34,7 @@ public class ExerciseSearchAdapter extends RecyclerView.Adapter<ExerciseSearchAd
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Exercise exercise = exercises.get(position);
+        ExerciseDB exercise = exercises.get(position);
         holder.tvName.setText(exercise.getName());
         holder.tvDetails.setText(exercise.getBodyPart() + " | " + exercise.getTarget());
         holder.itemView.setOnClickListener(v -> listener.onExerciseClick(exercise));

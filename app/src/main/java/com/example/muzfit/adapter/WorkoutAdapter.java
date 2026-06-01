@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -11,6 +11,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.List;
+
+import com.example.muzfit.R;
+import com.example.muzfit.model.WorkoutRoutine;
 
 public class WorkoutAdapter extends ArrayAdapter<WorkoutRoutine> {
     private final Context context;
