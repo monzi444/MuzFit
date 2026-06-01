@@ -3,14 +3,24 @@ package com.example.muzfit.repository.training;
 import androidx.lifecycle.LiveData;
 
 import com.example.muzfit.model.Exercise;
+import com.example.muzfit.model.ExerciseDB;
 import com.example.muzfit.model.ExerciseSet;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.Workout;
 import com.example.muzfit.model.WorkoutExercise;
+import com.example.muzfit.model.WorkoutRoutine;
 
 import java.util.List;
 
 public interface ITrainingRepository {
+
+    LiveData<Result<List<ExerciseDB>>> searchExerciseCatalog(String query, String bodyPart);
+
+    LiveData<Result<List<WorkoutRoutine>>> getRoutines(String username);
+
+    LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String username);
+
+    LiveData<Result<Void>> deleteRoutine(String routineName, String username);
 
     LiveData<Result<List<Workout>>> getWorkouts(String username);
 

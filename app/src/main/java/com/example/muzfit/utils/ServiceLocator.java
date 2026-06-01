@@ -8,11 +8,14 @@ import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.repository.profile.ProfileRepository;
 import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
+import com.example.muzfit.service.ExerciseApiService;
 import com.example.muzfit.service.MuzFitApiService;
 import com.example.muzfit.source.dashboard.DashboardApiDataSource;
 import com.example.muzfit.source.diet.DietApiDataSource;
 import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
+import com.example.muzfit.source.training.catalog.ExerciseCatalogApiDataSource;
+import com.example.muzfit.source.training.firebase.TrainingFirebaseDataSource;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -24,18 +27,23 @@ public final class ServiceLocator {
 
     private static volatile ServiceLocator instance;
 
-    private final MuzFitApiService apiService;
+    private final MuzFitApiService muzFitApiService;
     private final IDietRepository dietRepository;
     private final ITrainingRepository trainingRepository;
     private final IProfileRepository profileRepository;
     private final IDashboardRepository dashboardRepository;
 
     private ServiceLocator() {
-        apiService = createApiService();
-        dietRepository = new DietRepository(new DietApiDataSource(apiService));
-        trainingRepository = new TrainingRepository(new TrainingApiDataSource(apiService));
-        profileRepository = new ProfileRepository(new ProfileApiDataSource(apiService));
-        dashboardRepository = new DashboardRepository(new DashboardApiDataSource(apiService));
+        muzFitApiService = createMuzFitApiService();
+        ExerciseApiService exerciseApiService = createExerciseApiService();
+        dietRepository = new DietRepository(new DietApiDataSource(muzFitApiService));
+        trainingRepository = new TrainingRepository(
+                new TrainingApiDataSource(muzFitApiService),
+                new ExerciseCatalogApiDataSource(exerciseApiService),
+                new TrainingFirebaseDataSource()
+        );
+        profileRepository = new ProfileRepository(new ProfileApiDataSource(muzFitApiService));
+        dashboardRepository = new DashboardRepository(new DashboardApiDataSource(muzFitApiService));
     }
 
     public static ServiceLocator getInstance() {
@@ -65,16 +73,14 @@ public final class ServiceLocator {
         return dashboardRepository;
     }
 
-    private static MuzFitApiService createApiService() {
-        Interceptor authInterceptor = chain -> {
-            Request request = chain.request().newBuilder()
-                    .header("Authorization", "Bearer " + Constants.API_KEY)
-                    .build();
-            return chain.proceed(request);
-        };
-
+    private static MuzFitApiService createMuzFitApiService() {
         OkHttpClient client = new OkHttpClient.Builder()
-                .addInterceptor(authInterceptor)
+                .addInterceptor(chain -> {
+                    Request request = chain.request().newBuilder()
+                            .header("Authorization", "Bearer " + Constants.API_KEY)
+                            .build();
+                    return chain.proceed(request);
+                })
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -84,5 +90,14 @@ public final class ServiceLocator {
                 .build();
 
         return retrofit.create(MuzFitApiService.class);
+    }
+
+    private static ExerciseApiService createExerciseApiService() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.EXERCISE_DB_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        return retrofit.create(ExerciseApiService.class);
     }
 }
