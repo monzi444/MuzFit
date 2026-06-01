@@ -3,7 +3,9 @@ package com.example.muzfit.ui.dashboard.viewmodel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.muzfit.model.DashboardCalendarDay;
 import com.example.muzfit.model.Result;
+import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.repository.dashboard.IDashboardRepository;
 
@@ -17,8 +19,8 @@ public class DashboardViewModel extends ViewModel {
         this.repository = repository;
     }
 
-    public LiveData<Result<Float>> getCosumedCalories() {
-        return repository.getCosumedCalories();
+    public LiveData<Result<Float>> getConsumedCalories() {
+        return repository.getConsumedCalories();
     }
 
     public LiveData<Result<Float>> getConsumedCarbs() {
@@ -33,11 +35,19 @@ public class DashboardViewModel extends ViewModel {
         return repository.getConsumedFats();
     }
 
+    public LiveData<Result<User>> getMacroGoals(String username) {
+        return repository.getMacroGoals(username);
+    }
+
     public LiveData<Result<List<WeightEntry>>> getWeights(String username) {
         return repository.getWeights(username);
     }
 
     public LiveData<Result<int[]>> getDailyCaloriesBurned() {
         return repository.getDailyCaloriesBurned();
+    }
+
+    public LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month) {
+        return repository.getCalendarData(year, month);
     }
 }
