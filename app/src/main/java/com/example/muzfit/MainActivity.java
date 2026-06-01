@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.muzfit.ui.dashboard.fragment.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.example.muzfit.ui.training.fragment.WorkoutFragment;
 
 public class MainActivity extends AppCompatActivity {
 

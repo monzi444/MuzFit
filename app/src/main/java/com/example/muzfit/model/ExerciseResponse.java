@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.model;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
@@ -8,13 +8,13 @@ public class ExerciseResponse {
     private boolean success;
     
     @SerializedName("data")
-    private List<Exercise> data;
+    private List<ExerciseDB> data;
 
     public boolean isSuccess() {
         return success;
     }
 
-    public List<Exercise> getData() {
+    public List<ExerciseDB> getData() {
         return data;
     }
 }

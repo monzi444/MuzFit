@@ -1,10 +1,10 @@
-package com.example.muzfit;
+package com.example.muzfit.model;
 
 import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 import java.util.List;
 
-public class Exercise implements Serializable {
+public class ExerciseDB implements Serializable {
     @SerializedName("exerciseId")
     private String id;
     

@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".WorkoutSessionActivity" />
+        <activity android:name=".ui.training.WorkoutSessionActivity" />
 
     </application>
 
