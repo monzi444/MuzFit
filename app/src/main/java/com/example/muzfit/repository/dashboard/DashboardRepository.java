@@ -3,8 +3,10 @@ package com.example.muzfit.repository.dashboard;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.muzfit.model.DashboardCalendarDay;
 import com.example.muzfit.model.Meal;
 import com.example.muzfit.model.Result;
+import com.example.muzfit.model.User;
 import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.model.Workout;
@@ -14,6 +16,7 @@ import com.example.muzfit.source.dashboard.BaseDashboardDataSource;
 import com.example.muzfit.utils.DateParser;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +34,7 @@ public class DashboardRepository implements IDashboardRepository {
     }
 
     @Override
-    public LiveData<Result<Float>> getCosumedCalories() {
+    public LiveData<Result<Float>> getConsumedCalories() {
         return getConsumedMacro(Macro.CALORIES);
     }
 
@@ -48,6 +51,35 @@ public class DashboardRepository implements IDashboardRepository {
     @Override
     public LiveData<Result<Float>> getConsumedFats() {
         return getConsumedMacro(Macro.FATS);
+    }
+
+    @Override
+    public LiveData<Result<User>> getMacroGoals(String username) {
+        MutableLiveData<Result<User>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        dashboardDataSource.fetchUsers(new DataSourceCallback<List<User>>() {
+            @Override
+            public void onSuccess(List<User> data) {
+                if (data == null || data.isEmpty()) {
+                    liveData.postValue(new Result.Error<>("No users available"));
+                    return;
+                }
+
+                for (User user : data) {
+                    if (username.equals(user.getUsername())) {
+                        liveData.postValue(new Result.Success<>(user));
+                        return;
+                    }
+                }
+                liveData.postValue(new Result.Success<>(data.get(0)));
+            }
+
+            @Override
+            public void onError(String message) {
+                liveData.postValue(new Result.Error<>(message));
+            }
+        });
+        return liveData;
     }
 
     @Override
@@ -101,6 +133,13 @@ public class DashboardRepository implements IDashboardRepository {
                 liveData.postValue(new Result.Error<>(message));
             }
         });
+        return liveData;
+    }
+
+    @Override
+    public LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month) {
+        MutableLiveData<Result<List<DashboardCalendarDay>>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Success<>(buildCalendarData(year, month)));
         return liveData;
     }
 
@@ -214,6 +253,69 @@ public class DashboardRepository implements IDashboardRepository {
             total += workoutExercise.getCalories();
         }
         return total;
+    }
+
+    private List<DashboardCalendarDay> buildCalendarData(int year, int month) {
+        List<DashboardCalendarDay> data = new ArrayList<>();
+
+        Calendar firstDay = Calendar.getInstance();
+        firstDay.set(year, month, 1);
+        int firstDayOffset = (firstDay.get(Calendar.DAY_OF_WEEK) + 5) % 7;
+        int daysInMonth = firstDay.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+        Calendar previousMonth = (Calendar) firstDay.clone();
+        previousMonth.add(Calendar.MONTH, -1);
+        int daysInPreviousMonth = previousMonth.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+        for (int i = firstDayOffset - 1; i >= 0; i--) {
+            data.add(new DashboardCalendarDay(
+                    daysInPreviousMonth - i,
+                    DashboardCalendarDay.ActivityLevel.EMPTY,
+                    false
+            ));
+        }
+
+        for (int day = 1; day <= daysInMonth; day++) {
+            data.add(new DashboardCalendarDay(day, getMockActivityLevel(year, month, day), true));
+        }
+
+        int nextMonthDay = 1;
+        while (data.size() % 7 != 0) {
+            data.add(new DashboardCalendarDay(
+                    nextMonthDay,
+                    DashboardCalendarDay.ActivityLevel.EMPTY,
+                    false
+            ));
+            nextMonthDay++;
+        }
+
+        return data;
+    }
+
+    private DashboardCalendarDay.ActivityLevel getMockActivityLevel(int year, int month, int day) {
+        if (isAfterToday(year, month, day)) {
+            return DashboardCalendarDay.ActivityLevel.EMPTY;
+        }
+
+        int seed = Math.abs((year * 31 + month * 17 + day * 13) % 10);
+        if (seed <= 5) {
+            return DashboardCalendarDay.ActivityLevel.GOAL;
+        }
+        if (seed <= 7) {
+            return DashboardCalendarDay.ActivityLevel.PARTIAL;
+        }
+        return DashboardCalendarDay.ActivityLevel.NONE;
+    }
+
+    private boolean isAfterToday(int year, int month, int day) {
+        Calendar today = Calendar.getInstance();
+        if (year != today.get(Calendar.YEAR)) {
+            return year > today.get(Calendar.YEAR);
+        }
+        if (month != today.get(Calendar.MONTH)) {
+            return month > today.get(Calendar.MONTH);
+        }
+        return day > today.get(Calendar.DAY_OF_MONTH);
     }
 
     private <T> List<T> selectPlaceholderItems(List<T> data, int count) {

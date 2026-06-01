@@ -2,14 +2,16 @@ package com.example.muzfit.repository.dashboard;
 
 import androidx.lifecycle.LiveData;
 
+import com.example.muzfit.model.DashboardCalendarDay;
 import com.example.muzfit.model.Result;
+import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
 
 import java.util.List;
 
 public interface IDashboardRepository {
 
-    LiveData<Result<Float>> getCosumedCalories();
+    LiveData<Result<Float>> getConsumedCalories();
 
     LiveData<Result<Float>> getConsumedCarbs();
 
@@ -17,7 +19,11 @@ public interface IDashboardRepository {
 
     LiveData<Result<Float>> getConsumedFats();
 
+    LiveData<Result<User>> getMacroGoals(String username);
+
     LiveData<Result<List<WeightEntry>>> getWeights(String username);
 
     LiveData<Result<int[]>> getDailyCaloriesBurned();
+
+    LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month);
 }

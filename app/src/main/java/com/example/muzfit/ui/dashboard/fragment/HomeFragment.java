@@ -21,7 +21,9 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.muzfit.R;
+import com.example.muzfit.model.DashboardCalendarDay;
 import com.example.muzfit.model.Result;
+import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.ui.dashboard.viewmodel.DashboardViewModel;
 import com.example.muzfit.ui.dashboard.viewmodel.DashboardViewModelFactory;
@@ -42,11 +44,11 @@ public class HomeFragment extends Fragment {
             "July", "August", "September", "October", "November", "December"
     };
     private static final int YEAR_WINDOW_RADIUS = 50;
-    private static final int CALORIE_GOAL = 2000;
-    private static final int PROTEIN_GOAL = 150;
-    private static final int CARBS_GOAL = 250;
-    private static final int FAT_GOAL = 70;
-    private static final int CALORIES_BURNED_GOAL = 2500;
+    private static final float DEFAULT_CALORIE_GOAL = 2000f;
+    private static final float DEFAULT_PROTEIN_GOAL = 150f;
+    private static final float DEFAULT_CARBS_GOAL = 250f;
+    private static final float DEFAULT_FAT_GOAL = 70f;
+    private static final int DEFAULT_CALORIES_BURNED_GOAL = 2500;
 
     private DashboardViewModel viewModel;
     private GridLayout calendarGrid;
@@ -68,33 +70,17 @@ public class HomeFragment extends Fragment {
     private int selectedYear;
     private int firstSelectableYear;
     private int lastSelectableYear;
+    private float consumedCalories;
+    private float consumedProteins;
+    private float consumedCarbs;
+    private float consumedFats;
+    private float calorieGoal = DEFAULT_CALORIE_GOAL;
+    private float proteinGoal = DEFAULT_PROTEIN_GOAL;
+    private float carbsGoal = DEFAULT_CARBS_GOAL;
+    private float fatGoal = DEFAULT_FAT_GOAL;
+    private int caloriesBurnedGoal = DEFAULT_CALORIES_BURNED_GOAL;
+    private int todayCaloriesBurned;
     private boolean isUpdatingCalendarSelection;
-
-    /**
-     * Represents the status of daily activity for the calendar.
-     * NONE: Goal not reached (Red border)
-     * PARTIAL: Goal partially reached (Orange border)
-     * GOAL: Goal fully reached (Green border)
-     * EMPTY: No activity tracked
-     */
-    public enum ActivityLevel {
-        NONE,
-        PARTIAL,
-        GOAL,
-        EMPTY
-    }
-
-    private static class CalendarDay {
-        int dayNumber;
-        ActivityLevel level;
-        boolean isCurrentMonth;
-
-        CalendarDay(int dayNumber, ActivityLevel level, boolean isCurrentMonth) {
-            this.dayNumber = dayNumber;
-            this.level = level;
-            this.isCurrentMonth = isCurrentMonth;
-        }
-    }
 
     @Nullable
     @Override
@@ -217,66 +203,14 @@ public class HomeFragment extends Fragment {
         }
         yearSpinner.setSelection(selectedYear - firstSelectableYear);
         isUpdatingCalendarSelection = false;
-        List<CalendarDay> calendarData = getCalendarData(selectedYear, selectedMonth);
-        setupCalendar(calendarGrid, calendarData);
-        setupActivityGoalSummary(calendarData);
-    }
-
-    private List<CalendarDay> getCalendarData(int year, int month) {
-        List<CalendarDay> data = new ArrayList<>();
-
-        Calendar firstDay = Calendar.getInstance();
-        firstDay.set(year, month, 1);
-        int firstDayOffset = (firstDay.get(Calendar.DAY_OF_WEEK) + 5) % 7;
-        int daysInMonth = firstDay.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-        Calendar previousMonth = (Calendar) firstDay.clone();
-        previousMonth.add(Calendar.MONTH, -1);
-        int daysInPreviousMonth = previousMonth.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-        for (int i = firstDayOffset - 1; i >= 0; i--) {
-            data.add(new CalendarDay(daysInPreviousMonth - i, ActivityLevel.EMPTY, false));
-        }
-
-        for (int day = 1; day <= daysInMonth; day++) {
-            data.add(new CalendarDay(day, getMockActivityLevel(year, month, day), true));
-        }
-
-        int nextMonthDay = 1;
-        while (data.size() % 7 != 0) {
-            data.add(new CalendarDay(nextMonthDay, ActivityLevel.EMPTY, false));
-            nextMonthDay++;
-        }
-
-        return data;
-    }
-
-    private ActivityLevel getMockActivityLevel(int year, int month, int day) {
-        if (isAfterToday(year, month, day)) {
-            return ActivityLevel.EMPTY;
-        }
-
-        Calendar date = Calendar.getInstance();
-        date.set(year, month, day);
-        int seed = Math.abs((year * 31 + month * 17 + day * 13) % 10);
-        if (seed <= 5) {
-            return ActivityLevel.GOAL;
-        }
-        if (seed <= 7) {
-            return ActivityLevel.PARTIAL;
-        }
-        return ActivityLevel.NONE;
-    }
-
-    private boolean isAfterToday(int year, int month, int day) {
-        Calendar today = Calendar.getInstance();
-        if (year != today.get(Calendar.YEAR)) {
-            return year > today.get(Calendar.YEAR);
-        }
-        if (month != today.get(Calendar.MONTH)) {
-            return month > today.get(Calendar.MONTH);
-        }
-        return day > today.get(Calendar.DAY_OF_MONTH);
+        viewModel.getCalendarData(selectedYear, selectedMonth).observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success) {
+                List<DashboardCalendarDay> calendarData =
+                        ((Result.Success<List<DashboardCalendarDay>>) result).getData();
+                setupCalendar(calendarGrid, calendarData);
+                setupActivityGoalSummary(calendarData);
+            }
+        });
     }
 
     private void setupMacros(View view) {
@@ -286,7 +220,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.calorie_color),
                 ContextCompat.getColor(requireContext(), R.color.calorie_overflow)
             );
-            calorieBar.setProgress(0, CALORIE_GOAL);
+            calorieBar.setProgress(0, calorieGoal);
         }
 
         proteinBar = view.findViewById(R.id.protein_progress);
@@ -295,7 +229,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.protein_color),
                 ContextCompat.getColor(requireContext(), R.color.protein_overflow)
             );
-            proteinBar.setProgress(0, PROTEIN_GOAL);
+            proteinBar.setProgress(0, proteinGoal);
         }
 
         carbsBar = view.findViewById(R.id.carbs_progress);
@@ -304,7 +238,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.carbs_color),
                 ContextCompat.getColor(requireContext(), R.color.carbs_overflow)
             );
-            carbsBar.setProgress(0, CARBS_GOAL);
+            carbsBar.setProgress(0, carbsGoal);
         }
 
         fatBar = view.findViewById(R.id.fat_progress);
@@ -313,7 +247,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.fat_color),
                 ContextCompat.getColor(requireContext(), R.color.fat_overflow)
             );
-            fatBar.setProgress(0, FAT_GOAL);
+            fatBar.setProgress(0, fatGoal);
         }
     }
 
@@ -326,7 +260,7 @@ public class HomeFragment extends Fragment {
             caloriesCount.setText("0");
         }
         if (caloriesProgress != null) {
-            caloriesProgress.setMax(CALORIES_BURNED_GOAL);
+            caloriesProgress.setMax(caloriesBurnedGoal);
             caloriesProgress.setProgress(0);
         }
         if (histogram != null) {
@@ -339,31 +273,42 @@ public class HomeFragment extends Fragment {
     }
 
     private void observeDashboardData() {
-        viewModel.getCosumedCalories().observe(getViewLifecycleOwner(), result -> {
+        viewModel.getMacroGoals(Constants.DEFAULT_USERNAME).observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success) {
+                User user = ((Result.Success<User>) result).getData();
+                updateGoals(user);
+            }
+        });
+
+        viewModel.getConsumedCalories().observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success && calorieBar != null) {
                 Float calories = ((Result.Success<Float>) result).getData();
-                calorieBar.setProgress(calories != null ? calories : 0f, CALORIE_GOAL);
+                consumedCalories = calories != null ? calories : 0f;
+                calorieBar.setProgress(consumedCalories, calorieGoal);
             }
         });
 
         viewModel.getConsumedProteins().observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success && proteinBar != null) {
                 Float proteins = ((Result.Success<Float>) result).getData();
-                proteinBar.setProgress(proteins != null ? proteins : 0f, PROTEIN_GOAL);
+                consumedProteins = proteins != null ? proteins : 0f;
+                proteinBar.setProgress(consumedProteins, proteinGoal);
             }
         });
 
         viewModel.getConsumedCarbs().observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success && carbsBar != null) {
                 Float carbs = ((Result.Success<Float>) result).getData();
-                carbsBar.setProgress(carbs != null ? carbs : 0f, CARBS_GOAL);
+                consumedCarbs = carbs != null ? carbs : 0f;
+                carbsBar.setProgress(consumedCarbs, carbsGoal);
             }
         });
 
         viewModel.getConsumedFats().observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success && fatBar != null) {
                 Float fats = ((Result.Success<Float>) result).getData();
-                fatBar.setProgress(fats != null ? fats : 0f, FAT_GOAL);
+                consumedFats = fats != null ? fats : 0f;
+                fatBar.setProgress(consumedFats, fatGoal);
             }
         });
 
@@ -380,6 +325,37 @@ public class HomeFragment extends Fragment {
                 updateCaloriesBurned(weeklyData);
             }
         });
+    }
+
+    private void updateGoals(User user) {
+        if (user == null) {
+            return;
+        }
+
+        calorieGoal = user.getCalorieGoal() > 0 ? user.getCalorieGoal() : DEFAULT_CALORIE_GOAL;
+        proteinGoal = user.getProteinGoal() > 0 ? user.getProteinGoal() : DEFAULT_PROTEIN_GOAL;
+        carbsGoal = user.getCarbGoal() > 0 ? user.getCarbGoal() : DEFAULT_CARBS_GOAL;
+        fatGoal = user.getFatGoal() > 0 ? user.getFatGoal() : DEFAULT_FAT_GOAL;
+        caloriesBurnedGoal = user.getCalorieBurnGoal() > 0
+                ? user.getCalorieBurnGoal()
+                : DEFAULT_CALORIES_BURNED_GOAL;
+
+        if (calorieBar != null) {
+            calorieBar.setProgress(consumedCalories, calorieGoal);
+        }
+        if (proteinBar != null) {
+            proteinBar.setProgress(consumedProteins, proteinGoal);
+        }
+        if (carbsBar != null) {
+            carbsBar.setProgress(consumedCarbs, carbsGoal);
+        }
+        if (fatBar != null) {
+            fatBar.setProgress(consumedFats, fatGoal);
+        }
+        if (caloriesProgress != null) {
+            caloriesProgress.setMax(caloriesBurnedGoal);
+            caloriesProgress.setProgress(Math.min(todayCaloriesBurned, caloriesBurnedGoal));
+        }
     }
 
     private float[] toWeightData(List<WeightEntry> weights) {
@@ -402,19 +378,19 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        int todayCalories = weeklyData[weeklyData.length - 1];
+        todayCaloriesBurned = weeklyData[weeklyData.length - 1];
         if (caloriesCount != null) {
-            caloriesCount.setText(String.format(Locale.getDefault(), "%,d", todayCalories));
+            caloriesCount.setText(String.format(Locale.getDefault(), "%,d", todayCaloriesBurned));
         }
         if (caloriesProgress != null) {
-            caloriesProgress.setProgress(Math.min(todayCalories, CALORIES_BURNED_GOAL));
+            caloriesProgress.setProgress(Math.min(todayCaloriesBurned, caloriesBurnedGoal));
         }
         if (histogram != null) {
             histogram.setData(weeklyData);
         }
     }
 
-    private void setupActivityGoalSummary(List<CalendarDay> calendarData) {
+    private void setupActivityGoalSummary(List<DashboardCalendarDay> calendarData) {
         if (activityGoalSummaryBar == null || activityGoalPercent == null
                 || activityPartialPercent == null || activityMissedPercent == null) {
             return;
@@ -424,12 +400,12 @@ public class HomeFragment extends Fragment {
         int partialCount = 0;
         int missedCount = 0;
 
-        for (CalendarDay day : calendarData) {
-            if (!day.isCurrentMonth) {
+        for (DashboardCalendarDay day : calendarData) {
+            if (!day.isCurrentMonth()) {
                 continue;
             }
 
-            switch (day.level) {
+            switch (day.getLevel()) {
                 case GOAL:
                     goalCount++;
                     break;
@@ -480,14 +456,14 @@ public class HomeFragment extends Fragment {
     /**
      * Populates the grid with circular day indicators like a calendar.
      */
-    private void setupCalendar(GridLayout grid, List<CalendarDay> data) {
+    private void setupCalendar(GridLayout grid, List<DashboardCalendarDay> data) {
         grid.removeAllViews();
         
         float density = getResources().getDisplayMetrics().density;
         int size = (int) (40 * density);
         int margin = (int) (4 * density);
 
-        for (CalendarDay day : data) {
+        for (DashboardCalendarDay day : data) {
             TextView dayView = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
             params.width = size;
@@ -495,21 +471,21 @@ public class HomeFragment extends Fragment {
             params.setMargins(margin, margin, margin, margin);
             dayView.setLayoutParams(params);
             dayView.setGravity(Gravity.CENTER);
-            dayView.setText(String.valueOf(day.dayNumber));
+            dayView.setText(String.valueOf(day.getDayNumber()));
             dayView.setTextSize(14);
 
-            if (day.isCurrentMonth) {
+            if (day.isCurrentMonth()) {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
                 dayView.setOnClickListener(v -> Toast.makeText(
                         requireContext(),
-                        String.format(Locale.getDefault(), "%d %s %d", day.dayNumber, MONTH_NAMES[selectedMonth], selectedYear),
+                        String.format(Locale.getDefault(), "%d %s %d", day.getDayNumber(), MONTH_NAMES[selectedMonth], selectedYear),
                         Toast.LENGTH_SHORT
                 ).show());
             } else {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_grey));
             }
 
-            switch (day.level) {
+            switch (day.getLevel()) {
                 case GOAL:
                     dayView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_goal));
                     break;
