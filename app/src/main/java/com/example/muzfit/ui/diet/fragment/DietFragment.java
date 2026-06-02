@@ -30,6 +30,11 @@ import com.example.muzfit.R;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
+import com.example.muzfit.model.User;
+import com.example.muzfit.repository.profile.IProfileRepository;
+import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
+import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
+import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.ServiceLocator;
 
 import java.util.Calendar;
@@ -39,11 +44,14 @@ import java.util.Locale;
 public class DietFragment extends Fragment {
 
     private DietViewModel viewModel;
-    private TextView tvMonthYear;
+    private ProfileViewModel profileViewModel;
+    private TextView tvMonthYear, tvCaloriesRemaining;
     private GridLayout calendarGrid;
     private TextView tvTotalCalories, tvTotalCarbs, tvTotalProtein, tvTotalFat;
     private LinearLayout containerColazione, containerPranzo, containerCena;
     private Calendar currentWeekStart;
+    private int calorieGoal = 0;
+    private float caloriesAssumed = 0;
 
     @Nullable
     @Override
@@ -66,9 +74,13 @@ public class DietFragment extends Fragment {
         tvTotalCarbs = view.findViewById(R.id.tvTotalCarbs);
         tvTotalProtein = view.findViewById(R.id.tvTotalProtein);
         tvTotalFat = view.findViewById(R.id.tvTotalFat);
+        tvCaloriesRemaining = view.findViewById(R.id.tvCaloriesRemaining);
 
         IDietRepository repository = ServiceLocator.getInstance().getDietRepository();
         viewModel = new ViewModelProvider(this, new DietViewModelFactory(repository)).get(DietViewModel.class);
+
+        IProfileRepository profileRepository = ServiceLocator.getInstance().getProfileRepository();
+        profileViewModel = new ViewModelProvider(this, new ProfileViewModelFactory(profileRepository)).get(ProfileViewModel.class);
 
         // Initialize to Monday of the current week
         currentWeekStart = Calendar.getInstance();
@@ -77,9 +89,16 @@ public class DietFragment extends Fragment {
         int offsetToMonday = (dayOfWeek == Calendar.SUNDAY) ? -6 : (Calendar.MONDAY - dayOfWeek);
         currentWeekStart.add(Calendar.DAY_OF_YEAR, offsetToMonday);
 
-        tvGreeting.setText(getString(R.string.greeting_prefix, "Utente"));
-
         setupCalendar();
+
+        profileViewModel.getDefaultUser().observe(getViewLifecycleOwner(), result -> {
+            if (result.isSuccess()) {
+                User user = ((com.example.muzfit.model.Result.Success<User>) result).getData();
+                calorieGoal = user.getCalorieGoal();
+                tvGreeting.setText(getString(R.string.greeting_prefix, user.getName()));
+                updateRemainingCalories();
+            }
+        });
 
         btnPrevWeek.setOnClickListener(v -> {
             currentWeekStart.add(Calendar.WEEK_OF_YEAR, -1);
@@ -123,9 +142,24 @@ public class DietFragment extends Fragment {
         }
 
         tvTotalCalories.setText(String.valueOf((int)totalKcal));
+        caloriesAssumed = totalKcal;
+        updateRemainingCalories();
         tvTotalCarbs.setText(String.format(Locale.getDefault(), "%.0fg", totalCarbs));
         tvTotalProtein.setText(String.format(Locale.getDefault(), "%.0fg", totalProtein));
         tvTotalFat.setText(String.format(Locale.getDefault(), "%.0fg", totalFat));
+    }
+
+    private void updateRemainingCalories() {
+        if (tvCaloriesRemaining != null) {
+            int remaining = calorieGoal - (int) caloriesAssumed;
+            tvCaloriesRemaining.setText(String.valueOf(remaining));
+            
+            if (remaining < 0) {
+                tvCaloriesRemaining.setTextColor(ContextCompat.getColor(requireContext(), R.color.fat_color));
+            } else {
+                tvCaloriesRemaining.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
+            }
+        }
     }
 
     private void populateFoodContainersFromMeals(List<Meal> mealList) {
