@@ -262,10 +262,11 @@
             android:layout_marginBottom="16dp" />
 
         <Button
-            android:id="@+id/addFoodButton"
+            android:id="@+id/chooseMealButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/add_food_button"
+            android:text="Scegli pasto"
             android:layout_marginTop="16dp" />
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -26,17 +26,17 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.muzfit.model.Food;
 import com.example.muzfit.model.Meal;
+import com.example.muzfit.model.User;
 import com.example.muzfit.R;
 import com.example.muzfit.repository.diet.IDietRepository;
+import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
-import com.example.muzfit.model.User;
-import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
-import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.ServiceLocator;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -66,7 +66,7 @@ public class DietFragment extends Fragment {
         containerPranzo = view.findViewById(R.id.containerPranzo);
         containerCena = view.findViewById(R.id.containerCena);
         
-        Button addFoodButton = view.findViewById(R.id.addFoodButton);
+        Button chooseMealButton = view.findViewById(R.id.chooseMealButton);
         ImageView btnPrevWeek = view.findViewById(R.id.btnPrevWeek);
         ImageView btnNextWeek = view.findViewById(R.id.btnNextWeek);
 
@@ -77,12 +77,11 @@ public class DietFragment extends Fragment {
         tvCaloriesRemaining = view.findViewById(R.id.tvCaloriesRemaining);
 
         IDietRepository repository = ServiceLocator.getInstance().getDietRepository();
-        viewModel = new ViewModelProvider(this, new DietViewModelFactory(repository)).get(DietViewModel.class);
+        viewModel = new ViewModelProvider(requireActivity(), new DietViewModelFactory(repository)).get(DietViewModel.class);
 
         IProfileRepository profileRepository = ServiceLocator.getInstance().getProfileRepository();
         profileViewModel = new ViewModelProvider(this, new ProfileViewModelFactory(profileRepository)).get(ProfileViewModel.class);
 
-        // Initialize to Monday of the current week
         currentWeekStart = Calendar.getInstance();
         currentWeekStart.setFirstDayOfWeek(Calendar.MONDAY);
         int dayOfWeek = currentWeekStart.get(Calendar.DAY_OF_WEEK);
@@ -115,23 +114,16 @@ public class DietFragment extends Fragment {
                 List<Meal> mealList = ((com.example.muzfit.model.Result.Success<List<Meal>>) result).getData();
                 updateTotalsFromMeals(mealList);
                 populateFoodContainersFromMeals(mealList);
-            } else if (result.isError()) {
-                String error = ((com.example.muzfit.model.Result.Error<List<Meal>>) result).getMessage();
-                Toast.makeText(getContext(), "Errore: " + error, Toast.LENGTH_SHORT).show();
             }
         });
 
-        addFoodButton.setOnClickListener(v -> showAddFoodDialog());
+        chooseMealButton.setOnClickListener(v -> showChooseMealDialog());
 
         return view;
     }
 
     private void updateTotalsFromMeals(List<Meal> mealList) {
-        float totalKcal = 0;
-        float totalCarbs = 0;
-        float totalProtein = 0;
-        float totalFat = 0;
-
+        float totalKcal = 0, totalCarbs = 0, totalProtein = 0, totalFat = 0;
         if (mealList != null) {
             for (Meal meal : mealList) {
                 totalKcal += meal.getCalories();
@@ -140,7 +132,6 @@ public class DietFragment extends Fragment {
                 totalFat += meal.getFat();
             }
         }
-
         tvTotalCalories.setText(String.valueOf((int)totalKcal));
         caloriesAssumed = totalKcal;
         updateRemainingCalories();
@@ -153,12 +144,7 @@ public class DietFragment extends Fragment {
         if (tvCaloriesRemaining != null) {
             int remaining = calorieGoal - (int) caloriesAssumed;
             tvCaloriesRemaining.setText(String.valueOf(remaining));
-            
-            if (remaining < 0) {
-                tvCaloriesRemaining.setTextColor(ContextCompat.getColor(requireContext(), R.color.fat_color));
-            } else {
-                tvCaloriesRemaining.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
-            }
+            tvCaloriesRemaining.setTextColor(ContextCompat.getColor(requireContext(), remaining < 0 ? R.color.fat_color : R.color.muz_primary_lime));
         }
     }
 
@@ -166,132 +152,133 @@ public class DietFragment extends Fragment {
         containerColazione.removeAllViews();
         containerPranzo.removeAllViews();
         containerCena.removeAllViews();
-
-        if (mealList == null) return;
-
+        
+        int countColazione = 0, countPranzo = 0, countCena = 0;
         LayoutInflater inflater = LayoutInflater.from(requireContext());
 
-        for (Meal meal : mealList) {
-            View itemView = inflater.inflate(R.layout.list_item_food, null);
-            TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
-            ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
+        if (mealList != null) {
+            for (Meal meal : mealList) {
+                View itemView = inflater.inflate(R.layout.list_item_food, null);
+                TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
+                ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
+                nameTv.setText(String.format(Locale.getDefault(), "%s (%.0f kcal)", meal.getFoodName(), meal.getCalories()));
+                deleteBtn.setOnClickListener(v -> viewModel.deleteMeal(meal.getId()));
 
-            String displayText = String.format(Locale.getDefault(), "%s (%.0f kcal)", 
-                    meal.getFoodName(), meal.getCalories());
-            nameTv.setText(displayText);
-            
-            deleteBtn.setOnClickListener(v -> {
-                viewModel.deleteMeal(meal.getId());
-                Toast.makeText(getContext(), "Eliminato: " + meal.getFoodName(), Toast.LENGTH_SHORT).show();
-            });
-
-            if (meal.getCategory() == Food.Category.COLAZIONE) {
-                containerColazione.addView(itemView);
-            } else if (meal.getCategory() == Food.Category.PRANZO) {
-                containerPranzo.addView(itemView);
-            } else if (meal.getCategory() == Food.Category.CENA) {
-                containerCena.addView(itemView);
+                if (meal.getCategory() == Food.Category.COLAZIONE) {
+                    containerColazione.addView(itemView);
+                    countColazione++;
+                } else if (meal.getCategory() == Food.Category.PRANZO) {
+                    containerPranzo.addView(itemView);
+                    countPranzo++;
+                } else if (meal.getCategory() == Food.Category.CENA) {
+                    containerCena.addView(itemView);
+                    countCena++;
+                }
             }
         }
+
+        if (countColazione == 0) addEmptyStateText(containerColazione);
+        if (countPranzo == 0) addEmptyStateText(containerPranzo);
+        if (countCena == 0) addEmptyStateText(containerCena);
+    }
+
+    private void addEmptyStateText(LinearLayout container) {
+        TextView emptyTv = new TextView(requireContext());
+        emptyTv.setText("Oggi non hai ancora effettuato pasti");
+        emptyTv.setPadding(16, 8, 16, 24);
+        emptyTv.setAlpha(0.6f);
+        emptyTv.setTypeface(null, Typeface.ITALIC);
+        container.addView(emptyTv);
     }
 
     private void setupCalendar() {
         Calendar today = Calendar.getInstance();
-        int todayDayOfYear = today.get(Calendar.DAY_OF_YEAR);
-        int todayYear = today.get(Calendar.YEAR);
-
-        String monthName = currentWeekStart.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
-        int year = currentWeekStart.get(Calendar.YEAR);
-        tvMonthYear.setText(String.format(Locale.getDefault(), "%s %d", monthName, year));
-
+        int todayDayOfYear = today.get(Calendar.DAY_OF_YEAR), todayYear = today.get(Calendar.YEAR);
+        tvMonthYear.setText(String.format(Locale.getDefault(), "%s %d", currentWeekStart.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault()), currentWeekStart.get(Calendar.YEAR)));
         calendarGrid.removeAllViews();
-
         float density = getResources().getDisplayMetrics().density;
-        int size = (int) (40 * density);
-        int margin = (int) (2 * density);
-
+        int size = (int) (40 * density), margin = (int) (2 * density);
         Calendar tempCalendar = (Calendar) currentWeekStart.clone();
-
         for (int i = 0; i < 7; i++) {
-            final int dayNum = tempCalendar.get(Calendar.DAY_OF_MONTH);
-            final int monthNum = tempCalendar.get(Calendar.MONTH);
-            final int yearNum = tempCalendar.get(Calendar.YEAR);
-            final int dayOfYear = tempCalendar.get(Calendar.DAY_OF_YEAR);
-
+            final int dayNum = tempCalendar.get(Calendar.DAY_OF_MONTH), monthNum = tempCalendar.get(Calendar.MONTH), yearNum = tempCalendar.get(Calendar.YEAR), dayOfYear = tempCalendar.get(Calendar.DAY_OF_YEAR);
             TextView dayView = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = 0;
-            params.height = size;
-            params.columnSpec = GridLayout.spec(i, 1f);
-            params.setMargins(margin, margin, margin, margin);
-            dayView.setLayoutParams(params);
-            dayView.setGravity(Gravity.CENTER);
-            dayView.setText(String.valueOf(dayNum));
-            dayView.setTextSize(14);
-
+            params.width = 0; params.height = size; params.columnSpec = GridLayout.spec(i, 1f); params.setMargins(margin, margin, margin, margin);
+            dayView.setLayoutParams(params); dayView.setGravity(Gravity.CENTER); dayView.setText(String.valueOf(dayNum)); dayView.setTextSize(14);
             if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
                 dayView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_goal));
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
-                dayView.setTypeface(null, Typeface.BOLD);
+                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white)); dayView.setTypeface(null, Typeface.BOLD);
             } else {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
-                if (tempCalendar.after(today)) {
-                    dayView.setAlpha(0.5f);
-                }
+                if (tempCalendar.after(today)) dayView.setAlpha(0.5f);
             }
-
-            dayView.setOnClickListener(v -> {
-                String selectedDate = String.format(Locale.getDefault(), "%d/%d/%d", dayNum, monthNum + 1, yearNum);
-                Toast.makeText(getContext(), "Data: " + selectedDate, Toast.LENGTH_SHORT).show();
-            });
-
-            calendarGrid.addView(dayView);
-            tempCalendar.add(Calendar.DAY_OF_YEAR, 1);
+            dayView.setOnClickListener(v -> Toast.makeText(getContext(), "Data: " + dayNum + "/" + (monthNum + 1) + "/" + yearNum, Toast.LENGTH_SHORT).show());
+            calendarGrid.addView(dayView); tempCalendar.add(Calendar.DAY_OF_YEAR, 1);
         }
     }
 
-    private void showAddFoodDialog() {
+    private void showChooseMealDialog() {
+        List<Meal> availableMeals = new ArrayList<>();
+        availableMeals.add(new Meal(0, "Mela", 95, 25, 1, 0, Food.Category.PRANZO));
+        availableMeals.add(new Meal(0, "Pasta al pomodoro", 350, 70, 10, 5, Food.Category.PRANZO));
+        availableMeals.add(new Meal(0, "Petto di Pollo", 165, 0, 31, 4, Food.Category.PRANZO));
+        
+        List<Meal> customList = viewModel.getCustomMeals().getValue();
+        if (customList != null) {
+            availableMeals.addAll(customList);
+        }
+
+        String[] mealNames = new String[availableMeals.size()];
+        for (int i = 0; i < availableMeals.size(); i++) mealNames[i] = String.format(Locale.getDefault(), "%s (%.0f kcal)", availableMeals.get(i).getFoodName(), availableMeals.get(i).getCalories());
+        
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_add_food, null);
-        builder.setView(dialogView);
+        builder.setTitle("Scegli un pasto rapido").setItems(mealNames, (dialog, which) -> showCategorySelectionDialog(availableMeals.get(which)))
+               .setPositiveButton("Add food", (dialog, id) -> showAddFoodDialog())
+               .setNegativeButton("Annulla", (dialog, id) -> dialog.cancel()).create().show();
+    }
 
-        EditText editTextFoodName = dialogView.findViewById(R.id.editTextFoodName);
-        EditText editTextCalories = dialogView.findViewById(R.id.editTextCalories);
-        EditText editTextCarbs = dialogView.findViewById(R.id.editTextCarbs);
-        EditText editTextProtein = dialogView.findViewById(R.id.editTextProtein);
-        EditText editTextFat = dialogView.findViewById(R.id.editTextFat);
-        Spinner spinnerCategory = dialogView.findViewById(R.id.spinnerCategory);
+    private void showCategorySelectionDialog(Meal template) {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food, null);
+        dialogView.findViewById(R.id.editTextFoodName).setVisibility(View.GONE);
+        dialogView.findViewById(R.id.editTextCalories).setVisibility(View.GONE);
+        dialogView.findViewById(R.id.editTextCarbs).setVisibility(View.GONE);
+        dialogView.findViewById(R.id.editTextProtein).setVisibility(View.GONE);
+        dialogView.findViewById(R.id.editTextFat).setVisibility(View.GONE);
+        
+        Spinner spinner = dialogView.findViewById(R.id.spinnerCategory);
+        spinner.setVisibility(View.VISIBLE);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new String[]{"Colazione", "Pranzo", "Cena"});
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
 
-        ArrayAdapter<Food.Category> categoryAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_item, Food.Category.values());
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategory.setAdapter(categoryAdapter);
+        new AlertDialog.Builder(requireContext()).setTitle("Seleziona categoria")
+            .setView(dialogView)
+            .setPositiveButton("Aggiungi", (dialog, id) -> {
+                Food.Category category = spinner.getSelectedItemPosition() == 0 ? Food.Category.COLAZIONE : (spinner.getSelectedItemPosition() == 1 ? Food.Category.PRANZO : Food.Category.CENA);
+                viewModel.addMeal(new Meal(0, template.getFoodName(), template.getCalories(), template.getCarbs(), template.getProtein(), template.getFat(), category));
+            })
+            .setNegativeButton("Indietro", (dialog, id) -> showChooseMealDialog()).create().show();
+    }
 
-        builder.setTitle("Aggiungi Cibo")
-                .setPositiveButton("Aggiungi", (dialog, id) -> {
-                    String name = editTextFoodName.getText().toString();
-                    String caloriesStr = editTextCalories.getText().toString();
-                    String carbsStr = editTextCarbs.getText().toString();
-                    String proteinStr = editTextProtein.getText().toString();
-                    String fatStr = editTextFat.getText().toString();
-                    Food.Category selectedCategory = (Food.Category) spinnerCategory.getSelectedItem();
-
-                    if (!name.isEmpty() && !caloriesStr.isEmpty()) {
-                        int calories = Integer.parseInt(caloriesStr);
-                        int carbs = carbsStr.isEmpty() ? 0 : Integer.parseInt(carbsStr);
-                        int protein = proteinStr.isEmpty() ? 0 : Integer.parseInt(proteinStr);
-                        int fat = fatStr.isEmpty() ? 0 : Integer.parseInt(fatStr);
-
-                        Meal newMeal = new Meal(0, name, (float)calories, (float)carbs, (float)protein, (float)fat, selectedCategory);
-                        viewModel.addMeal(newMeal);
-                        Toast.makeText(getContext(), "Cibo aggiunto!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getContext(), "Inserisci nome e calorie", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Annulla", (dialog, id) -> dialog.cancel());
-
-        builder.create().show();
+    private void showAddFoodDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food, null);
+        dialogView.findViewById(R.id.spinnerCategory).setVisibility(View.GONE);
+        if (dialogView instanceof LinearLayout) {
+            LinearLayout layout = (LinearLayout) dialogView;
+            for (int i = 0; i < layout.getChildCount(); i++) {
+                View child = layout.getChildAt(i);
+                if (child instanceof TextView && ((TextView) child).getText().toString().equals("Categoria")) child.setVisibility(View.GONE);
+            }
+        }
+        EditText nameEt = dialogView.findViewById(R.id.editTextFoodName), calEt = dialogView.findViewById(R.id.editTextCalories), carbEt = dialogView.findViewById(R.id.editTextCarbs), protEt = dialogView.findViewById(R.id.editTextProtein), fatEt = dialogView.findViewById(R.id.editTextFat);
+        new AlertDialog.Builder(requireContext()).setTitle("Crea nuovo cibo").setView(dialogView)
+            .setPositiveButton("Salva", (dialog, id) -> {
+                String name = nameEt.getText().toString(), calS = calEt.getText().toString();
+                if (!name.isEmpty() && !calS.isEmpty()) {
+                    viewModel.addCustomMeal(new Meal(0, name, Float.parseFloat(calS), carbEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(carbEt.getText().toString()), protEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(protEt.getText().toString()), fatEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(fatEt.getText().toString()), Food.Category.PRANZO));
+                    showChooseMealDialog();
+                }
+            })
+            .setNegativeButton("Annulla", (dialog, id) -> showChooseMealDialog()).create().show();
     }
 }

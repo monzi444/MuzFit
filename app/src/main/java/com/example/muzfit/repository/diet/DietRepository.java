@@ -19,11 +19,7 @@ public class DietRepository implements IDietRepository {
 
     private final BaseDietDataSource dietDataSource;
     private final MutableLiveData<Result<List<Meal>>> mealsLiveData = new MutableLiveData<>();
-    private List<Meal> cachedMeals = new ArrayList<>(Arrays.asList(
-            new Meal(1, "Mela", 95, 25, 1, 0, Food.Category.COLAZIONE),
-            new Meal(2, "Pasta al pomodoro", 350, 70, 10, 5, Food.Category.PRANZO),
-            new Meal(3, "Petto di Pollo", 165, 0, 31, 4, Food.Category.CENA)
-    ));
+    private List<Meal> cachedMeals = new ArrayList<>();
 
     public DietRepository(BaseDietDataSource dietDataSource) {
         this.dietDataSource = dietDataSource;
