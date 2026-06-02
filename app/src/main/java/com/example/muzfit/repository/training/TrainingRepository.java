@@ -260,7 +260,7 @@ public class TrainingRepository implements ITrainingRepository {
                 for (ExerciseSet exerciseSet : data) {
                     if (exerciseSet.getWorkoutId() == workoutId
                             && username.equals(exerciseSet.getUsername())
-                            && exerciseSet.getExerciseId() == exerciseId) {
+                            && String.valueOf(exerciseId).equals(exerciseSet.getExerciseId())) {
                         filtered.add(exerciseSet);
                     }
                 }

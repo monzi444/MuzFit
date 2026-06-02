@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.muzfit.ui.dashboard.fragment.HomeFragment;
+import com.example.muzfit.utils.ServiceLocator;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.muzfit.ui.training.fragment.WorkoutFragment;
 import com.example.muzfit.ui.diet.fragment.DietFragment;
@@ -21,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        ServiceLocator.getInstance(this);
         
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

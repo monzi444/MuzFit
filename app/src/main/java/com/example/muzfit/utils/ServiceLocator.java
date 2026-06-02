@@ -1,5 +1,8 @@
 package com.example.muzfit.utils;
 
+import android.content.Context;
+
+import com.example.muzfit.database.MuzFitDatabase;
 import com.example.muzfit.repository.dashboard.DashboardRepository;
 import com.example.muzfit.repository.dashboard.IDashboardRepository;
 import com.example.muzfit.repository.diet.DietRepository;
@@ -28,6 +31,7 @@ public final class ServiceLocator {
     private static volatile ServiceLocator instance;
 
     private final MuzFitApiService muzFitApiService;
+    private MuzFitDatabase database;
     private final IDietRepository dietRepository;
     private final ITrainingRepository trainingRepository;
     private final IProfileRepository profileRepository;
@@ -55,6 +59,26 @@ public final class ServiceLocator {
             }
         }
         return instance;
+    }
+
+    public static ServiceLocator getInstance(Context context) {
+        ServiceLocator serviceLocator = getInstance();
+        serviceLocator.initDatabase(context);
+        return serviceLocator;
+    }
+
+    public void initDatabase(Context context) {
+        if (database == null && context != null) {
+            synchronized (this) {
+                if (database == null) {
+                    database = MuzFitDatabase.getInstance(context);
+                }
+            }
+        }
+    }
+
+    public MuzFitDatabase getDatabase() {
+        return database;
     }
 
     public IDietRepository getDietRepository() {
