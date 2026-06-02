@@ -5,9 +5,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -34,7 +35,7 @@ public class QuickFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_quick, container, false);
 
         IDietRepository repository = ServiceLocator.getInstance().getDietRepository();
-        dietViewModel = new ViewModelProvider(this, new DietViewModelFactory(repository)).get(DietViewModel.class);
+        dietViewModel = new ViewModelProvider(requireActivity(), new DietViewModelFactory(repository)).get(DietViewModel.class);
 
         BottomNavigationView bottomNav = requireActivity().findViewById(R.id.bottom_navigation);
 
@@ -76,29 +77,36 @@ public class QuickFragment extends Fragment {
         EditText editTextFat = dialogView.findViewById(R.id.editTextFat);
         Spinner spinnerCategory = dialogView.findViewById(R.id.spinnerCategory);
 
-        ArrayAdapter<Food.Category> categoryAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_item, Food.Category.values());
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategory.setAdapter(categoryAdapter);
+        spinnerCategory.setVisibility(View.GONE);
+        if (dialogView instanceof LinearLayout) {
+            LinearLayout layout = (LinearLayout) dialogView;
+            for (int i = 0; i < layout.getChildCount(); i++) {
+                View child = layout.getChildAt(i);
+                if (child instanceof TextView && ((TextView) child).getText().toString().equals("Categoria")) {
+                    child.setVisibility(View.GONE);
+                }
+            }
+        }
 
-        builder.setTitle("Aggiungi Cibo")
-                .setPositiveButton("Aggiungi", (dialog, id) -> {
+        builder.setTitle("Crea nuovo cibo")
+                .setPositiveButton("Salva", (dialog, id) -> {
                     String name = editTextFoodName.getText().toString();
                     String caloriesStr = editTextCalories.getText().toString();
                     String carbsStr = editTextCarbs.getText().toString();
                     String proteinStr = editTextProtein.getText().toString();
                     String fatStr = editTextFat.getText().toString();
-                    Food.Category selectedCategory = (Food.Category) spinnerCategory.getSelectedItem();
 
                     if (!name.isEmpty() && !caloriesStr.isEmpty()) {
-                        int calories = Integer.parseInt(caloriesStr);
-                        int carbs = carbsStr.isEmpty() ? 0 : Integer.parseInt(carbsStr);
-                        int protein = proteinStr.isEmpty() ? 0 : Integer.parseInt(proteinStr);
-                        int fat = fatStr.isEmpty() ? 0 : Integer.parseInt(fatStr);
+                        float calories = Float.parseFloat(caloriesStr);
+                        float carbs = carbsStr.isEmpty() ? 0 : Float.parseFloat(carbsStr);
+                        float protein = proteinStr.isEmpty() ? 0 : Float.parseFloat(proteinStr);
+                        float fat = fatStr.isEmpty() ? 0 : Float.parseFloat(fatStr);
 
-                        Meal newMeal = new Meal(0, name, (float)calories, (float)carbs, (float)protein, (float)fat, selectedCategory);
-                        dietViewModel.addMeal(newMeal);
-                        Toast.makeText(getContext(), "Cibo aggiunto alla dieta!", Toast.LENGTH_SHORT).show();
+                        // Added to the custom list that will be visible in "Scegli pasto"
+                        Meal customMeal = new Meal(0, name, calories, carbs, protein, fat, Food.Category.PRANZO);
+                        dietViewModel.addCustomMeal(customMeal);
+                        
+                        Toast.makeText(getContext(), "Cibo creato! Ora lo trovi in 'Scegli pasto' nella pagina Dieta", Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(getContext(), "Per favore inserisci nome e calorie", Toast.LENGTH_SHORT).show();
                     }

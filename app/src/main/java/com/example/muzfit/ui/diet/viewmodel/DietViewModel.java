@@ -12,17 +12,15 @@ import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.utils.Constants;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DietViewModel extends ViewModel {
 
     private final IDietRepository repository;
-    private final MutableLiveData<List<Food>> foodList = new MutableLiveData<>(new ArrayList<>(Arrays.asList(
-            new Food("Mela", 95, 25, 1, 0, Food.Category.COLAZIONE),
-            new Food("Pasta al pomodoro", 350, 70, 10, 5, Food.Category.PRANZO),
-            new Food("Petto di Pollo", 165, 0, 31, 4, Food.Category.CENA)
-    )));
+    private final MutableLiveData<List<Food>> foodList = new MutableLiveData<>(new ArrayList<>());
+    
+    // Shared list of custom meals across fragments
+    private static final MutableLiveData<List<Meal>> sharedCustomMeals = new MutableLiveData<>(new ArrayList<>());
 
     public DietViewModel(IDietRepository repository) {
         this.repository = repository;
@@ -39,6 +37,20 @@ public class DietViewModel extends ViewModel {
             updatedList.add(food);
             foodList.setValue(updatedList);
         }
+    }
+
+    public LiveData<List<Meal>> getCustomMeals() {
+        return sharedCustomMeals;
+    }
+
+    public void addCustomMeal(Meal meal) {
+        List<Meal> currentList = sharedCustomMeals.getValue();
+        List<Meal> updatedList = new ArrayList<>();
+        if (currentList != null) {
+            updatedList.addAll(currentList);
+        }
+        updatedList.add(meal);
+        sharedCustomMeals.setValue(updatedList);
     }
 
     public LiveData<Result<List<Meal>>> getMeals() {
