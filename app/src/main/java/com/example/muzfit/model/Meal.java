@@ -8,17 +8,23 @@ public class Meal {
     private float carbs;
     private float protein;
     private float fat;
+    private Food.Category category = Food.Category.PRANZO;
 
     public Meal() {
     }
 
     public Meal(int id, String foodName, float calories, float carbs, float protein, float fat) {
+        this(id, foodName, calories, carbs, protein, fat, Food.Category.PRANZO);
+    }
+
+    public Meal(int id, String foodName, float calories, float carbs, float protein, float fat, Food.Category category) {
         this.id = id;
         this.foodName = foodName;
         this.calories = calories;
         this.carbs = carbs;
         this.protein = protein;
         this.fat = fat;
+        this.category = category;
     }
 
     public int getId() {
@@ -67,5 +73,13 @@ public class Meal {
 
     public void setFat(float fat) {
         this.fat = fat;
+    }
+
+    public Food.Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Food.Category category) {
+        this.category = category;
     }
 }

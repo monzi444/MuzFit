@@ -25,13 +25,13 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.muzfit.model.Food;
+import com.example.muzfit.model.Meal;
 import com.example.muzfit.R;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
 import com.example.muzfit.utils.ServiceLocator;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -91,17 +91,14 @@ public class DietFragment extends Fragment {
             setupCalendar();
         });
 
-        // Adapting legacy Food list logic for now. 
-        // Note: Real DietViewModel uses Result<List<Meal>>
-        // This is a bridge until the UI is fully converted to Meal/Result pattern
         viewModel.getMeals().observe(getViewLifecycleOwner(), result -> {
             if (result.isSuccess()) {
-                // Mapping Meal (from repository) to Food (used by existing UI logic)
-                List<Food> foods = new ArrayList<>();
-                // result.getData() returns List<Meal>
-                // For simplicity during migration, we'll keep the UI logic but wrap it
-                updateTotalsFromMeals(((com.example.muzfit.model.Result.Success<List<com.example.muzfit.model.Meal>>) result).getData());
-                populateFoodContainersFromMeals(((com.example.muzfit.model.Result.Success<List<com.example.muzfit.model.Meal>>) result).getData());
+                List<Meal> mealList = ((com.example.muzfit.model.Result.Success<List<Meal>>) result).getData();
+                updateTotalsFromMeals(mealList);
+                populateFoodContainersFromMeals(mealList);
+            } else if (result.isError()) {
+                String error = ((com.example.muzfit.model.Result.Error<List<Meal>>) result).getMessage();
+                Toast.makeText(getContext(), "Errore: " + error, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -110,14 +107,14 @@ public class DietFragment extends Fragment {
         return view;
     }
 
-    private void updateTotalsFromMeals(List<com.example.muzfit.model.Meal> mealList) {
+    private void updateTotalsFromMeals(List<Meal> mealList) {
         float totalKcal = 0;
         float totalCarbs = 0;
         float totalProtein = 0;
         float totalFat = 0;
 
         if (mealList != null) {
-            for (com.example.muzfit.model.Meal meal : mealList) {
+            for (Meal meal : mealList) {
                 totalKcal += meal.getCalories();
                 totalCarbs += meal.getCarbs();
                 totalProtein += meal.getProtein();
@@ -131,7 +128,7 @@ public class DietFragment extends Fragment {
         tvTotalFat.setText(String.format(Locale.getDefault(), "%.0fg", totalFat));
     }
 
-    private void populateFoodContainersFromMeals(List<com.example.muzfit.model.Meal> mealList) {
+    private void populateFoodContainersFromMeals(List<Meal> mealList) {
         containerColazione.removeAllViews();
         containerPranzo.removeAllViews();
         containerCena.removeAllViews();
@@ -140,19 +137,27 @@ public class DietFragment extends Fragment {
 
         LayoutInflater inflater = LayoutInflater.from(requireContext());
 
-        for (com.example.muzfit.model.Meal meal : mealList) {
+        for (Meal meal : mealList) {
             View itemView = inflater.inflate(R.layout.list_item_food, null);
             TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
             ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
 
-            nameTv.setText(meal.getFoodName());
+            String displayText = String.format(Locale.getDefault(), "%s (%.0f kcal)", 
+                    meal.getFoodName(), meal.getCalories());
+            nameTv.setText(displayText);
             
             deleteBtn.setOnClickListener(v -> {
-                Toast.makeText(getContext(), "Elimina: " + meal.getFoodName(), Toast.LENGTH_SHORT).show();
+                viewModel.deleteMeal(meal.getId());
+                Toast.makeText(getContext(), "Eliminato: " + meal.getFoodName(), Toast.LENGTH_SHORT).show();
             });
 
-            // Mocking category since Meal doesn't have it in the snippet
-            containerPranzo.addView(itemView);
+            if (meal.getCategory() == Food.Category.COLAZIONE) {
+                containerColazione.addView(itemView);
+            } else if (meal.getCategory() == Food.Category.PRANZO) {
+                containerPranzo.addView(itemView);
+            } else if (meal.getCategory() == Food.Category.CENA) {
+                containerCena.addView(itemView);
+            }
         }
     }
 
@@ -236,7 +241,7 @@ public class DietFragment extends Fragment {
                     String carbsStr = editTextCarbs.getText().toString();
                     String proteinStr = editTextProtein.getText().toString();
                     String fatStr = editTextFat.getText().toString();
-                    Food.Category category = (Food.Category) spinnerCategory.getSelectedItem();
+                    Food.Category selectedCategory = (Food.Category) spinnerCategory.getSelectedItem();
 
                     if (!name.isEmpty() && !caloriesStr.isEmpty()) {
                         int calories = Integer.parseInt(caloriesStr);
@@ -244,7 +249,7 @@ public class DietFragment extends Fragment {
                         int protein = proteinStr.isEmpty() ? 0 : Integer.parseInt(proteinStr);
                         int fat = fatStr.isEmpty() ? 0 : Integer.parseInt(fatStr);
 
-                        com.example.muzfit.model.Meal newMeal = new com.example.muzfit.model.Meal(0, name, (float)calories, (float)carbs, (float)protein, (float)fat);
+                        Meal newMeal = new Meal(0, name, (float)calories, (float)carbs, (float)protein, (float)fat, selectedCategory);
                         viewModel.addMeal(newMeal);
                         Toast.makeText(getContext(), "Cibo aggiunto!", Toast.LENGTH_SHORT).show();
                     } else {

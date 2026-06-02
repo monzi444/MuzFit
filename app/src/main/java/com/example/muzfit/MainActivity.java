@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.muzfit.ui.dashboard.fragment.HomeFragment;
+import com.example.muzfit.ui.quick.fragment.QuickFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.muzfit.ui.training.fragment.WorkoutFragment;
 import com.example.muzfit.ui.diet.fragment.DietFragment;

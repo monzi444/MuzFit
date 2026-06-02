@@ -17,4 +17,6 @@ public interface IDietRepository {
     LiveData<Result<Void>> logMeal(UserMeal userMeal);
 
     LiveData<Result<Meal>> addMeal(Meal meal);
+
+    LiveData<Result<Void>> deleteMeal(int id);
 }
