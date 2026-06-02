@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public final class MuzFitDatabaseSeeder {
 
@@ -23,13 +24,10 @@ public final class MuzFitDatabaseSeeder {
     private MuzFitDatabaseSeeder() {
     }
 
-    public static void seedBrunoMoretti(MuzFitDatabase database) {
-        EXECUTOR.execute(() -> {
+    public static Future<?> seedBrunoMoretti(MuzFitDatabase database) {
+        return EXECUTOR.submit(() -> {
             MuzFitDao dao = database.muzFitDao();
-            if (dao.getUser(Constants.DEFAULT_USERNAME) != null) {
-                return;
-            }
-
+            clearDatedSeedData(dao);
             seedUser(dao);
             seedMeals(dao);
             seedExercises(dao);
@@ -41,6 +39,14 @@ public final class MuzFitDatabaseSeeder {
         });
     }
 
+    private static void clearDatedSeedData(MuzFitDao dao) {
+        dao.deleteExerciseSets(Constants.DEFAULT_USERNAME);
+        dao.deleteWorkoutExercises(Constants.DEFAULT_USERNAME);
+        dao.deleteWorkouts(Constants.DEFAULT_USERNAME);
+        dao.deleteUserMeals(Constants.DEFAULT_USERNAME);
+        dao.deleteWeightEntries(Constants.DEFAULT_USERNAME);
+    }
+
     private static void seedUser(MuzFitDao dao) {
         dao.insertUser(new User(
                 Constants.DEFAULT_USERNAME,
@@ -50,10 +56,10 @@ public final class MuzFitDatabaseSeeder {
                 179.0f,
                 1,
                 520,
-                2450,
+                1500,
                 285.0f,
                 155.0f,
-                75.0f
+                50.0f
         ));
     }
 

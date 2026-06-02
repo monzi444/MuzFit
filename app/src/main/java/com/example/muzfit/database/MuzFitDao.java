@@ -51,14 +51,66 @@ public interface MuzFitDao {
     @Query("SELECT * FROM UserMeal WHERE username = :username")
     List<UserMeal> getUserMeals(String username);
 
+    @Query(
+            "SELECT COALESCE(SUM(Meal.calories), 0) " +
+                    "FROM UserMeal " +
+                    "JOIN Meal ON Meal.id = UserMeal.mealId " +
+                    "WHERE UserMeal.username = :username " +
+                    "AND UserMeal.dateMillis >= :startOfDayMillis " +
+                    "AND UserMeal.dateMillis < :endOfDayMillis"
+    )
+    float getConsumedCalories(String username, long startOfDayMillis, long endOfDayMillis);
+
+    @Query(
+            "SELECT COALESCE(SUM(Meal.carbs), 0) " +
+                    "FROM UserMeal " +
+                    "JOIN Meal ON Meal.id = UserMeal.mealId " +
+                    "WHERE UserMeal.username = :username " +
+                    "AND UserMeal.dateMillis >= :startOfDayMillis " +
+                    "AND UserMeal.dateMillis < :endOfDayMillis"
+    )
+    float getConsumedCarbs(String username, long startOfDayMillis, long endOfDayMillis);
+
+    @Query(
+            "SELECT COALESCE(SUM(Meal.protein), 0) " +
+                    "FROM UserMeal " +
+                    "JOIN Meal ON Meal.id = UserMeal.mealId " +
+                    "WHERE UserMeal.username = :username " +
+                    "AND UserMeal.dateMillis >= :startOfDayMillis " +
+                    "AND UserMeal.dateMillis < :endOfDayMillis"
+    )
+    float getConsumedProteins(String username, long startOfDayMillis, long endOfDayMillis);
+
+    @Query(
+            "SELECT COALESCE(SUM(Meal.fat), 0) " +
+                    "FROM UserMeal " +
+                    "JOIN Meal ON Meal.id = UserMeal.mealId " +
+                    "WHERE UserMeal.username = :username " +
+                    "AND UserMeal.dateMillis >= :startOfDayMillis " +
+                    "AND UserMeal.dateMillis < :endOfDayMillis"
+    )
+    float getConsumedFats(String username, long startOfDayMillis, long endOfDayMillis);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertUserMeal(UserMeal userMeal);
 
     @Delete
     void deleteUserMeal(UserMeal userMeal);
 
+    @Query("DELETE FROM UserMeal WHERE username = :username")
+    void deleteUserMeals(String username);
+
     @Query("SELECT * FROM Workout WHERE username = :username ORDER BY dateMillis DESC")
     List<Workout> getWorkouts(String username);
+
+    @Query(
+            "SELECT * FROM Workout " +
+                    "WHERE username = :username " +
+                    "AND dateMillis >= :startMillis " +
+                    "AND dateMillis < :endMillis " +
+                    "ORDER BY dateMillis"
+    )
+    List<Workout> getWorkoutsBetween(String username, long startMillis, long endMillis);
 
     @Query("SELECT * FROM Workout WHERE id = :workoutId AND username = :username LIMIT 1")
     Workout getWorkout(int workoutId, String username);
@@ -68,6 +120,9 @@ public interface MuzFitDao {
 
     @Delete
     void deleteWorkout(Workout workout);
+
+    @Query("DELETE FROM Workout WHERE username = :username")
+    void deleteWorkouts(String username);
 
     @Query("SELECT * FROM Exercise ORDER BY name")
     List<Exercise> getExercises();
@@ -90,6 +145,9 @@ public interface MuzFitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertWorkoutExercise(WorkoutExercise workoutExercise);
 
+    @Query("DELETE FROM WorkoutExercise WHERE username = :username")
+    void deleteWorkoutExercises(String username);
+
     @Query(
             "SELECT * FROM ExerciseSet " +
                     "WHERE workoutId = :workoutId " +
@@ -101,9 +159,15 @@ public interface MuzFitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertExerciseSet(ExerciseSet exerciseSet);
 
+    @Query("DELETE FROM ExerciseSet WHERE username = :username")
+    void deleteExerciseSets(String username);
+
     @Query("SELECT * FROM WeightEntry WHERE username = :username ORDER BY dateMillis")
     List<WeightEntry> getWeightEntries(String username);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertWeightEntry(WeightEntry weightEntry);
+
+    @Query("DELETE FROM WeightEntry WHERE username = :username")
+    void deleteWeightEntries(String username);
 }

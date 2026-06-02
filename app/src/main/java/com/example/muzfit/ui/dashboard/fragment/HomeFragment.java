@@ -273,7 +273,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void observeDashboardData() {
-        viewModel.getMacroGoals(Constants.DEFAULT_USERNAME).observe(getViewLifecycleOwner(), result -> {
+        viewModel.getMacroGoals().observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success) {
                 User user = ((Result.Success<User>) result).getData();
                 updateGoals(user);
@@ -284,7 +284,7 @@ public class HomeFragment extends Fragment {
             if (result instanceof Result.Success && calorieBar != null) {
                 Float calories = ((Result.Success<Float>) result).getData();
                 consumedCalories = calories != null ? calories : 0f;
-                calorieBar.setProgress(consumedCalories, calorieGoal);
+                updateDailyCalorieBar();
             }
         });
 
@@ -312,7 +312,7 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        viewModel.getWeights(Constants.DEFAULT_USERNAME).observe(getViewLifecycleOwner(), result -> {
+        viewModel.getWeights().observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success && weightGraph != null) {
                 List<WeightEntry> weights = ((Result.Success<List<WeightEntry>>) result).getData();
                 weightGraph.setData(toWeightData(weights));
@@ -341,7 +341,7 @@ public class HomeFragment extends Fragment {
                 : DEFAULT_CALORIES_BURNED_GOAL;
 
         if (calorieBar != null) {
-            calorieBar.setProgress(consumedCalories, calorieGoal);
+            updateDailyCalorieBar();
         }
         if (proteinBar != null) {
             proteinBar.setProgress(consumedProteins, proteinGoal);
@@ -388,6 +388,15 @@ public class HomeFragment extends Fragment {
         if (histogram != null) {
             histogram.setData(weeklyData);
         }
+        updateDailyCalorieBar();
+    }
+
+    private void updateDailyCalorieBar() {
+        if (calorieBar == null) {
+            return;
+        }
+        float netCalories = Math.max(0f, consumedCalories - todayCaloriesBurned);
+        calorieBar.setProgress(netCalories, calorieGoal);
     }
 
     private void setupActivityGoalSummary(List<DashboardCalendarDay> calendarData) {

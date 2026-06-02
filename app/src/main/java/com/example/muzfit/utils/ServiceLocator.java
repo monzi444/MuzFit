@@ -14,12 +14,13 @@ import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
 import com.example.muzfit.service.ExerciseApiService;
 import com.example.muzfit.service.MuzFitApiService;
-import com.example.muzfit.source.dashboard.DashboardApiDataSource;
 import com.example.muzfit.source.diet.DietApiDataSource;
 import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
 import com.example.muzfit.source.training.catalog.ExerciseCatalogApiDataSource;
 import com.example.muzfit.source.training.firebase.TrainingFirebaseDataSource;
+
+import java.util.concurrent.Future;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -33,6 +34,7 @@ public final class ServiceLocator {
 
     private final MuzFitApiService muzFitApiService;
     private MuzFitDatabase database;
+    private Future<?> seedFuture;
     private final IDietRepository dietRepository;
     private final ITrainingRepository trainingRepository;
     private final IProfileRepository profileRepository;
@@ -48,7 +50,7 @@ public final class ServiceLocator {
                 new TrainingFirebaseDataSource()
         );
         profileRepository = new ProfileRepository(new ProfileApiDataSource(muzFitApiService));
-        dashboardRepository = new DashboardRepository(new DashboardApiDataSource(muzFitApiService));
+        dashboardRepository = new DashboardRepository();
     }
 
     public static ServiceLocator getInstance() {
@@ -73,7 +75,11 @@ public final class ServiceLocator {
             synchronized (this) {
                 if (database == null) {
                     database = MuzFitDatabase.getInstance(context);
-                    MuzFitDatabaseSeeder.seedBrunoMoretti(database);
+                    seedFuture = MuzFitDatabaseSeeder.seedBrunoMoretti(database);
+                    if (dashboardRepository instanceof DashboardRepository) {
+                        ((DashboardRepository) dashboardRepository).setLocalDatabase(database);
+                        ((DashboardRepository) dashboardRepository).setSeedFuture(seedFuture);
+                    }
                 }
             }
         }

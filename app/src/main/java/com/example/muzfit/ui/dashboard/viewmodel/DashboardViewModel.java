@@ -35,12 +35,12 @@ public class DashboardViewModel extends ViewModel {
         return repository.getConsumedFats();
     }
 
-    public LiveData<Result<User>> getMacroGoals(String username) {
-        return repository.getMacroGoals(username);
+    public LiveData<Result<User>> getMacroGoals() {
+        return repository.getMacroGoals();
     }
 
-    public LiveData<Result<List<WeightEntry>>> getWeights(String username) {
-        return repository.getWeights(username);
+    public LiveData<Result<List<WeightEntry>>> getWeights() {
+        return repository.getWeights();
     }
 
     public LiveData<Result<int[]>> getDailyCaloriesBurned() {

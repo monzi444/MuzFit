@@ -3,105 +3,108 @@ package com.example.muzfit.repository.dashboard;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.muzfit.database.MuzFitDao;
+import com.example.muzfit.database.MuzFitDatabase;
 import com.example.muzfit.model.DashboardCalendarDay;
-import com.example.muzfit.model.Meal;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
-import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.model.Workout;
 import com.example.muzfit.model.WorkoutExercise;
-import com.example.muzfit.source.common.DataSourceCallback;
-import com.example.muzfit.source.dashboard.BaseDashboardDataSource;
-import com.example.muzfit.utils.DateParser;
+import com.example.muzfit.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class DashboardRepository implements IDashboardRepository {
 
-    private static final int PLACEHOLDER_ITEM_COUNT = 5;
     private static final int WEEK_DAYS = 7;
+    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
-    private final BaseDashboardDataSource dashboardDataSource;
+    private MuzFitDao localDao;
+    private Future<?> seedFuture;
 
-    public DashboardRepository(BaseDashboardDataSource dashboardDataSource) {
-        this.dashboardDataSource = dashboardDataSource;
+    public DashboardRepository() {
+    }
+
+    public void setLocalDatabase(MuzFitDatabase database) {
+        if (database != null) {
+            localDao = database.muzFitDao();
+        }
+    }
+
+    public void setSeedFuture(Future<?> seedFuture) {
+        this.seedFuture = seedFuture;
     }
 
     @Override
     public LiveData<Result<Float>> getConsumedCalories() {
-        return getConsumedMacro(Macro.CALORIES);
-
+        return getConsumedMacroFromDatabase(Macro.CALORIES);
     }
 
     @Override
     public LiveData<Result<Float>> getConsumedCarbs() {
-        return getConsumedMacro(Macro.CARBS);
+        return getConsumedMacroFromDatabase(Macro.CARBS);
     }
 
     @Override
     public LiveData<Result<Float>> getConsumedProteins() {
-        return getConsumedMacro(Macro.PROTEINS);
+        return getConsumedMacroFromDatabase(Macro.PROTEINS);
     }
 
     @Override
     public LiveData<Result<Float>> getConsumedFats() {
-        return getConsumedMacro(Macro.FATS);
+        return getConsumedMacroFromDatabase(Macro.FATS);
     }
 
     @Override
-    public LiveData<Result<User>> getMacroGoals(String username) {
+    public LiveData<Result<User>> getMacroGoals() {
         MutableLiveData<Result<User>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        dashboardDataSource.fetchUsers(new DataSourceCallback<List<User>>() {
-            @Override
-            public void onSuccess(List<User> data) {
-                if (data == null || data.isEmpty()) {
-                    liveData.postValue(new Result.Error<>("No users available"));
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
+        }
+
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                User user = localDao.getUser(Constants.DEFAULT_USERNAME);
+                if (user == null) {
+                    liveData.postValue(new Result.Error<>("User not found"));
                     return;
                 }
-
-                for (User user : data) {
-                    if (username.equals(user.getUsername())) {
-                        liveData.postValue(new Result.Success<>(user));
-                        return;
-                    }
-                }
-                liveData.postValue(new Result.Success<>(data.get(0)));
-            }
-
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+                liveData.postValue(new Result.Success<>(user));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
             }
         });
         return liveData;
     }
 
     @Override
-    public LiveData<Result<List<WeightEntry>>> getWeights(String username) {
+    public LiveData<Result<List<WeightEntry>>> getWeights() {
         MutableLiveData<Result<List<WeightEntry>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        dashboardDataSource.fetchWeightEntries(new DataSourceCallback<List<WeightEntry>>() {
-            @Override
-            public void onSuccess(List<WeightEntry> data) {
-                List<WeightEntry> filtered = new ArrayList<>();
-                for (WeightEntry entry : data) {
-                    if (username.equals(entry.getUsername())) {
-                        filtered.add(entry);
-                    }
-                }
-                liveData.postValue(new Result.Success<>(filtered));
-            }
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
+        }
 
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                liveData.postValue(new Result.Success<>(
+                        localDao.getWeightEntries(Constants.DEFAULT_USERNAME)
+                ));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
             }
         });
         return liveData;
@@ -111,27 +114,24 @@ public class DashboardRepository implements IDashboardRepository {
     public LiveData<Result<int[]>> getDailyCaloriesBurned() {
         MutableLiveData<Result<int[]>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        dashboardDataSource.fetchWorkouts(new DataSourceCallback<List<Workout>>() {
-            @Override
-            public void onSuccess(List<Workout> workouts) {
-                dashboardDataSource.fetchWorkoutExercises(new DataSourceCallback<List<WorkoutExercise>>() {
-                    @Override
-                    public void onSuccess(List<WorkoutExercise> workoutExercises) {
-                        liveData.postValue(new Result.Success<>(
-                                buildDailyCaloriesBurned(workouts, workoutExercises)
-                        ));
-                    }
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
+        }
 
-                    @Override
-                    public void onError(String message) {
-                        liveData.postValue(new Result.Error<>(message));
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                long startOfWeek = getStartOfTrailingWeekMillis();
+                long endOfToday = getEndOfDayMillis(getStartOfDayMillis(System.currentTimeMillis()));
+                List<Workout> workouts = localDao.getWorkoutsBetween(
+                        Constants.DEFAULT_USERNAME,
+                        startOfWeek,
+                        endOfToday
+                );
+                liveData.postValue(new Result.Success<>(buildDailyCaloriesBurned(startOfWeek, workouts)));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
             }
         });
         return liveData;
@@ -140,124 +140,146 @@ public class DashboardRepository implements IDashboardRepository {
     @Override
     public LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month) {
         MutableLiveData<Result<List<DashboardCalendarDay>>> liveData = new MutableLiveData<>();
-        liveData.setValue(new Result.Success<>(buildCalendarData(year, month)));
-        return liveData;
-    }
-
-    private LiveData<Result<Float>> getConsumedMacro(Macro macro) {
-        MutableLiveData<Result<Float>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        dashboardDataSource.fetchAllUserMeals(new DataSourceCallback<List<UserMeal>>() {
-            @Override
-            public void onSuccess(List<UserMeal> userMeals) {
-                dashboardDataSource.fetchMeals(new DataSourceCallback<List<Meal>>() {
-                    @Override
-                    public void onSuccess(List<Meal> meals) {
-                        liveData.postValue(new Result.Success<>(
-                                sumMacro(selectConsumedMeals(userMeals, meals), macro)
-                        ));
-                    }
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
+        }
 
-                    @Override
-                    public void onError(String message) {
-                        liveData.postValue(new Result.Error<>(message));
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                long startOfMonth = getStartOfMonthMillis(year, month);
+                long endOfMonth = getEndOfMonthMillis(year, month);
+                List<Workout> workouts = localDao.getWorkoutsBetween(
+                        Constants.DEFAULT_USERNAME,
+                        startOfMonth,
+                        endOfMonth
+                );
+                liveData.postValue(new Result.Success<>(buildCalendarData(year, month, workouts)));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
             }
         });
         return liveData;
     }
 
-    private List<Meal> selectConsumedMeals(List<UserMeal> userMeals, List<Meal> meals) {
-        List<Meal> selected = new ArrayList<>();
-        if (meals == null || meals.isEmpty()) {
-            return selected;
+    private LiveData<Result<Float>> getConsumedMacroFromDatabase(Macro macro) {
+        MutableLiveData<Result<Float>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
         }
 
-        long today = System.currentTimeMillis();
-        Set<Integer> todayMealIds = new HashSet<>();
-        if (userMeals != null) {
-            for (UserMeal userMeal : userMeals) {
-                if (DateParser.isSameDay(userMeal.getDateMillis(), today)) {
-                    todayMealIds.add(userMeal.getMealId());
-                }
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                long startOfDay = getStartOfDayMillis(System.currentTimeMillis());
+                long endOfDay = getEndOfDayMillis(startOfDay);
+                liveData.postValue(new Result.Success<>(
+                        getConsumedMacroValue(macro, startOfDay, endOfDay)
+                ));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
             }
-        }
-
-        for (Meal meal : meals) {
-            if (todayMealIds.contains(meal.getId())) {
-                selected.add(meal);
-            }
-        }
-
-        if (selected.isEmpty()) {
-            selected.addAll(selectPlaceholderItems(meals, PLACEHOLDER_ITEM_COUNT));
-        }
-        return selected;
+        });
+        return liveData;
     }
 
-    private float sumMacro(List<Meal> meals, Macro macro) {
-        float total = 0f;
-        for (Meal meal : meals) {
-            switch (macro) {
-                case CALORIES:
-                    total += meal.getCalories();
-                    break;
-                case CARBS:
-                    total += meal.getCarbs();
-                    break;
-                case PROTEINS:
-                    total += meal.getProtein();
-                    break;
-                case FATS:
-                    total += meal.getFat();
-                    break;
-                default:
-                    break;
-            }
+    private void awaitSeedIfNeeded() throws Exception {
+        if (seedFuture != null) {
+            seedFuture.get();
         }
-        return total;
     }
 
-    private int[] buildDailyCaloriesBurned(List<Workout> workouts, List<WorkoutExercise> workoutExercises) {
+    private float getConsumedMacroValue(Macro macro, long startOfDayMillis, long endOfDayMillis) {
+        switch (macro) {
+            case CALORIES:
+                return localDao.getConsumedCalories(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+            case CARBS:
+                return localDao.getConsumedCarbs(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+            case PROTEINS:
+                return localDao.getConsumedProteins(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+            case FATS:
+                return localDao.getConsumedFats(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+            default:
+                return 0f;
+        }
+    }
+
+    private long getStartOfDayMillis(long dateMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(dateMillis);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private long getEndOfDayMillis(long startOfDayMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(startOfDayMillis);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        return calendar.getTimeInMillis();
+    }
+
+    private long getStartOfTrailingWeekMillis() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(getStartOfDayMillis(System.currentTimeMillis()));
+        calendar.add(Calendar.DAY_OF_YEAR, -(WEEK_DAYS - 1));
+        return calendar.getTimeInMillis();
+    }
+
+    private int[] buildDailyCaloriesBurned(long startOfWeekMillis, List<Workout> workouts) {
         int[] dailyCalories = new int[WEEK_DAYS];
-        for (int dayIndex = 0; dayIndex < WEEK_DAYS; dayIndex++) {
-            List<Workout> dailyWorkouts = selectPlaceholderItems(workouts, PLACEHOLDER_ITEM_COUNT);
-            Set<Integer> workoutIds = new HashSet<>();
-            for (Workout workout : dailyWorkouts) {
-                workoutIds.add(workout.getId());
+        if (workouts == null) {
+            return dailyCalories;
+        }
+
+        for (Workout workout : workouts) {
+            int dayIndex = getDayOffset(startOfWeekMillis, workout.getDateMillis());
+            if (dayIndex < 0 || dayIndex >= WEEK_DAYS) {
+                continue;
             }
 
             int total = 0;
+            List<WorkoutExercise> workoutExercises = localDao.getWorkoutExercises(
+                    workout.getId(),
+                    Constants.DEFAULT_USERNAME
+            );
             for (WorkoutExercise workoutExercise : workoutExercises) {
-                if (workoutIds.contains(workoutExercise.getWorkoutId())) {
-                    total += workoutExercise.getCalories();
-                }
+                total += workoutExercise.getCalories();
             }
-
-            if (total == 0) {
-                total = sumPlaceholderWorkoutExercises(workoutExercises);
-            }
-            dailyCalories[dayIndex] = total;
+            dailyCalories[dayIndex] += total;
         }
         return dailyCalories;
     }
 
-    private int sumPlaceholderWorkoutExercises(List<WorkoutExercise> workoutExercises) {
-        int total = 0;
-        for (WorkoutExercise workoutExercise : selectPlaceholderItems(workoutExercises, PLACEHOLDER_ITEM_COUNT)) {
-            total += workoutExercise.getCalories();
-        }
-        return total;
+    private int getDayOffset(long startOfWeekMillis, long dateMillis) {
+        long startOfWorkoutDay = getStartOfDayMillis(dateMillis);
+        return (int) ((startOfWorkoutDay - startOfWeekMillis) / (24L * 60L * 60L * 1000L));
     }
 
-    private List<DashboardCalendarDay> buildCalendarData(int year, int month) {
+    private long getStartOfMonthMillis(int year, int month) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month, 1, 0, 0, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private long getEndOfMonthMillis(int year, int month) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month, 1, 0, 0, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.MONTH, 1);
+        return calendar.getTimeInMillis();
+    }
+
+    private List<DashboardCalendarDay> buildCalendarData(int year, int month, List<Workout> workouts) {
         List<DashboardCalendarDay> data = new ArrayList<>();
+        Set<Integer> trainedDays = getTrainedDays(workouts);
 
         Calendar firstDay = Calendar.getInstance();
         firstDay.set(year, month, 1);
@@ -277,7 +299,10 @@ public class DashboardRepository implements IDashboardRepository {
         }
 
         for (int day = 1; day <= daysInMonth; day++) {
-            data.add(new DashboardCalendarDay(day, getMockActivityLevel(year, month, day), true));
+            DashboardCalendarDay.ActivityLevel level = trainedDays.contains(day)
+                    ? DashboardCalendarDay.ActivityLevel.GOAL
+                    : DashboardCalendarDay.ActivityLevel.EMPTY;
+            data.add(new DashboardCalendarDay(day, level, true));
         }
 
         int nextMonthDay = 1;
@@ -293,40 +318,18 @@ public class DashboardRepository implements IDashboardRepository {
         return data;
     }
 
-    private DashboardCalendarDay.ActivityLevel getMockActivityLevel(int year, int month, int day) {
-        if (isAfterToday(year, month, day)) {
-            return DashboardCalendarDay.ActivityLevel.EMPTY;
+    private Set<Integer> getTrainedDays(List<Workout> workouts) {
+        Set<Integer> trainedDays = new HashSet<>();
+        if (workouts == null) {
+            return trainedDays;
         }
 
-        int seed = Math.abs((year * 31 + month * 17 + day * 13) % 10);
-        if (seed <= 5) {
-            return DashboardCalendarDay.ActivityLevel.GOAL;
+        Calendar calendar = Calendar.getInstance();
+        for (Workout workout : workouts) {
+            calendar.setTimeInMillis(workout.getDateMillis());
+            trainedDays.add(calendar.get(Calendar.DAY_OF_MONTH));
         }
-        if (seed <= 7) {
-            return DashboardCalendarDay.ActivityLevel.PARTIAL;
-        }
-        return DashboardCalendarDay.ActivityLevel.NONE;
-    }
-
-    private boolean isAfterToday(int year, int month, int day) {
-        Calendar today = Calendar.getInstance();
-        if (year != today.get(Calendar.YEAR)) {
-            return year > today.get(Calendar.YEAR);
-        }
-        if (month != today.get(Calendar.MONTH)) {
-            return month > today.get(Calendar.MONTH);
-        }
-        return day > today.get(Calendar.DAY_OF_MONTH);
-    }
-
-    private <T> List<T> selectPlaceholderItems(List<T> data, int count) {
-        List<T> selected = new ArrayList<>();
-        if (data == null || data.isEmpty()) {
-            return selected;
-        }
-        selected.addAll(data);
-        Collections.shuffle(selected);
-        return selected.subList(0, Math.min(count, selected.size()));
+        return trainedDays;
     }
 
     private enum Macro {
