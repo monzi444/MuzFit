@@ -3,6 +3,7 @@ package com.example.muzfit.utils;
 import android.content.Context;
 
 import com.example.muzfit.database.MuzFitDatabase;
+import com.example.muzfit.database.MuzFitDatabaseSeeder;
 import com.example.muzfit.repository.dashboard.DashboardRepository;
 import com.example.muzfit.repository.dashboard.IDashboardRepository;
 import com.example.muzfit.repository.diet.DietRepository;
@@ -72,6 +73,7 @@ public final class ServiceLocator {
             synchronized (this) {
                 if (database == null) {
                     database = MuzFitDatabase.getInstance(context);
+                    MuzFitDatabaseSeeder.seedBrunoMoretti(database);
                 }
             }
         }

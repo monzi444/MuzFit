@@ -44,7 +44,30 @@ public interface IDashboardRepository {
     // WHERE Utente_Username = <current_user.username>;
     LiveData<Result<List<WeightEntry>>> getWeights(String username);
 
+    // SELECT
+    //    DATE(a.`Data`) AS Giorno,
+    //    SUM(ae.`Calorie`) AS CalorieBruciate
+    // FROM `Allenamento` a
+    // JOIN `AllenamentoEsercizio` ae
+    //    ON ae.`Allenamento_idAllenamento` = a.`idAllenamento`
+    //   AND ae.`Allenamento_Utente_Username` = a.`Utente_Username`
+    // WHERE a.`Utente_Username` = <current_user.username>
+    //  AND DATE(a.`Data`) >= DATE_SUB(<today>, INTERVAL 6 DAY)
+    //  AND DATE(a.`Data`) <= <today>
+    // GROUP BY DATE(a.`Data`)
+    // ORDER BY Giorno;
     LiveData<Result<int[]>> getDailyCaloriesBurned();
 
+    // SELECT
+    //    DATE(a.`Data`) AS Giorno,
+    //    SUM(ae.`Calorie`) AS CalorieBruciate
+    // FROM `Allenamento` a
+    // JOIN `AllenamentoEsercizio` ae
+    //    ON ae.`Allenamento_idAllenamento` = a.`idAllenamento`
+    //   AND ae.`Allenamento_Utente_Username` = a.`Utente_Username`
+    // WHERE a.`Utente_Username` = <current_user.username>
+    //  AND DATE(a.`Data`) <= <today>
+    // GROUP BY DATE(a.`Data`)
+    // ORDER BY Giorno;
     LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month);
 }
