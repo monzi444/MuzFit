@@ -1,29 +1,25 @@
 package com.example.muzfit.model;
 
 import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Ignore;
 import androidx.room.Index;
 
 @Entity(
-        tableName = "Peso",
-        primaryKeys = {"Data", "Utente_Username"},
+        tableName = "WeightEntry",
+        primaryKeys = {"dateMillis", "username"},
         foreignKeys = @ForeignKey(
                 entity = User.class,
-                parentColumns = "Username",
-                childColumns = "Utente_Username"
+                parentColumns = "username",
+                childColumns = "username"
         ),
-        indices = @Index("Utente_Username")
+        indices = @Index("username")
 )
 public class WeightEntry {
 
-    @ColumnInfo(name = "Data")
     private long dateMillis;
-    @ColumnInfo(name = "Peso")
     private float weight;
-    @ColumnInfo(name = "Utente_Username")
     @NonNull
     private String username = "";
 

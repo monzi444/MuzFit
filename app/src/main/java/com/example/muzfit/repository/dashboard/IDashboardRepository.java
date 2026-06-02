@@ -13,14 +13,35 @@ public interface IDashboardRepository {
 
     LiveData<Result<Float>> getConsumedCalories();
 
+    // SELECT SUM(p.Calorie) AS CalorieTotali
+    // FROM Pasto_has_Utente pu
+    // JOIN Pasto p ON p.idPasto = pu.Pasto_idPasto
+    // WHERE pu.Utente_Username = <current_user.username>
+    // AND DATE(pu.Data) = <today>;
     LiveData<Result<Float>> getConsumedCarbs();
 
+    // SELECT SUM(p.Proteins) AS CalorieTotali
+    // FROM Pasto_has_Utente pu
+    // JOIN Pasto p ON p.idPasto = pu.Pasto_idPasto
+    // WHERE pu.Utente_Username = <current_user.username>
+    // AND DATE(pu.Data) = <today>;
     LiveData<Result<Float>> getConsumedProteins();
 
+    // SELECT SUM(p.Fats) AS CalorieTotali
+    // FROM Pasto_has_Utente pu
+    // JOIN Pasto p ON p.idPasto = pu.Pasto_idPasto
+    // WHERE pu.Utente_Username = <current_user.username>
+    // AND DATE(pu.Data) = <today>;
     LiveData<Result<Float>> getConsumedFats();
 
+    // SELECT carboidrati, proteine, grassi
+    // FROM utente
+    // WHERE utente.username = <current_user.username>;
     LiveData<Result<User>> getMacroGoals(String username);
 
+    // SELECT peso.Data, peso.Peso
+    // FROM peso
+    // WHERE Utente_Username = <current_user.username>;
     LiveData<Result<List<WeightEntry>>> getWeights(String username);
 
     LiveData<Result<int[]>> getDailyCaloriesBurned();

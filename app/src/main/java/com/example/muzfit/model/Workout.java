@@ -1,31 +1,26 @@
 package com.example.muzfit.model;
 
 import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Ignore;
 import androidx.room.Index;
 
 @Entity(
-        tableName = "Allenamento",
-        primaryKeys = {"idAllenamento", "Utente_Username"},
+        tableName = "Workout",
+        primaryKeys = {"id", "username"},
         foreignKeys = @ForeignKey(
                 entity = User.class,
-                parentColumns = "Username",
-                childColumns = "Utente_Username"
+                parentColumns = "username",
+                childColumns = "username"
         ),
-        indices = @Index("Utente_Username")
+        indices = @Index("username")
 )
 public class Workout {
 
-    @ColumnInfo(name = "idAllenamento")
     private int id;
-    @ColumnInfo(name = "Data")
     private long dateMillis;
-    @ColumnInfo(name = "Descrizione")
     private String description = "";
-    @ColumnInfo(name = "Utente_Username")
     @NonNull
     private String username = "";
 

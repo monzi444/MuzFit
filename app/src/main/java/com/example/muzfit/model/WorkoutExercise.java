@@ -1,46 +1,41 @@
 package com.example.muzfit.model;
 
 import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Ignore;
 import androidx.room.Index;
 
 @Entity(
-        tableName = "AllenamentoEsercizio",
+        tableName = "WorkoutExercise",
         primaryKeys = {
-                "Allenamento_idAllenamento",
-                "Allenamento_Utente_Username",
-                "DescrizioneEsercizio_IdEsercizio"
+                "workoutId",
+                "username",
+                "exerciseId"
         },
         foreignKeys = {
                 @ForeignKey(
                         entity = Workout.class,
-                        parentColumns = {"idAllenamento", "Utente_Username"},
-                        childColumns = {"Allenamento_idAllenamento", "Allenamento_Utente_Username"}
+                        parentColumns = {"id", "username"},
+                        childColumns = {"workoutId", "username"}
                 ),
                 @ForeignKey(
                         entity = Exercise.class,
-                        parentColumns = "IdEsercizio",
-                        childColumns = "DescrizioneEsercizio_IdEsercizio"
+                        parentColumns = "id",
+                        childColumns = "exerciseId"
                 )
         },
         indices = {
-                @Index({"Allenamento_idAllenamento", "Allenamento_Utente_Username"}),
-                @Index("DescrizioneEsercizio_IdEsercizio")
+                @Index({"workoutId", "username"}),
+                @Index("exerciseId")
         }
 )
 public class WorkoutExercise {
 
-    @ColumnInfo(name = "Calorie")
     private int calories;
-    @ColumnInfo(name = "Allenamento_idAllenamento")
     private int workoutId;
-    @ColumnInfo(name = "Allenamento_Utente_Username")
     @NonNull
     private String username = "";
-    @ColumnInfo(name = "DescrizioneEsercizio_IdEsercizio")
     @NonNull
     private String exerciseId = "";
 

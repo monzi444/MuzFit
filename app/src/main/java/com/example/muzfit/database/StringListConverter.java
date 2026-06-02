@@ -2,6 +2,7 @@ package com.example.muzfit.database;
 
 import androidx.room.TypeConverter;
 
+import com.example.muzfit.model.Food;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -26,5 +27,18 @@ public class StringListConverter {
         }
         List<String> parsed = GSON.fromJson(value, STRING_LIST_TYPE);
         return parsed != null ? parsed : new ArrayList<>();
+    }
+
+    @TypeConverter
+    public String fromFoodCategory(Food.Category category) {
+        return category != null ? category.name() : Food.Category.PRANZO.name();
+    }
+
+    @TypeConverter
+    public Food.Category toFoodCategory(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return Food.Category.PRANZO;
+        }
+        return Food.Category.valueOf(value);
     }
 }

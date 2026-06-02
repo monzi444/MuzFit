@@ -1,7 +1,6 @@
 package com.example.muzfit.model;
 
 import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
@@ -12,40 +11,32 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity(tableName = "DescrizioneEsercizio")
+@Entity(tableName = "Exercise")
 public class Exercise implements Serializable {
 
     @PrimaryKey
     @NonNull
-    @ColumnInfo(name = "IdEsercizio")
     @SerializedName("exerciseId")
     private String id = "";
 
-    @ColumnInfo(name = "NomeEsercizio")
     @SerializedName("name")
     private String name = "";
 
-    @ColumnInfo(name = "BodyParts")
     @SerializedName("bodyParts")
     private List<String> bodyParts = new ArrayList<>();
 
-    @ColumnInfo(name = "Equipments")
     @SerializedName("equipments")
     private List<String> equipments = new ArrayList<>();
 
-    @ColumnInfo(name = "GifUrl")
     @SerializedName("gifUrl")
     private String gifUrl = "";
 
-    @ColumnInfo(name = "TargetMuscles")
     @SerializedName("targetMuscles")
     private List<String> targetMuscles = new ArrayList<>();
 
-    @ColumnInfo(name = "SecondaryMuscles")
     @SerializedName("secondaryMuscles")
     private List<String> secondaryMuscles = new ArrayList<>();
 
-    @ColumnInfo(name = "Instructions")
     @SerializedName("instructions")
     private List<String> instructions = new ArrayList<>();
 

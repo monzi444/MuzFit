@@ -1,37 +1,25 @@
 package com.example.muzfit.model;
 
 import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "Utente")
+@Entity(tableName = "User")
 public class User {
 
     @PrimaryKey
     @NonNull
-    @ColumnInfo(name = "Username")
     private String username = "";
-    @ColumnInfo(name = "Nome")
     private String name = "";
-    @ColumnInfo(name = "Password")
     private String password = "";
-    @ColumnInfo(name = "Peso")
     private float weight;
-    @ColumnInfo(name = "Altezza")
     private float height;
-    @ColumnInfo(name = "Genere")
     private int genderCode;
-    @ColumnInfo(name = "CalorieBruciate")
     private int calorieBurnGoal;
-    @ColumnInfo(name = "CalorieAssunte")
     private int calorieGoal;
-    @ColumnInfo(name = "Carboidrati")
     private float carbGoal;
-    @ColumnInfo(name = "Proteine")
     private float proteinGoal;
-    @ColumnInfo(name = "Grassi")
     private float fatGoal;
 
     public User() {

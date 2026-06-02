@@ -36,6 +36,7 @@ public class DashboardRepository implements IDashboardRepository {
     @Override
     public LiveData<Result<Float>> getConsumedCalories() {
         return getConsumedMacro(Macro.CALORIES);
+
     }
 
     @Override

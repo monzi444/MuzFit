@@ -1,25 +1,18 @@
 package com.example.muzfit.model;
 
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "Pasto")
+@Entity(tableName = "Meal")
 public class Meal {
 
     @PrimaryKey
-    @ColumnInfo(name = "idPasto")
     private int id;
-    @ColumnInfo(name = "Alimento")
     private String foodName = "";
-    @ColumnInfo(name = "Calorie")
     private float calories;
-    @ColumnInfo(name = "Carboidrati")
     private float carbs;
-    @ColumnInfo(name = "Proteine")
     private float protein;
-    @ColumnInfo(name = "Grassi")
     private float fat;
     private Food.Category category = Food.Category.PRANZO;
 
@@ -31,6 +24,7 @@ public class Meal {
         this(id, foodName, calories, carbs, protein, fat, Food.Category.PRANZO);
     }
 
+    @Ignore
     public Meal(int id, String foodName, float calories, float carbs, float protein, float fat, Food.Category category) {
         this.id = id;
         this.foodName = foodName;

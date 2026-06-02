@@ -1,53 +1,46 @@
 package com.example.muzfit.model;
 
 import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Ignore;
 import androidx.room.Index;
 
 @Entity(
-        tableName = "Serie",
+        tableName = "ExerciseSet",
         primaryKeys = {
-                "idSerie",
-                "AllenamentoEsercizio_Allenamento_idAllenamento",
-                "AllenamentoEsercizio_Allenamento_Utente_Username",
-                "AllenamentoEsercizio_DescrizioneEsercizio_IdEsercizio"
+                "id",
+                "workoutId",
+                "username",
+                "exerciseId"
         },
         foreignKeys = @ForeignKey(
                 entity = WorkoutExercise.class,
                 parentColumns = {
-                        "Allenamento_idAllenamento",
-                        "Allenamento_Utente_Username",
-                        "DescrizioneEsercizio_IdEsercizio"
+                        "workoutId",
+                        "username",
+                        "exerciseId"
                 },
                 childColumns = {
-                        "AllenamentoEsercizio_Allenamento_idAllenamento",
-                        "AllenamentoEsercizio_Allenamento_Utente_Username",
-                        "AllenamentoEsercizio_DescrizioneEsercizio_IdEsercizio"
+                        "workoutId",
+                        "username",
+                        "exerciseId"
                 }
         ),
         indices = @Index({
-                "AllenamentoEsercizio_Allenamento_idAllenamento",
-                "AllenamentoEsercizio_Allenamento_Utente_Username",
-                "AllenamentoEsercizio_DescrizioneEsercizio_IdEsercizio"
+                "workoutId",
+                "username",
+                "exerciseId"
         })
 )
 public class ExerciseSet {
 
-    @ColumnInfo(name = "idSerie")
     private int id;
-    @ColumnInfo(name = "Ripetizioni")
     private int repetitions;
-    @ColumnInfo(name = "Peso")
     private int weight;
-    @ColumnInfo(name = "AllenamentoEsercizio_Allenamento_idAllenamento")
     private int workoutId;
-    @ColumnInfo(name = "AllenamentoEsercizio_Allenamento_Utente_Username")
     @NonNull
     private String username = "";
-    @ColumnInfo(name = "AllenamentoEsercizio_DescrizioneEsercizio_IdEsercizio")
     @NonNull
     private String exerciseId = "";
 
