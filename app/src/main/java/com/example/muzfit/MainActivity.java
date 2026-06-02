@@ -56,16 +56,10 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Set default fragment
         if (savedInstanceState == null) {
-            boolean startQuick = getIntent().getBooleanExtra("START_QUICK", false);
-            if (startQuick) {
-                bottomNav.setSelectedItemId(R.id.nav_quick);
-            } else {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new HomeFragment())
-                        .commit();
-            }
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new HomeFragment())
+                    .commit();
         }
     }
 }
