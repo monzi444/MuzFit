@@ -45,22 +45,8 @@ public class DietRepository implements IDietRepository {
     public LiveData<Result<List<UserMeal>>> getUserMealsForDay(String username, long dateMillis) {
         observedUsername = username;
         observedDateMillis = dateMillis;
-        userMealsForDayLiveData.setValue(new Result.Loading<>());
-        EXECUTOR.execute(() -> {
-            try {
-                awaitSeedIfNeeded();
-                if (localDao == null) {
-                    userMealsForDayLiveData.postValue(new Result.Error<>("Local database is not initialized"));
-                    return;
-                }
-                long startOfDay = getStartOfDayMillis(dateMillis);
-                long endOfDay = getEndOfDayMillis(startOfDay);
-                List<UserMeal> userMeals = localDao.getUserMealsForDay(username, startOfDay, endOfDay);
-                userMealsForDayLiveData.postValue(new Result.Success<>(userMeals));
-            } catch (Exception e) {
-                userMealsForDayLiveData.postValue(new Result.Error<>(errorMessage(e)));
-            }
-        });
+        userMealsForDayLiveData.postValue(new Result.Loading<>());
+        EXECUTOR.execute(this::loadObservedUserMealsForDay);
         return userMealsForDayLiveData;
     }
 
@@ -148,8 +134,33 @@ public class DietRepository implements IDietRepository {
     }
 
     private void refreshUserMealsForDay() {
-        if (observedUsername != null) {
-            getUserMealsForDay(observedUsername, observedDateMillis);
+        if (observedUsername == null) {
+            return;
+        }
+        EXECUTOR.execute(this::loadObservedUserMealsForDay);
+    }
+
+    private void loadObservedUserMealsForDay() {
+        if (observedUsername == null) {
+            userMealsForDayLiveData.postValue(new Result.Error<>("No day is being observed"));
+            return;
+        }
+        try {
+            awaitSeedIfNeeded();
+            if (localDao == null) {
+                userMealsForDayLiveData.postValue(new Result.Error<>("Local database is not initialized"));
+                return;
+            }
+            long startOfDay = getStartOfDayMillis(observedDateMillis);
+            long endOfDay = getEndOfDayMillis(startOfDay);
+            List<UserMeal> userMeals = localDao.getUserMealsForDay(
+                    observedUsername,
+                    startOfDay,
+                    endOfDay
+            );
+            userMealsForDayLiveData.postValue(new Result.Success<>(userMeals));
+        } catch (Exception e) {
+            userMealsForDayLiveData.postValue(new Result.Error<>(errorMessage(e)));
         }
     }
 

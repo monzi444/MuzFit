@@ -185,7 +185,16 @@ public class DietFragment extends Fragment {
                 TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
                 ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
                 nameTv.setText(String.format(Locale.getDefault(), "%s (%.0f kcal)", meal.getFoodName(), meal.getCalories()));
-                deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal));
+                deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal)
+                        .observe(getViewLifecycleOwner(), result -> {
+                            if (result.isError()) {
+                                Toast.makeText(
+                                        requireContext(),
+                                        ((com.example.muzfit.model.Result.Error<?>) result).getMessage(),
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            }
+                        }));
 
                 if (userMeal.getCategory() == MealCategory.COLAZIONE) {
                     containerColazione.addView(itemView);
