@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/muzfit_dialog_background"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        style="@style/MuzFit.Text.Label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/choose_meal_title" />
+
+    <ListView
+        android:id="@+id/lvChooseMeal"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/muzfit_category_card_bg"
+        android:cacheColorHint="@android:color/transparent"
+        android:divider="@color/muz_glass_border"
+        android:dividerHeight="1dp"
+        android:padding="4dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddFoodFromPicker"
+        style="@style/MuzFit.Button.Skeuo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/add_food_button" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCancelChooseMeal"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cancel"
+        android:textColor="@color/muz_on_surface_variant" />
+
+</LinearLayout>

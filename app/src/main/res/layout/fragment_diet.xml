@@ -261,12 +261,13 @@
             android:orientation="vertical"
             android:layout_marginBottom="16dp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/chooseMealButton"
+            style="@style/MuzFit.Button.Skeuo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Scegli pasto"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"
+            android:text="@string/choose_meal_button" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

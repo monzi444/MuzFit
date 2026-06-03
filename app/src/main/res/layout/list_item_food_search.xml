@@ -9,6 +9,7 @@
         android:id="@+id/tvFoodName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/muz_on_surface"
         android:textSize="16sp"
         android:textStyle="bold" />
 
@@ -16,7 +17,7 @@
         android:id="@+id/tvFoodDetails"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#666666"
+        android:textColor="@color/muz_on_surface_variant"
         android:textSize="12sp" />
 
 </LinearLayout>

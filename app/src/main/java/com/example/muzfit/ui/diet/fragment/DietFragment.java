@@ -1,7 +1,9 @@
 package com.example.muzfit.ui.diet.fragment;
 
 import android.app.AlertDialog;
+import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -10,14 +12,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -82,7 +84,7 @@ public class DietFragment extends Fragment {
         containerPranzo = view.findViewById(R.id.containerPranzo);
         containerCena = view.findViewById(R.id.containerCena);
         
-        Button chooseMealButton = view.findViewById(R.id.chooseMealButton);
+        MaterialButton chooseMealButton = view.findViewById(R.id.chooseMealButton);
         ImageView btnPrevWeek = view.findViewById(R.id.btnPrevWeek);
         ImageView btnNextWeek = view.findViewById(R.id.btnNextWeek);
 
@@ -284,6 +286,16 @@ public class DietFragment extends Fragment {
         }
     }
 
+    private AlertDialog.Builder styledDialogBuilder() {
+        return new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog);
+    }
+
+    private void applyDialogWindowStyle(AlertDialog dialog) {
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+    }
+
     private void showChooseMealDialog() {
         List<Meal> availableMeals = new ArrayList<>();
         availableMeals.add(new Meal(0, "Mela", 95, 25, 1, 0));
@@ -295,21 +307,19 @@ public class DietFragment extends Fragment {
             availableMeals.addAll(catalog.values());
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Scegli un pasto rapido");
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_choose_meal, null);
+        ListView listView = dialogView.findViewById(R.id.lvChooseMeal);
 
-        ListView listView = new ListView(requireContext());
-
-        // We create the dialog first so we can dismiss it from inside the adapter
-        chooseMealDialog = builder
-                .setView(listView)
-                .setPositiveButton("Add food", (d, id) -> {
-                    dismissChooseMealDialog();
-                    showAddFoodDialog();
-                })
-                .setNegativeButton("Annulla", (d, id) -> dismissChooseMealDialog())
+        chooseMealDialog = styledDialogBuilder()
+                .setView(dialogView)
                 .create();
         AlertDialog dialog = chooseMealDialog;
+
+        dialogView.findViewById(R.id.btnAddFoodFromPicker).setOnClickListener(v -> {
+            dismissChooseMealDialog();
+            showAddFoodDialog();
+        });
+        dialogView.findViewById(R.id.btnCancelChooseMeal).setOnClickListener(v -> dismissChooseMealDialog());
 
         ArrayAdapter<Meal> adapter = new ArrayAdapter<Meal>(requireContext(), R.layout.list_item_food, availableMeals) {
             @NonNull
@@ -336,9 +346,9 @@ public class DietFragment extends Fragment {
                         });
                     });
 
-                    // Set click listener on the whole row to select the meal
                     convertView.setOnClickListener(v -> {
                         dialog.dismiss();
+                        chooseMealDialog = null;
                         showCategorySelectionDialog(meal);
                     });
                 }
@@ -347,7 +357,9 @@ public class DietFragment extends Fragment {
         };
 
         listView.setAdapter(adapter);
-        dialog.show();
+        chooseMealDialog.setOnDismissListener(d -> chooseMealDialog = null);
+        applyDialogWindowStyle(chooseMealDialog);
+        chooseMealDialog.show();
     }
 
     private void showCategorySelectionDialog(Meal template) {
@@ -357,43 +369,67 @@ public class DietFragment extends Fragment {
     private void showCategorySelectionDialog(Meal template, boolean backToAddFood) {
         dismissAddFoodDialog();
 
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food, null);
-        dialogView.findViewById(R.id.editTextFoodName).setVisibility(View.GONE);
-        dialogView.findViewById(R.id.editTextCalories).setVisibility(View.GONE);
-        dialogView.findViewById(R.id.editTextCarbs).setVisibility(View.GONE);
-        dialogView.findViewById(R.id.editTextProtein).setVisibility(View.GONE);
-        dialogView.findViewById(R.id.editTextFat).setVisibility(View.GONE);
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_meal_category, null);
+        MaterialCardView cardColazione = dialogView.findViewById(R.id.cardColazione);
+        MaterialCardView cardPranzo = dialogView.findViewById(R.id.cardPranzo);
+        MaterialCardView cardCena = dialogView.findViewById(R.id.cardCena);
 
-        Spinner spinner = dialogView.findViewById(R.id.spinnerCategory);
-        spinner.setVisibility(View.VISIBLE);
-        setupMealCategorySpinner(spinner);
+        final MealCategory[] selectedCategory = {MealCategory.COLAZIONE};
+        updateCategoryCardSelection(cardColazione, cardPranzo, cardCena, selectedCategory[0]);
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Seleziona categoria")
+        cardColazione.setOnClickListener(v -> {
+            selectedCategory[0] = MealCategory.COLAZIONE;
+            updateCategoryCardSelection(cardColazione, cardPranzo, cardCena, selectedCategory[0]);
+        });
+        cardPranzo.setOnClickListener(v -> {
+            selectedCategory[0] = MealCategory.PRANZO;
+            updateCategoryCardSelection(cardColazione, cardPranzo, cardCena, selectedCategory[0]);
+        });
+        cardCena.setOnClickListener(v -> {
+            selectedCategory[0] = MealCategory.CENA;
+            updateCategoryCardSelection(cardColazione, cardPranzo, cardCena, selectedCategory[0]);
+        });
+
+        AlertDialog categoryDialog = styledDialogBuilder()
                 .setView(dialogView)
-                .setPositiveButton("Aggiungi", (dialog, id) -> {
-                    MealCategory category = categoryFromSpinner(spinner);
-                    logMealAndCloseDialogs(template, category);
-                })
-                .setNegativeButton("Indietro", (dialog, id) -> {
-                    if (backToAddFood) {
-                        showAddFoodDialog();
-                    } else {
-                        showChooseMealDialog();
-                    }
-                })
-                .show();
+                .create();
+
+        dialogView.findViewById(R.id.btnCategoryConfirm).setOnClickListener(v -> {
+            categoryDialog.dismiss();
+            logMealAndCloseDialogs(template, selectedCategory[0]);
+        });
+        dialogView.findViewById(R.id.btnCategoryBack).setOnClickListener(v -> {
+            categoryDialog.dismiss();
+            if (backToAddFood) {
+                showAddFoodDialog();
+            } else {
+                showChooseMealDialog();
+            }
+        });
+        applyDialogWindowStyle(categoryDialog);
+        categoryDialog.show();
+    }
+
+    private void updateCategoryCardSelection(MaterialCardView cardColazione, MaterialCardView cardPranzo,
+                                             MaterialCardView cardCena, MealCategory selected) {
+        styleCategoryCard(cardColazione, selected == MealCategory.COLAZIONE);
+        styleCategoryCard(cardPranzo, selected == MealCategory.PRANZO);
+        styleCategoryCard(cardCena, selected == MealCategory.CENA);
+    }
+
+    private void styleCategoryCard(MaterialCardView card, boolean selected) {
+        card.setStrokeWidth(selected ? 2 : 1);
+        int color = ContextCompat.getColor(
+                requireContext(),
+                selected ? R.color.muz_primary_lime : R.color.muz_glass_border
+        );
+        card.setStrokeColor(ColorStateList.valueOf(color));
     }
 
     private void showAddFoodDialog() {
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food_search, null);
         EditText etSearchFood = dialogView.findViewById(R.id.etSearchFood);
         RecyclerView rvFoodResults = dialogView.findViewById(R.id.rvFoodResults);
-        EditText nameEt = dialogView.findViewById(R.id.editTextFoodName);
-        EditText calEt = dialogView.findViewById(R.id.editTextCalories);
-        EditText carbEt = dialogView.findViewById(R.id.editTextCarbs);
-        EditText protEt = dialogView.findViewById(R.id.editTextProtein);
-        EditText fatEt = dialogView.findViewById(R.id.editTextFat);
 
         List<Meal> searchResults = new ArrayList<>();
         FoodSearchAdapter searchAdapter = new FoodSearchAdapter(searchResults, meal ->
@@ -422,15 +458,44 @@ public class DietFragment extends Fragment {
             }
         });
 
-        addFoodDialog = new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.add_food_search_title)
+        addFoodDialog = styledDialogBuilder()
                 .setView(dialogView)
-                .setPositiveButton(R.string.save, (dialog, id) ->
-                        saveManualFood(nameEt, calEt, carbEt, protEt, fatEt))
-                .setNegativeButton(R.string.cancel, (dialog, id) -> dismissAddFoodDialog())
                 .create();
+
+        dialogView.findViewById(R.id.btnAddFoodManual).setOnClickListener(v -> {
+            dismissAddFoodDialog();
+            showManualFoodDialog();
+        });
+        dialogView.findViewById(R.id.btnCancelSearch).setOnClickListener(v -> dismissAddFoodDialog());
+
         addFoodDialog.setOnDismissListener(d -> addFoodDialog = null);
+        applyDialogWindowStyle(addFoodDialog);
         addFoodDialog.show();
+    }
+
+    private void showManualFoodDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food_manual, null);
+        EditText nameEt = dialogView.findViewById(R.id.editTextFoodName);
+        EditText calEt = dialogView.findViewById(R.id.editTextCalories);
+        EditText carbEt = dialogView.findViewById(R.id.editTextCarbs);
+        EditText protEt = dialogView.findViewById(R.id.editTextProtein);
+        EditText fatEt = dialogView.findViewById(R.id.editTextFat);
+
+        AlertDialog manualDialog = styledDialogBuilder()
+                .setView(dialogView)
+                .create();
+
+        dialogView.findViewById(R.id.btnSaveManualFood).setOnClickListener(v -> {
+            if (saveManualFood(nameEt, calEt, carbEt, protEt, fatEt)) {
+                manualDialog.dismiss();
+            }
+        });
+        dialogView.findViewById(R.id.btnBackManualFood).setOnClickListener(v -> {
+            manualDialog.dismiss();
+            showAddFoodDialog();
+        });
+        applyDialogWindowStyle(manualDialog);
+        manualDialog.show();
     }
 
     private void searchFoods(String query, List<Meal> results, FoodSearchAdapter adapter) {
@@ -458,38 +523,23 @@ public class DietFragment extends Fragment {
     }
 
     private void showFoodConfirmDialog(Meal meal, Runnable onConfirm) {
-        AlertDialog confirmDialog = new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.food_search_confirm_title)
-                .setMessage(getString(
-                        R.string.food_search_confirm_message,
-                        meal.getFoodName(),
-                        OpenFoodFactsMapper.formatSearchSubtitle(meal)
-                ))
-                .setPositiveButton(R.string.food_search_confirm_add, (dialog, which) -> onConfirm.run())
-                .setNegativeButton(R.string.cancel, null)
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_food_confirm, null);
+        TextView tvName = dialogView.findViewById(R.id.tvConfirmFoodName);
+        TextView tvDetails = dialogView.findViewById(R.id.tvConfirmFoodDetails);
+        tvName.setText(meal.getFoodName());
+        tvDetails.setText(OpenFoodFactsMapper.formatSearchSubtitle(meal));
+
+        AlertDialog confirmDialog = styledDialogBuilder()
+                .setView(dialogView)
                 .create();
+
+        dialogView.findViewById(R.id.btnConfirmAdd).setOnClickListener(v -> {
+            confirmDialog.dismiss();
+            onConfirm.run();
+        });
+        dialogView.findViewById(R.id.btnConfirmCancel).setOnClickListener(v -> confirmDialog.dismiss());
+        applyDialogWindowStyle(confirmDialog);
         confirmDialog.show();
-    }
-
-    private void setupMealCategorySpinner(Spinner spinner) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                new String[]{"Colazione", "Pranzo", "Cena"}
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-    }
-
-    private static MealCategory categoryFromSpinner(Spinner spinner) {
-        int position = spinner.getSelectedItemPosition();
-        if (position == 1) {
-            return MealCategory.PRANZO;
-        }
-        if (position == 2) {
-            return MealCategory.CENA;
-        }
-        return MealCategory.COLAZIONE;
     }
 
     private void dismissChooseMealDialog() {
@@ -530,12 +580,12 @@ public class DietFragment extends Fragment {
         });
     }
 
-    private void saveManualFood(EditText nameEt, EditText calEt, EditText carbEt, EditText protEt, EditText fatEt) {
-        String name = nameEt.getText().toString().trim();
-        String calS = calEt.getText().toString().trim();
+    private boolean saveManualFood(EditText nameEt, EditText calEt, EditText carbEt, EditText protEt, EditText fatEt) {
+        String name = nameEt.getText() != null ? nameEt.getText().toString().trim() : "";
+        String calS = calEt.getText() != null ? calEt.getText().toString().trim() : "";
         if (name.isEmpty() || calS.isEmpty()) {
             Toast.makeText(requireContext(), R.string.food_name_required_toast, Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
         Meal meal = new Meal(
                 0,
@@ -546,6 +596,7 @@ public class DietFragment extends Fragment {
                 parseOptionalFloat(fatEt)
         );
         showCategorySelectionDialog(meal, true);
+        return true;
     }
 
     private static float parseOptionalFloat(EditText editText) {

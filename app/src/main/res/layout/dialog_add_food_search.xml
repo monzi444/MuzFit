@@ -1,71 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@drawable/muzfit_dialog_background"
+    android:orientation="vertical"
+    android:padding="20dp">
 
-    <LinearLayout
+    <TextView
+        style="@style/MuzFit.Text.Label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/add_food_search_title" />
+
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_marginTop="4dp"
+        android:text="@string/add_food_search_subtitle"
+        android:textColor="@color/muz_on_surface_variant"
+        android:textSize="13sp" />
 
-        <EditText
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="@string/add_food_search_hint"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/muz_primary_lime"
+        app:hintTextColor="@color/muz_primary_lime">
+
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearchFood"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/add_food_search_hint"
+            android:imeOptions="actionSearch"
             android:inputType="text"
-            android:imeOptions="actionSearch" />
+            android:singleLine="true"
+            android:textColor="@color/muz_on_surface"
+            android:textColorHint="@color/muz_on_surface_variant" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvFoodResults"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginTop="8dp"
-            android:nestedScrollingEnabled="true" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvFoodResults"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/muzfit_category_card_bg"
+        android:nestedScrollingEnabled="true"
+        android:padding="4dp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/add_food_manual_section"
-            android:textStyle="bold" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddFoodManual"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/add_food_manual_button"
+        android:textColor="@color/muz_on_surface"
+        app:icon="@android:drawable/ic_input_add"
+        app:iconGravity="textStart"
+        app:iconTint="@color/muz_primary_lime"
+        app:strokeColor="@color/muz_glass_border" />
 
-        <EditText
-            android:id="@+id/editTextFoodName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="Nome Cibo"
-            android:inputType="text" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCancelSearch"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/cancel"
+        android:textColor="@color/muz_on_surface_variant" />
 
-        <EditText
-            android:id="@+id/editTextCalories"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Calorie"
-            android:inputType="numberDecimal" />
-
-        <EditText
-            android:id="@+id/editTextCarbs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Carboidrati (g)"
-            android:inputType="numberDecimal" />
-
-        <EditText
-            android:id="@+id/editTextProtein"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Proteine (g)"
-            android:inputType="numberDecimal" />
-
-        <EditText
-            android:id="@+id/editTextFat"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Grassi (g)"
-            android:inputType="numberDecimal" />
-
-    </LinearLayout>
-</ScrollView>
+</LinearLayout>

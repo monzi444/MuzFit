@@ -5,7 +5,18 @@
         <item name="colorPrimary">@color/muz_primary_lime</item>
     </style>
 
-    <style name="Theme.MuzFit" parent="Base.Theme.MuzFit" />
+    <style name="Theme.MuzFit" parent="Base.Theme.MuzFit">
+        <item name="materialAlertDialogTheme">@style/Theme.MuzFit.Dialog</item>
+    </style>
+
+    <style name="Theme.MuzFit.Dialog" parent="ThemeOverlay.Material3.Dialog.Alert">
+        <item name="android:background">@drawable/muzfit_dialog_background</item>
+        <item name="colorSurface">@color/muz_container_l2</item>
+        <item name="colorOnSurface">@color/muz_on_surface</item>
+        <item name="android:textColorPrimary">@color/muz_on_surface</item>
+        <item name="android:textColorSecondary">@color/muz_on_surface_variant</item>
+        <item name="colorPrimary">@color/muz_primary_lime</item>
+    </style>
 
     <style name="CircleAppearance">
         <item name="cornerSize">50%</item>
