@@ -3,8 +3,9 @@ package com.example.muzfit.repository.training;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.muzfit.database.MuzFitDao;
+import com.example.muzfit.database.MuzFitDatabase;
 import com.example.muzfit.model.Exercise;
-import com.example.muzfit.model.ExerciseDB;
 import com.example.muzfit.model.ExerciseSet;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.Workout;
@@ -21,12 +22,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class TrainingRepository implements ITrainingRepository {
+
+    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     private final BaseTrainingDataSource trainingApiDataSource;
     private final BaseExerciseCatalogDataSource exerciseCatalogDataSource;
     private final BaseTrainingFirebaseDataSource trainingFirebaseDataSource;
+
+    private MuzFitDao localDao;
+    private Future<?> seedFuture;
 
     public TrainingRepository(BaseTrainingDataSource trainingApiDataSource,
                               BaseExerciseCatalogDataSource exerciseCatalogDataSource,
@@ -36,23 +45,51 @@ public class TrainingRepository implements ITrainingRepository {
         this.trainingFirebaseDataSource = trainingFirebaseDataSource;
     }
 
+    public void setLocalDatabase(MuzFitDatabase database) {
+        if (database != null) {
+            localDao = database.muzFitDao();
+        }
+    }
+
+    public void setSeedFuture(Future<?> seedFuture) {
+        this.seedFuture = seedFuture;
+    }
+
+    private void awaitSeedIfNeeded() {
+        if (seedFuture != null) {
+            try {
+                seedFuture.get();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     @Override
-    public LiveData<Result<List<ExerciseDB>>> searchExerciseCatalog(String query, String bodyPart) {
-        MutableLiveData<Result<List<ExerciseDB>>> liveData = new MutableLiveData<>();
+    public LiveData<Result<List<Exercise>>> searchExerciseCatalog(String query, String bodyPart) {
+        MutableLiveData<Result<List<Exercise>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         String normalizedQuery = query != null ? query.toLowerCase(Locale.getDefault()).trim() : "";
+        
+        // CHIAMATA ALL'API ONLINE (ExerciseDB)
         exerciseCatalogDataSource.searchExercises(
                 normalizedQuery,
                 bodyPart,
                 Constants.EXERCISE_CATALOG_SEARCH_LIMIT,
-                new DataSourceCallback<List<ExerciseDB>>() {
+                new DataSourceCallback<List<Exercise>>() {
                     @Override
-                    public void onSuccess(List<ExerciseDB> data) {
+                    public void onSuccess(List<Exercise> data) {
+                        if (data != null) {
+                            for (Exercise e : data) {
+                                e.syncLists();
+                            }
+                        }
                         liveData.postValue(new Result.Success<>(sortByRelevance(data, normalizedQuery)));
                     }
 
                     @Override
                     public void onError(String message) {
+                        // In caso di errore dell'API, non facciamo fallback sul DB locale 
+                        // per la ricerca del catalogo, per evitare confusione.
                         liveData.postValue(new Result.Error<>(message));
                     }
                 }
@@ -64,35 +101,83 @@ public class TrainingRepository implements ITrainingRepository {
     public LiveData<Result<List<WorkoutRoutine>>> getRoutines(String username) {
         MutableLiveData<Result<List<WorkoutRoutine>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        trainingFirebaseDataSource.fetchRoutines(username, new DataSourceCallback<List<WorkoutRoutine>>() {
-            @Override
-            public void onSuccess(List<WorkoutRoutine> data) {
-                liveData.postValue(new Result.Success<>(data));
-            }
 
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
-            }
-        });
+        // Le routine create devono essere prese esclusivamente dal database locale
+        if (localDao != null) {
+            EXECUTOR.execute(() -> {
+                awaitSeedIfNeeded();
+                liveData.postValue(new Result.Success<>(buildRoutinesFromDb(username)));
+            });
+        } else {
+            liveData.postValue(new Result.Error<>(Constants.ERROR_DATABASE));
+        }
+
         return liveData;
+    }
+
+    private void loadRoutinesFromDb(String username, MutableLiveData<Result<List<WorkoutRoutine>>> liveData) {
+        if (localDao != null) {
+            EXECUTOR.execute(() -> {
+                awaitSeedIfNeeded();
+                liveData.postValue(new Result.Success<>(buildRoutinesFromDb(username)));
+            });
+        } else {
+            liveData.postValue(new Result.Error<>(Constants.ERROR_DATABASE));
+        }
+    }
+
+    private List<WorkoutRoutine> buildRoutinesFromDb(String username) {
+        List<WorkoutRoutine> routines = new ArrayList<>();
+        List<Workout> workouts = localDao.getWorkouts(username);
+        for (Workout workout : workouts) {
+            List<WorkoutExercise> wes = localDao.getWorkoutExercises(workout.getId(), username);
+            List<Exercise> exercises = new ArrayList<>();
+            for (WorkoutExercise we : wes) {
+                Exercise e = localDao.getExercise(we.getExerciseId());
+                if (e != null) exercises.add(e);
+            }
+            String name = workout.getDescription() != null && !workout.getDescription().isEmpty()
+                    ? workout.getDescription() : "Allenamento " + workout.getId();
+            routines.add(new WorkoutRoutine(name, exercises));
+        }
+        return routines;
     }
 
     @Override
     public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String username) {
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        trainingFirebaseDataSource.saveRoutine(routine, username, new DataSourceCallback<Void>() {
-            @Override
-            public void onSuccess(Void data) {
-                liveData.postValue(new Result.Success<>(null));
-            }
+        
+        if (localDao != null) {
+            EXECUTOR.execute(() -> {
+                try {
+                    awaitSeedIfNeeded();
+                    // Crea un nuovo ID per il workout (usa timestamp come fallback)
+                    int workoutId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+                    
+                    // 1. Salva i dettagli degli esercizi scelti per questa routine (presi dall'API ExerciseDB)
+                    // Questi vengono salvati nella tabella Exercise del DB locale
+                    localDao.insertExercises(routine.getExercises());
 
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
-            }
-        });
+                    // 2. Inserisce il Workout nella tabella Workout del DB locale
+                    Workout workout = new Workout(workoutId, System.currentTimeMillis(), routine.getName(), username);
+                    localDao.insertWorkout(workout);
+                    
+                    // 3. Collega gli esercizi al workout nella tabella WorkoutExercise (WorkoutRoutine nel tuo schema)
+                    List<WorkoutExercise> wes = new ArrayList<>();
+                    for (Exercise e : routine.getExercises()) {
+                        wes.add(new WorkoutExercise(0, workoutId, username, e.getId()));
+                    }
+                    localDao.insertWorkoutExercises(wes);
+                    
+                    liveData.postValue(new Result.Success<>(null));
+                } catch (Exception e) {
+                    liveData.postValue(new Result.Error<>(e.getMessage()));
+                }
+            });
+        } else {
+            liveData.postValue(new Result.Error<>(Constants.ERROR_DATABASE));
+        }
         return liveData;
     }
 
@@ -132,7 +217,15 @@ public class TrainingRepository implements ITrainingRepository {
 
             @Override
             public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+                if (localDao != null) {
+                    EXECUTOR.execute(() -> {
+                        awaitSeedIfNeeded();
+                        List<Workout> workouts = localDao.getWorkouts(username);
+                        liveData.postValue(new Result.Success<>(workouts));
+                    });
+                } else {
+                    liveData.postValue(new Result.Error<>(message));
+                }
             }
         });
         return liveData;
@@ -156,7 +249,19 @@ public class TrainingRepository implements ITrainingRepository {
 
             @Override
             public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+                if (localDao != null) {
+                    EXECUTOR.execute(() -> {
+                        awaitSeedIfNeeded();
+                        Workout workout = localDao.getWorkout(workoutId, username);
+                        if (workout != null) {
+                            liveData.postValue(new Result.Success<>(workout));
+                        } else {
+                            liveData.postValue(new Result.Error<>(message));
+                        }
+                    });
+                } else {
+                    liveData.postValue(new Result.Error<>(message));
+                }
             }
         });
         return liveData;
@@ -184,7 +289,14 @@ public class TrainingRepository implements ITrainingRepository {
 
             @Override
             public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+                if (localDao != null) {
+                    EXECUTOR.execute(() -> {
+                        awaitSeedIfNeeded();
+                        liveData.postValue(new Result.Success<>(localDao.getExercises()));
+                    });
+                } else {
+                    liveData.postValue(new Result.Error<>(message));
+                }
             }
         });
         return liveData;
@@ -192,31 +304,8 @@ public class TrainingRepository implements ITrainingRepository {
 
     @Override
     public LiveData<Result<List<Exercise>>> searchExercises(String query) {
-        MutableLiveData<Result<List<Exercise>>> liveData = new MutableLiveData<>();
-        liveData.setValue(new Result.Loading<>());
-        trainingApiDataSource.fetchExercises(new DataSourceCallback<List<Exercise>>() {
-            @Override
-            public void onSuccess(List<Exercise> data) {
-                if (query == null || query.trim().isEmpty()) {
-                    liveData.postValue(new Result.Success<>(data));
-                    return;
-                }
-                String normalizedQuery = query.trim().toLowerCase(Locale.getDefault());
-                List<Exercise> filtered = new ArrayList<>();
-                for (Exercise exercise : data) {
-                    if (exercise.getName().toLowerCase(Locale.getDefault()).contains(normalizedQuery)) {
-                        filtered.add(exercise);
-                    }
-                }
-                liveData.postValue(new Result.Success<>(filtered));
-            }
-
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
-            }
-        });
-        return liveData;
+        // Forza l'uso dell'API esterna ExerciseDB per la ricerca testuale
+        return searchExerciseCatalog(query, null);
     }
 
     @Override
@@ -238,7 +327,16 @@ public class TrainingRepository implements ITrainingRepository {
 
             @Override
             public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+                if (localDao != null) {
+                    EXECUTOR.execute(() -> {
+                        awaitSeedIfNeeded();
+                        liveData.postValue(new Result.Success<>(
+                                localDao.getWorkoutExercises(workoutId, username)
+                        ));
+                    });
+                } else {
+                    liveData.postValue(new Result.Error<>(message));
+                }
             }
         });
         return liveData;
@@ -269,7 +367,16 @@ public class TrainingRepository implements ITrainingRepository {
 
             @Override
             public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+                if (localDao != null) {
+                    EXECUTOR.execute(() -> {
+                        awaitSeedIfNeeded();
+                        liveData.postValue(new Result.Success<>(
+                                localDao.getExerciseSets(workoutId, username, String.valueOf(exerciseId))
+                        ));
+                    });
+                } else {
+                    liveData.postValue(new Result.Error<>(message));
+                }
             }
         });
         return liveData;
@@ -280,11 +387,11 @@ public class TrainingRepository implements ITrainingRepository {
         return RepositorySupport.notSupported();
     }
 
-    private List<ExerciseDB> sortByRelevance(List<ExerciseDB> exercises, String normalizedQuery) {
+    private List<Exercise> sortByRelevance(List<Exercise> exercises, String normalizedQuery) {
         if (exercises == null) {
             return new ArrayList<>();
         }
-        List<ExerciseDB> sorted = new ArrayList<>(exercises);
+        List<Exercise> sorted = new ArrayList<>(exercises);
         if (normalizedQuery.isEmpty()) {
             return sorted;
         }

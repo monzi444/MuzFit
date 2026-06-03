@@ -34,7 +34,7 @@ import java.util.List;
 import com.example.muzfit.R;
 import com.example.muzfit.adapter.ExerciseSearchAdapter;
 import com.example.muzfit.adapter.WorkoutAdapter;
-import com.example.muzfit.model.ExerciseDB;
+import com.example.muzfit.model.Exercise;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.WorkoutRoutine;
 import com.example.muzfit.ui.training.WorkoutSessionActivity;
@@ -72,6 +72,8 @@ public class WorkoutFragment extends Fragment {
 
         adapter = new WorkoutAdapter(requireContext(), routineList);
         routineListView.setAdapter(adapter);
+
+        loadRoutines();
 
         routineListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -132,6 +134,26 @@ public class WorkoutFragment extends Fragment {
         return view;
     }
 
+    private void loadRoutines() {
+        viewModel.getRoutinesForDefaultUser().observe(getViewLifecycleOwner(), result -> {
+            if (!isAdded()) return;
+            if (result.isLoading()) {
+                // Show loading if needed
+                return;
+            }
+            if (result.isError()) {
+                // If it's a "not implemented" error, we don't show a toast every time
+                return;
+            }
+            List<WorkoutRoutine> data = ((Result.Success<List<WorkoutRoutine>>) result).getData();
+            if (data != null) {
+                routineList.clear();
+                routineList.addAll(data);
+                adapter.notifyDataSetChanged();
+            }
+        });
+    }
+
     private void showDeleteConfirmDialog(int position) {
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.delete_confirm_title)
@@ -156,7 +178,7 @@ public class WorkoutFragment extends Fragment {
         TextView tvSelectedExercisesCount = dialogView.findViewById(R.id.tvSelectedExercisesCount);
         ChipGroup cgBodyParts = dialogView.findViewById(R.id.cgBodyParts);
 
-        List<ExerciseDB> selectedExercises = new ArrayList<>();
+        List<Exercise> selectedExercises = new ArrayList<>();
         if (routineToEdit != null) {
             etRoutineName.setText(routineToEdit.getName());
             selectedExercises.addAll(routineToEdit.getExercises());
@@ -164,7 +186,7 @@ public class WorkoutFragment extends Fragment {
             etRoutineName.setText(getNextDefaultWorkoutName());
         }
 
-        List<ExerciseDB> searchResults = new ArrayList<>();
+        List<Exercise> searchResults = new ArrayList<>();
         
         ExerciseSearchAdapter searchAdapter = new ExerciseSearchAdapter(searchResults, exercise -> {
             showExercisePreviewDialog(exercise, () -> {
@@ -216,24 +238,25 @@ public class WorkoutFragment extends Fragment {
             }
             
             WorkoutRoutine newRoutine = new WorkoutRoutine(name, new ArrayList<>(selectedExercises));
-            if (routineToEdit != null) {
-                int index = routineList.indexOf(routineToEdit);
-                if (index != -1) {
-                    routineList.set(index, newRoutine);
+            
+            viewModel.saveRoutineForDefaultUser(newRoutine).observe(getViewLifecycleOwner(), result -> {
+                if (!isAdded()) return;
+                if (result.isLoading()) return;
+                
+                if (result.isSuccess()) {
+                    loadRoutines(); // Ricarica la lista dal database per confermare il salvataggio
+                    Toast.makeText(getContext(), getString(R.string.routine_created_toast), Toast.LENGTH_SHORT).show();
+                } else {
+                    String msg = ((Result.Error<Void>) result).getMessage();
+                    Toast.makeText(getContext(), "Errore salvataggio: " + msg, Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                routineList.add(newRoutine);
-                selectedPosition = routineList.size() - 1;
-                routineListView.setItemChecked(selectedPosition, true);
-            }
-            adapter.notifyDataSetChanged();
-            Toast.makeText(getContext(), getString(R.string.routine_created_toast), Toast.LENGTH_SHORT).show();
+            });
         });
         builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
         builder.show();
     }
 
-    private void showExercisePreviewDialog(ExerciseDB exercise, Runnable onConfirm) {
+    private void showExercisePreviewDialog(Exercise exercise, Runnable onConfirm) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_exercise_preview, null);
         TextView tvPreviewName = dialogView.findViewById(R.id.tvPreviewName);
@@ -256,7 +279,7 @@ public class WorkoutFragment extends Fragment {
         builder.show();
     }
 
-    private void showSelectedExercisesRecap(List<ExerciseDB> selectedExercises, TextView tvCount) {
+    private void showSelectedExercisesRecap(List<Exercise> selectedExercises, TextView tvCount) {
         if (selectedExercises.isEmpty()) return;
 
         String[] names = new String[selectedExercises.size()];
@@ -298,11 +321,12 @@ public class WorkoutFragment extends Fragment {
         return prefix + (maxNum + 1);
     }
 
-    private void searchExercises(String query, List<ExerciseDB> results, ExerciseSearchAdapter adapter) {
+    private void searchExercises(String query, List<Exercise> results, ExerciseSearchAdapter adapter) {
         searchExercises(query, null, results, adapter);
     }
 
-    private void searchExercises(String query, String bodyPart, List<ExerciseDB> results, ExerciseSearchAdapter adapter) {
+    private void searchExercises(String query, String bodyPart, List<Exercise> results, ExerciseSearchAdapter adapter) {
+        // Forza l'uso di searchExerciseCatalog che interroga l'API esterna ExerciseDB
         viewModel.searchExerciseCatalog(query, bodyPart).observe(getViewLifecycleOwner(), result -> {
             if (!isAdded()) {
                 return;
@@ -311,11 +335,11 @@ public class WorkoutFragment extends Fragment {
                 return;
             }
             if (result.isError()) {
-                String message = ((Result.Error<List<ExerciseDB>>) result).getMessage();
+                String message = ((Result.Error<List<Exercise>>) result).getMessage();
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
                 return;
             }
-            List<ExerciseDB> apiData = ((Result.Success<List<ExerciseDB>>) result).getData();
+            List<Exercise> apiData = ((Result.Success<List<Exercise>>) result).getData();
             results.clear();
             if (apiData != null) {
                 results.addAll(apiData);

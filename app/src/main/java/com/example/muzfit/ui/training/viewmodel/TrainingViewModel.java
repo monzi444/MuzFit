@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.muzfit.model.Exercise;
-import com.example.muzfit.model.ExerciseDB;
 import com.example.muzfit.model.ExerciseSet;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.Workout;
@@ -23,7 +22,7 @@ public class TrainingViewModel extends ViewModel {
         this.repository = repository;
     }
 
-    public LiveData<Result<List<ExerciseDB>>> searchExerciseCatalog(String query, String bodyPart) {
+    public LiveData<Result<List<Exercise>>> searchExerciseCatalog(String query, String bodyPart) {
         return repository.searchExerciseCatalog(query, bodyPart);
     }
 

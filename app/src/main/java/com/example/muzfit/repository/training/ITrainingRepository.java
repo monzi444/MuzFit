@@ -3,7 +3,6 @@ package com.example.muzfit.repository.training;
 import androidx.lifecycle.LiveData;
 
 import com.example.muzfit.model.Exercise;
-import com.example.muzfit.model.ExerciseDB;
 import com.example.muzfit.model.ExerciseSet;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.Workout;
@@ -14,7 +13,7 @@ import java.util.List;
 
 public interface ITrainingRepository {
 
-    LiveData<Result<List<ExerciseDB>>> searchExerciseCatalog(String query, String bodyPart);
+    LiveData<Result<List<Exercise>>> searchExerciseCatalog(String query, String bodyPart);
 
     LiveData<Result<List<WorkoutRoutine>>> getRoutines(String username);
 
