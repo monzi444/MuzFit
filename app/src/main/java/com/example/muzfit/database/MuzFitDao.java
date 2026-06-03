@@ -48,6 +48,9 @@ public interface MuzFitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertMeals(List<Meal> meals);
 
+    @Delete
+    void deleteMeal(Meal meal);
+
     @Query("SELECT * FROM UserMeal WHERE username = :username")
     List<UserMeal> getUserMeals(String username);
 

@@ -17,6 +17,8 @@ public interface IDietRepository {
 
     LiveData<Result<Meal>> addMealToCatalog(Meal meal);
 
+    LiveData<Result<Void>> deleteMealFromCatalog(Meal meal);
+
     LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis);
 
     LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal);

@@ -92,6 +92,27 @@ public class DietRepository implements IDietRepository {
     }
 
     @Override
+    public LiveData<Result<Void>> deleteMealFromCatalog(Meal meal) {
+        MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao == null) {
+                    liveData.postValue(new Result.Error<>("Local database is not initialized"));
+                    return;
+                }
+                localDao.deleteMeal(meal);
+                liveData.postValue(new Result.Success<>(null));
+                refreshMealCatalog();
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(errorMessage(e)));
+            }
+        });
+        return liveData;
+    }
+
+    @Override
     public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis) {
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
