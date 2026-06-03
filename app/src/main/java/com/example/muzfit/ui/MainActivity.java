@@ -13,10 +13,11 @@ import com.example.muzfit.R;
 import com.example.muzfit.ui.dashboard.fragment.HomeFragment;
 import com.example.muzfit.ui.diet.fragment.DietFragment;
 import com.example.muzfit.ui.profile.fragment.ProfileFragment;
-import com.example.muzfit.ui.quick.fragment.QuickFragment;
+import com.example.muzfit.ui.quick.QuickOverlayHelper;
 import com.example.muzfit.ui.training.fragment.WorkoutFragment;
 import com.example.muzfit.utils.ServiceLocator;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.compose.ui.platform.ComposeView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,20 +35,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        ComposeView composeView = findViewById(R.id.quick_overlay_compose);
+        QuickOverlayHelper.INSTANCE.init(composeView);
+
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
 
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
+                QuickOverlayHelper.hide();
             } else if (itemId == R.id.nav_diet) {
                 selectedFragment = new DietFragment();
+                QuickOverlayHelper.hide();
             } else if (itemId == R.id.nav_quick) {
-                selectedFragment = new QuickFragment();
+                QuickOverlayHelper.toggle();
+                return false;
             } else if (itemId == R.id.nav_workout) {
                 selectedFragment = new WorkoutFragment();
+                QuickOverlayHelper.hide();
             } else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
+                QuickOverlayHelper.hide();
             }
 
             if (selectedFragment != null) {

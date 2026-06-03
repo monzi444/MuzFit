@@ -26,4 +26,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/quick_overlay_compose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,15 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.devtools.ksp") version "2.1.0-1.0.29" apply false
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.muzfit"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.muzfit"
@@ -34,6 +32,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
@@ -52,6 +53,14 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.4.0")
+
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.activity.compose)
+
     testImplementation(libs.junit)
     testImplementation("androidx.room:room-testing:2.8.4")
     androidTestImplementation(libs.ext.junit)
