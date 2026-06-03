@@ -11,6 +11,8 @@
     <string name="food_search_confirm_message">%1$s\n%2$s</string>
     <string name="food_search_confirm_add">Aggiungi</string>
     <string name="food_name_required_toast">Inserisci nome e calorie</string>
+    <string name="food_category_label">Pasto</string>
+    <string name="food_logged_toast">Pasto aggiunto!</string>
     <string name="delete_food">Delete</string>
     <string name="workout_page_title">Workout</string>
     <string name="saved_routines_label">Saved routines</string>

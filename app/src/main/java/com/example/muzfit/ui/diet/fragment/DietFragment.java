@@ -36,7 +36,6 @@ import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.UserMeal;
-import com.example.muzfit.R;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.service.dto.openfoodfacts.OpenFoodFactsMapper;
@@ -65,6 +64,10 @@ public class DietFragment extends Fragment {
     private int calorieGoal = 0;
     private float caloriesAssumed = 0;
     private List<UserMeal> lastUserMeals = new ArrayList<>();
+    @Nullable
+    private AlertDialog chooseMealDialog;
+    @Nullable
+    private AlertDialog addFoodDialog;
 
     @Nullable
     @Override
@@ -282,31 +285,31 @@ public class DietFragment extends Fragment {
     }
 
     private void showChooseMealDialog() {
-        Map<Integer, Meal> catalog = viewModel.getMealsById().getValue();
         List<Meal> availableMeals = new ArrayList<>();
         availableMeals.add(new Meal(0, "Mela", 95, 25, 1, 0));
         availableMeals.add(new Meal(0, "Pasta al pomodoro", 350, 70, 10, 5));
         availableMeals.add(new Meal(0, "Petto di Pollo", 165, 0, 31, 4));
-        
+
         Map<Integer, Meal> catalog = viewModel.getMealsById().getValue();
         if (catalog != null) {
             availableMeals.addAll(catalog.values());
         }
 
-        String[] mealNames = new String[availableMeals.size()];
-        for (int i = 0; i < availableMeals.size(); i++) mealNames[i] = String.format(Locale.getDefault(), "%s (%.0f kcal)", availableMeals.get(i).getFoodName(), availableMeals.get(i).getCalories());
-        
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Scegli un pasto rapido");
 
         ListView listView = new ListView(requireContext());
 
         // We create the dialog first so we can dismiss it from inside the adapter
-        AlertDialog dialog = builder
+        chooseMealDialog = builder
                 .setView(listView)
-                .setPositiveButton("Add food", (d, id) -> showAddFoodDialog())
-                .setNegativeButton("Annulla", (d, id) -> d.cancel())
+                .setPositiveButton("Add food", (d, id) -> {
+                    dismissChooseMealDialog();
+                    showAddFoodDialog();
+                })
+                .setNegativeButton("Annulla", (d, id) -> dismissChooseMealDialog())
                 .create();
+        AlertDialog dialog = chooseMealDialog;
 
         ArrayAdapter<Meal> adapter = new ArrayAdapter<Meal>(requireContext(), R.layout.list_item_food, availableMeals) {
             @NonNull
@@ -348,30 +351,38 @@ public class DietFragment extends Fragment {
     }
 
     private void showCategorySelectionDialog(Meal template) {
+        showCategorySelectionDialog(template, false);
+    }
+
+    private void showCategorySelectionDialog(Meal template, boolean backToAddFood) {
+        dismissAddFoodDialog();
+
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food, null);
         dialogView.findViewById(R.id.editTextFoodName).setVisibility(View.GONE);
         dialogView.findViewById(R.id.editTextCalories).setVisibility(View.GONE);
         dialogView.findViewById(R.id.editTextCarbs).setVisibility(View.GONE);
         dialogView.findViewById(R.id.editTextProtein).setVisibility(View.GONE);
         dialogView.findViewById(R.id.editTextFat).setVisibility(View.GONE);
-        
+
         Spinner spinner = dialogView.findViewById(R.id.spinnerCategory);
         spinner.setVisibility(View.VISIBLE);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new String[]{"Colazione", "Pranzo", "Cena"});
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        setupMealCategorySpinner(spinner);
 
-        new AlertDialog.Builder(requireContext()).setTitle("Seleziona categoria")
-            .setView(dialogView)
-            .setPositiveButton("Aggiungi", (dialog, id) -> {
-                MealCategory category = spinner.getSelectedItemPosition() == 0 ? MealCategory.COLAZIONE : (spinner.getSelectedItemPosition() == 1 ? MealCategory.PRANZO : MealCategory.CENA);
-                viewModel.logMealForSelectedDay(template, category).observe(getViewLifecycleOwner(), result -> {
-                    if (result.isError()) {
-                        Toast.makeText(requireContext(), "Errore nell'aggiunta del pasto", Toast.LENGTH_SHORT).show();
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Seleziona categoria")
+                .setView(dialogView)
+                .setPositiveButton("Aggiungi", (dialog, id) -> {
+                    MealCategory category = categoryFromSpinner(spinner);
+                    logMealAndCloseDialogs(template, category);
+                })
+                .setNegativeButton("Indietro", (dialog, id) -> {
+                    if (backToAddFood) {
+                        showAddFoodDialog();
+                    } else {
+                        showChooseMealDialog();
                     }
-                });
-            })
-            .setNegativeButton("Indietro", (dialog, id) -> showChooseMealDialog()).create().show();
+                })
+                .show();
     }
 
     private void showAddFoodDialog() {
@@ -386,7 +397,7 @@ public class DietFragment extends Fragment {
 
         List<Meal> searchResults = new ArrayList<>();
         FoodSearchAdapter searchAdapter = new FoodSearchAdapter(searchResults, meal ->
-                showFoodConfirmDialog(meal, () -> addMealToCatalogAndReturn(meal)));
+                showFoodConfirmDialog(meal, () -> showCategorySelectionDialog(meal, true)));
         rvFoodResults.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvFoodResults.setAdapter(searchAdapter);
 
@@ -411,13 +422,15 @@ public class DietFragment extends Fragment {
             }
         });
 
-        new AlertDialog.Builder(requireContext())
+        addFoodDialog = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.add_food_search_title)
                 .setView(dialogView)
-                .setPositiveButton(R.string.save, (dialog, id) -> saveManualFood(nameEt, calEt, carbEt, protEt, fatEt))
-                .setNegativeButton(R.string.cancel, (dialog, id) -> showChooseMealDialog())
-                .create()
-                .show();
+                .setPositiveButton(R.string.save, (dialog, id) ->
+                        saveManualFood(nameEt, calEt, carbEt, protEt, fatEt))
+                .setNegativeButton(R.string.cancel, (dialog, id) -> dismissAddFoodDialog())
+                .create();
+        addFoodDialog.setOnDismissListener(d -> addFoodDialog = null);
+        addFoodDialog.show();
     }
 
     private void searchFoods(String query, List<Meal> results, FoodSearchAdapter adapter) {
@@ -445,7 +458,7 @@ public class DietFragment extends Fragment {
     }
 
     private void showFoodConfirmDialog(Meal meal, Runnable onConfirm) {
-        new AlertDialog.Builder(requireContext())
+        AlertDialog confirmDialog = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.food_search_confirm_title)
                 .setMessage(getString(
                         R.string.food_search_confirm_message,
@@ -454,11 +467,53 @@ public class DietFragment extends Fragment {
                 ))
                 .setPositiveButton(R.string.food_search_confirm_add, (dialog, which) -> onConfirm.run())
                 .setNegativeButton(R.string.cancel, null)
-                .show();
+                .create();
+        confirmDialog.show();
     }
 
-    private void addMealToCatalogAndReturn(Meal meal) {
-        viewModel.addMealToCatalog(meal).observe(getViewLifecycleOwner(), result -> {
+    private void setupMealCategorySpinner(Spinner spinner) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                new String[]{"Colazione", "Pranzo", "Cena"}
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private static MealCategory categoryFromSpinner(Spinner spinner) {
+        int position = spinner.getSelectedItemPosition();
+        if (position == 1) {
+            return MealCategory.PRANZO;
+        }
+        if (position == 2) {
+            return MealCategory.CENA;
+        }
+        return MealCategory.COLAZIONE;
+    }
+
+    private void dismissChooseMealDialog() {
+        if (chooseMealDialog != null && chooseMealDialog.isShowing()) {
+            chooseMealDialog.dismiss();
+        }
+        chooseMealDialog = null;
+    }
+
+    private void dismissAddFoodDialog() {
+        if (addFoodDialog != null && addFoodDialog.isShowing()) {
+            addFoodDialog.dismiss();
+        }
+        addFoodDialog = null;
+    }
+
+    private void dismissAllMealDialogs() {
+        dismissAddFoodDialog();
+        dismissChooseMealDialog();
+    }
+
+    private void logMealAndCloseDialogs(Meal meal, MealCategory category) {
+        dismissAllMealDialogs();
+        viewModel.logMealForSelectedDay(meal, category).observe(getViewLifecycleOwner(), result -> {
             if (!isAdded()) {
                 return;
             }
@@ -470,8 +525,8 @@ public class DietFragment extends Fragment {
                 ).show();
                 return;
             }
-            Toast.makeText(requireContext(), R.string.food_added_toast, Toast.LENGTH_SHORT).show();
-            showChooseMealDialog();
+            viewModel.getMealCatalog();
+            Toast.makeText(requireContext(), R.string.food_logged_toast, Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -490,7 +545,7 @@ public class DietFragment extends Fragment {
                 parseOptionalFloat(protEt),
                 parseOptionalFloat(fatEt)
         );
-        addMealToCatalogAndReturn(meal);
+        showCategorySelectionDialog(meal, true);
     }
 
     private static float parseOptionalFloat(EditText editText) {
