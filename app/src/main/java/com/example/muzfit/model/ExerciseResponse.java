@@ -8,13 +8,13 @@ public class ExerciseResponse {
     private boolean success;
     
     @SerializedName("data")
-    private List<ExerciseDB> data;
+    private List<Exercise> data;
 
     public boolean isSuccess() {
         return success;
     }
 
-    public List<ExerciseDB> getData() {
+    public List<Exercise> getData() {
         return data;
     }
 }

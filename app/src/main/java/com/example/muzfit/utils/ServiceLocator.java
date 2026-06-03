@@ -86,9 +86,17 @@ public final class ServiceLocator {
                         ((DashboardRepository) dashboardRepository).setLocalDatabase(database);
                         ((DashboardRepository) dashboardRepository).setSeedFuture(seedFuture);
                     }
+                    if (dietRepository instanceof DietRepository) {
+                        ((DietRepository) dietRepository).setLocalDatabase(database);
+                        ((DietRepository) dietRepository).setSeedFuture(seedFuture);
+                    }
                     if (profileRepository instanceof ProfileRepository) {
                         ((ProfileRepository) profileRepository).setLocalDatabase(database);
                         ((ProfileRepository) profileRepository).setSeedFuture(seedFuture);
+                    }
+                    if (trainingRepository instanceof TrainingRepository) {
+                        ((TrainingRepository) trainingRepository).setLocalDatabase(database);
+                        ((TrainingRepository) trainingRepository).setSeedFuture(seedFuture);
                     }
                 }
             }
@@ -139,8 +147,12 @@ public final class ServiceLocator {
     }
 
     private static ExerciseApiService createExerciseApiService() {
+        // Aggiungiamo il logging o un client semplice per debuggare l'API esterna
+        OkHttpClient client = new OkHttpClient.Builder().build();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.EXERCISE_DB_BASE_URL)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

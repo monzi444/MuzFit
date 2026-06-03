@@ -20,7 +20,7 @@ import java.util.Locale;
 
 import com.example.muzfit.R;
 import com.example.muzfit.model.WorkoutRoutine;
-import com.example.muzfit.model.ExerciseDB;
+import com.example.muzfit.model.Exercise;
 
 public class WorkoutSessionActivity extends AppCompatActivity {
 
@@ -73,7 +73,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
             return;
         }
 
-        ExerciseDB exercise = routine.getExercises().get(index);
+        Exercise exercise = routine.getExercises().get(index);
         tvExerciseName.setText(exercise.getName());
         
         StringBuilder instr = new StringBuilder();
@@ -113,7 +113,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         etReps.setText("3");
 
         // Hide weight field if it's body weight
-        ExerciseDB exercise = routine.getExercises().get(currentExerciseIndex);
+        Exercise exercise = routine.getExercises().get(currentExerciseIndex);
         if ("body weight".equalsIgnoreCase(exercise.getEquipment())) {
             etWeight.setVisibility(View.GONE);
         } else {

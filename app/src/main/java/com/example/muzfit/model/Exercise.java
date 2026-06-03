@@ -16,20 +16,32 @@ public class Exercise implements Serializable {
 
     @PrimaryKey
     @NonNull
-    @SerializedName("exerciseId")
+    @SerializedName(value = "exerciseId", alternate = {"id"})
     private String id = "";
 
     @SerializedName("name")
     private String name = "";
 
+    @SerializedName("bodyPart")
+    @Ignore
+    private String bodyPart;
+
     @SerializedName("bodyParts")
     private List<String> bodyParts = new ArrayList<>();
+
+    @SerializedName("equipment")
+    @Ignore
+    private String equipment;
 
     @SerializedName("equipments")
     private List<String> equipments = new ArrayList<>();
 
     @SerializedName("gifUrl")
     private String gifUrl = "";
+
+    @SerializedName("target")
+    @Ignore
+    private String target;
 
     @SerializedName("targetMuscles")
     private List<String> targetMuscles = new ArrayList<>();
@@ -61,6 +73,19 @@ public class Exercise implements Serializable {
         this.targetMuscles = targetMuscles != null ? targetMuscles : new ArrayList<>();
         this.secondaryMuscles = secondaryMuscles != null ? secondaryMuscles : new ArrayList<>();
         this.instructions = instructions != null ? instructions : new ArrayList<>();
+    }
+
+    @Ignore
+    public void syncLists() {
+        if (bodyPart != null && !bodyPart.isEmpty() && bodyParts.isEmpty()) {
+            bodyParts.add(bodyPart);
+        }
+        if (equipment != null && !equipment.isEmpty() && equipments.isEmpty()) {
+            equipments.add(equipment);
+        }
+        if (target != null && !target.isEmpty() && targetMuscles.isEmpty()) {
+            targetMuscles.add(target);
+        }
     }
 
     @NonNull
@@ -155,16 +180,19 @@ public class Exercise implements Serializable {
 
     @Ignore
     public String getBodyPart() {
+        if (bodyPart != null && !bodyPart.isEmpty()) return bodyPart;
         return firstOrFallback(bodyParts);
     }
 
     @Ignore
     public String getEquipment() {
+        if (equipment != null && !equipment.isEmpty()) return equipment;
         return firstOrFallback(equipments);
     }
 
     @Ignore
     public String getTarget() {
+        if (target != null && !target.isEmpty()) return target;
         return firstOrFallback(targetMuscles);
     }
 
