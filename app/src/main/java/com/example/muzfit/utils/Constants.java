@@ -7,6 +7,20 @@ public final class Constants {
     public static final String API_KEY = "an3WkP5TFacbU7A1ekw9DoEp";
     public static final String EXERCISE_DB_BASE_URL = "https://oss.exercisedb.dev/api/v1/";
     public static final int EXERCISE_CATALOG_SEARCH_LIMIT = 50;
+
+    public static final String OPEN_FOOD_FACTS_BASE_URL = "https://world.openfoodfacts.org/";
+    public static final String OFF_SEARCH_PATH = "cgi/search.pl";
+    public static final String OFF_QUERY_SEARCH_TERMS = "search_terms";
+    public static final String OFF_QUERY_SEARCH_SIMPLE = "search_simple";
+    public static final String OFF_QUERY_ACTION = "action";
+    public static final String OFF_QUERY_JSON = "json";
+    public static final String OFF_QUERY_PAGE_SIZE = "page_size";
+    public static final String OFF_SEARCH_ACTION_PROCESS = "process";
+    public static final int OFF_SEARCH_SIMPLE = 1;
+    public static final int OFF_SEARCH_JSON = 1;
+    public static final int OFF_FOOD_SEARCH_LIMIT = 20;
+    public static final int OFF_FOOD_SEARCH_MIN_QUERY_LENGTH = 3;
+    public static final String OFF_USER_AGENT = "MuzFit/1.0 (Android; fitness app)";
     public static final String DEFAULT_USERNAME = "bruno.moretti";
 
     public static final String PATH_UTENTE = "utente";
@@ -27,6 +41,8 @@ public final class Constants {
     public static final String PATH_PESO_SINGLE = "peso/single";
 
     public static final String ERROR_NETWORK = "Network request failed";
+    public static final String ERROR_FOOD_SEARCH = "Food search failed";
+    public static final String ERROR_FOOD_SEARCH_NO_RESULTS = "No foods found";
     public static final String ERROR_NOT_SUPPORTED = "Operation not supported by the API";
     public static final String ERROR_USER_NOT_FOUND = "User not found";
     public static final String ERROR_WORKOUT_NOT_FOUND = "Workout not found";

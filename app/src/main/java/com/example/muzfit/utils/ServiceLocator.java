@@ -17,6 +17,8 @@ import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
 import com.example.muzfit.service.ExerciseApiService;
 import com.example.muzfit.service.MuzFitApiService;
+import com.example.muzfit.service.OpenFoodFactsApiService;
+import com.example.muzfit.source.diet.openfoodfacts.OpenFoodFactsApiDataSource;
 import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
 import com.example.muzfit.source.training.catalog.ExerciseCatalogApiDataSource;
@@ -47,7 +49,8 @@ public final class ServiceLocator {
     private ServiceLocator() {
         muzFitApiService = createMuzFitApiService();
         ExerciseApiService exerciseApiService = createExerciseApiService();
-        dietRepository = new DietRepository();
+        OpenFoodFactsApiService openFoodFactsApiService = createOpenFoodFactsApiService();
+        dietRepository = new DietRepository(new OpenFoodFactsApiDataSource(openFoodFactsApiService));
         trainingRepository = new TrainingRepository(
                 new TrainingApiDataSource(muzFitApiService),
                 new ExerciseCatalogApiDataSource(exerciseApiService),
@@ -148,5 +151,24 @@ public final class ServiceLocator {
                 .build();
 
         return retrofit.create(ExerciseApiService.class);
+    }
+
+    private static OpenFoodFactsApiService createOpenFoodFactsApiService() {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    Request request = chain.request().newBuilder()
+                            .header("User-Agent", Constants.OFF_USER_AGENT)
+                            .build();
+                    return chain.proceed(request);
+                })
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.OPEN_FOOD_FACTS_BASE_URL)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        return retrofit.create(OpenFoodFactsApiService.class);
     }
 }

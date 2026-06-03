@@ -4,6 +4,13 @@
     <string name="diet_page_title">Diet Page</string>
     <string name="add_food_button">Add Food</string>
     <string name="food_added_toast">Food added!</string>
+    <string name="add_food_search_title">Cerca cibo</string>
+    <string name="add_food_search_hint">es. pasta, mela, yogurt…</string>
+    <string name="add_food_manual_section">Oppure inserisci manualmente</string>
+    <string name="food_search_confirm_title">Aggiungere questo cibo?</string>
+    <string name="food_search_confirm_message">%1$s\n%2$s</string>
+    <string name="food_search_confirm_add">Aggiungi</string>
+    <string name="food_name_required_toast">Inserisci nome e calorie</string>
     <string name="delete_food">Delete</string>
     <string name="workout_page_title">Workout</string>
     <string name="saved_routines_label">Saved routines</string>

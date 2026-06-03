@@ -82,4 +82,8 @@ public class DietViewModel extends ViewModel {
     public LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal) {
         return repository.deleteLoggedMeal(userMeal);
     }
+
+    public LiveData<Result<List<Meal>>> searchFoods(String query) {
+        return repository.searchFoods(query);
+    }
 }

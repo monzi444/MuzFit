@@ -9,6 +9,8 @@ import com.example.muzfit.model.Meal;
 import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.UserMeal;
+import com.example.muzfit.source.common.DataSourceCallback;
+import com.example.muzfit.source.diet.openfoodfacts.BaseOpenFoodFactsDataSource;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.DateParser;
 
@@ -23,6 +25,7 @@ public class DietRepository implements IDietRepository {
 
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
+    private final BaseOpenFoodFactsDataSource openFoodFactsDataSource;
     private MuzFitDao localDao;
     private Future<?> seedFuture;
     private final MutableLiveData<Result<List<UserMeal>>> userMealsForDayLiveData = new MutableLiveData<>();
@@ -30,7 +33,8 @@ public class DietRepository implements IDietRepository {
     private String observedUsername;
     private long observedDateMillis;
 
-    public DietRepository() {
+    public DietRepository(BaseOpenFoodFactsDataSource openFoodFactsDataSource) {
+        this.openFoodFactsDataSource = openFoodFactsDataSource;
     }
 
     public void setLocalDatabase(MuzFitDatabase database) {
@@ -111,6 +115,28 @@ public class DietRepository implements IDietRepository {
                 liveData.postValue(new Result.Error<>(errorMessage(e)));
             }
         });
+        return liveData;
+    }
+
+    @Override
+    public LiveData<Result<List<Meal>>> searchFoods(String query) {
+        MutableLiveData<Result<List<Meal>>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        openFoodFactsDataSource.searchFoods(
+                query,
+                Constants.OFF_FOOD_SEARCH_LIMIT,
+                new DataSourceCallback<List<Meal>>() {
+                    @Override
+                    public void onSuccess(List<Meal> data) {
+                        liveData.postValue(new Result.Success<>(data));
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        liveData.postValue(new Result.Error<>(message));
+                    }
+                }
+        );
         return liveData;
     }
 

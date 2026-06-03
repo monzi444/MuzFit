@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/etSearchFood"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/add_food_search_hint"
+            android:inputType="text"
+            android:imeOptions="actionSearch" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvFoodResults"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="true" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/add_food_manual_section"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/editTextFoodName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Nome Cibo"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/editTextCalories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Calorie"
+            android:inputType="numberDecimal" />
+
+        <EditText
+            android:id="@+id/editTextCarbs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Carboidrati (g)"
+            android:inputType="numberDecimal" />
+
+        <EditText
+            android:id="@+id/editTextProtein"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Proteine (g)"
+            android:inputType="numberDecimal" />
+
+        <EditText
+            android:id="@+id/editTextFat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Grassi (g)"
+            android:inputType="numberDecimal" />
+
+    </LinearLayout>
+</ScrollView>

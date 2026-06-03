@@ -3,6 +3,8 @@ package com.example.muzfit.ui.diet.fragment;
 import android.app.AlertDialog;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,18 +25,24 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.muzfit.R;
+import com.example.muzfit.adapter.FoodSearchAdapter;
 import com.example.muzfit.model.Meal;
 import com.example.muzfit.model.MealCategory;
+import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.UserMeal;
-import com.example.muzfit.R;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
+import com.example.muzfit.service.dto.openfoodfacts.OpenFoodFactsMapper;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
+import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.ServiceLocator;
 
 import java.util.ArrayList;
@@ -317,24 +325,129 @@ public class DietFragment extends Fragment {
     }
 
     private void showAddFoodDialog() {
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food, null);
-        dialogView.findViewById(R.id.spinnerCategory).setVisibility(View.GONE);
-        if (dialogView instanceof LinearLayout) {
-            LinearLayout layout = (LinearLayout) dialogView;
-            for (int i = 0; i < layout.getChildCount(); i++) {
-                View child = layout.getChildAt(i);
-                if (child instanceof TextView && ((TextView) child).getText().toString().equals("Categoria")) child.setVisibility(View.GONE);
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food_search, null);
+        EditText etSearchFood = dialogView.findViewById(R.id.etSearchFood);
+        RecyclerView rvFoodResults = dialogView.findViewById(R.id.rvFoodResults);
+        EditText nameEt = dialogView.findViewById(R.id.editTextFoodName);
+        EditText calEt = dialogView.findViewById(R.id.editTextCalories);
+        EditText carbEt = dialogView.findViewById(R.id.editTextCarbs);
+        EditText protEt = dialogView.findViewById(R.id.editTextProtein);
+        EditText fatEt = dialogView.findViewById(R.id.editTextFat);
+
+        List<Meal> searchResults = new ArrayList<>();
+        FoodSearchAdapter searchAdapter = new FoodSearchAdapter(searchResults, meal ->
+                showFoodConfirmDialog(meal, () -> addMealToCatalogAndReturn(meal)));
+        rvFoodResults.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvFoodResults.setAdapter(searchAdapter);
+
+        etSearchFood.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
-        }
-        EditText nameEt = dialogView.findViewById(R.id.editTextFoodName), calEt = dialogView.findViewById(R.id.editTextCalories), carbEt = dialogView.findViewById(R.id.editTextCarbs), protEt = dialogView.findViewById(R.id.editTextProtein), fatEt = dialogView.findViewById(R.id.editTextFat);
-        new AlertDialog.Builder(requireContext()).setTitle("Crea nuovo cibo").setView(dialogView)
-            .setPositiveButton("Salva", (dialog, id) -> {
-                String name = nameEt.getText().toString(), calS = calEt.getText().toString();
-                if (!name.isEmpty() && !calS.isEmpty()) {
-                    viewModel.addMealToCatalog(new Meal(0, name, Float.parseFloat(calS), carbEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(carbEt.getText().toString()), protEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(protEt.getText().toString()), fatEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(fatEt.getText().toString())));
-                    showChooseMealDialog();
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s.toString().trim();
+                if (query.length() >= Constants.OFF_FOOD_SEARCH_MIN_QUERY_LENGTH) {
+                    searchFoods(query, searchResults, searchAdapter);
+                } else {
+                    searchResults.clear();
+                    searchAdapter.notifyDataSetChanged();
                 }
-            })
-            .setNegativeButton("Annulla", (dialog, id) -> showChooseMealDialog()).create().show();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.add_food_search_title)
+                .setView(dialogView)
+                .setPositiveButton(R.string.save, (dialog, id) -> saveManualFood(nameEt, calEt, carbEt, protEt, fatEt))
+                .setNegativeButton(R.string.cancel, (dialog, id) -> showChooseMealDialog())
+                .create()
+                .show();
+    }
+
+    private void searchFoods(String query, List<Meal> results, FoodSearchAdapter adapter) {
+        viewModel.searchFoods(query).observe(getViewLifecycleOwner(), result -> {
+            if (!isAdded()) {
+                return;
+            }
+            if (result.isLoading()) {
+                return;
+            }
+            if (result.isError()) {
+                String message = ((Result.Error<List<Meal>>) result).getMessage();
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                results.clear();
+                adapter.notifyDataSetChanged();
+                return;
+            }
+            List<Meal> apiData = ((Result.Success<List<Meal>>) result).getData();
+            results.clear();
+            if (apiData != null) {
+                results.addAll(apiData);
+            }
+            adapter.notifyDataSetChanged();
+        });
+    }
+
+    private void showFoodConfirmDialog(Meal meal, Runnable onConfirm) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.food_search_confirm_title)
+                .setMessage(getString(
+                        R.string.food_search_confirm_message,
+                        meal.getFoodName(),
+                        OpenFoodFactsMapper.formatSearchSubtitle(meal)
+                ))
+                .setPositiveButton(R.string.food_search_confirm_add, (dialog, which) -> onConfirm.run())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void addMealToCatalogAndReturn(Meal meal) {
+        viewModel.addMealToCatalog(meal).observe(getViewLifecycleOwner(), result -> {
+            if (!isAdded()) {
+                return;
+            }
+            if (result.isError()) {
+                Toast.makeText(
+                        requireContext(),
+                        ((Result.Error<?>) result).getMessage(),
+                        Toast.LENGTH_SHORT
+                ).show();
+                return;
+            }
+            Toast.makeText(requireContext(), R.string.food_added_toast, Toast.LENGTH_SHORT).show();
+            showChooseMealDialog();
+        });
+    }
+
+    private void saveManualFood(EditText nameEt, EditText calEt, EditText carbEt, EditText protEt, EditText fatEt) {
+        String name = nameEt.getText().toString().trim();
+        String calS = calEt.getText().toString().trim();
+        if (name.isEmpty() || calS.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.food_name_required_toast, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Meal meal = new Meal(
+                0,
+                name,
+                Float.parseFloat(calS),
+                parseOptionalFloat(carbEt),
+                parseOptionalFloat(protEt),
+                parseOptionalFloat(fatEt)
+        );
+        addMealToCatalogAndReturn(meal);
+    }
+
+    private static float parseOptionalFloat(EditText editText) {
+        String value = editText.getText().toString().trim();
+        if (value.isEmpty()) {
+            return 0f;
+        }
+        return Float.parseFloat(value);
     }
 }

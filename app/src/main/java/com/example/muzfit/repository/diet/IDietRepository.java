@@ -20,4 +20,6 @@ public interface IDietRepository {
     LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis);
 
     LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal);
+
+    LiveData<Result<List<Meal>>> searchFoods(String query);
 }
