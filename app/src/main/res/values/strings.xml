@@ -57,7 +57,7 @@
     <string name="profile_macro_carbs">Carbo\n%1$.0f g</string>
     <string name="profile_macro_protein">Proteine\n%1$.0f g</string>
     <string name="profile_macro_fat">Grassi\n%1$.0f g</string>
-    <string name="profile_username_display">@%1$s</string>
+    <string name="profile_username_display">%1$s</string>
     <string name="profile_update_success">Profilo aggiornato</string>
     <string name="profile_goals_update_success">Obiettivi aggiornati</string>
     <string name="profile_stat_placeholder">--</string>

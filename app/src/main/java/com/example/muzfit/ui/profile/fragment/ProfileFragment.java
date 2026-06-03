@@ -131,7 +131,7 @@ public class ProfileFragment extends Fragment {
             if (email != null && !email.isEmpty()) {
                 tvEmailUtente.setText(email);
             } else if (currentUser != null) {
-                tvEmailUtente.setText(getString(R.string.profile_username_display, currentUser.getUsername()));
+                tvEmailUtente.setText(formatUsernameHandle(currentUser.getUsername()));
             }
         });
     }
@@ -143,7 +143,7 @@ public class ProfileFragment extends Fragment {
         tvNomeUtente.setText(user.getName());
         if (tvEmailUtente.getText().toString().isEmpty()
                 || tvEmailUtente.getText().toString().equals("utente@example.com")) {
-            tvEmailUtente.setText(getString(R.string.profile_username_display, user.getUsername()));
+            tvEmailUtente.setText(formatUsernameHandle(user.getUsername()));
         }
         tvPeso.setText(getString(R.string.profile_weight_format, user.getWeight()));
         tvAltezza.setText(getString(R.string.profile_height_format, user.getHeight()));
@@ -344,5 +344,9 @@ public class ProfileFragment extends Fragment {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    private String formatUsernameHandle(String username) {
+        return getString(R.string.profile_username_display, "@" + username);
     }
 }
