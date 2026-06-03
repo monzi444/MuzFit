@@ -27,6 +27,9 @@ public final class MuzFitDatabaseSeeder {
     public static Future<?> seedBrunoMoretti(MuzFitDatabase database) {
         return EXECUTOR.submit(() -> {
             MuzFitDao dao = database.muzFitDao();
+            if (dao.getUser(Constants.DEFAULT_USERNAME) != null) {
+                return;
+            }
             clearDatedSeedData(dao);
             seedUser(dao);
             seedMeals(dao);
