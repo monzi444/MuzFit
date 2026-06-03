@@ -70,6 +70,10 @@ public class DietViewModel extends ViewModel {
         return repository.addMealToCatalog(meal);
     }
 
+    public LiveData<Result<Void>> deleteMealFromCatalog(Meal meal) {
+        return repository.deleteMealFromCatalog(meal);
+    }
+
     public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis) {
         return repository.logMeal(meal, category, username, dateMillis);
     }

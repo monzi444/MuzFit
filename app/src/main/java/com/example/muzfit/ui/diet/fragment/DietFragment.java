@@ -16,6 +16,7 @@ import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +36,7 @@ import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.UserMeal;
+import com.example.muzfit.R;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.service.dto.openfoodfacts.OpenFoodFactsMapper;
@@ -199,7 +201,9 @@ public class DietFragment extends Fragment {
                 nameTv.setText(String.format(Locale.getDefault(), "%s (%.0f kcal)", meal.getFoodName(), meal.getCalories()));
                 deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal)
                         .observe(getViewLifecycleOwner(), result -> {
-                            if (result.isError()) {
+                            if (result.isSuccess()) {
+                                Toast.makeText(requireContext(), "Togliere il cibo dal pasto!", Toast.LENGTH_SHORT).show();
+                            } else if (result.isError()) {
                                 Toast.makeText(
                                         requireContext(),
                                         ((com.example.muzfit.model.Result.Error<?>) result).getMessage(),
@@ -278,6 +282,7 @@ public class DietFragment extends Fragment {
     }
 
     private void showChooseMealDialog() {
+        Map<Integer, Meal> catalog = viewModel.getMealsById().getValue();
         List<Meal> availableMeals = new ArrayList<>();
         availableMeals.add(new Meal(0, "Mela", 95, 25, 1, 0));
         availableMeals.add(new Meal(0, "Pasta al pomodoro", 350, 70, 10, 5));
@@ -285,20 +290,61 @@ public class DietFragment extends Fragment {
         
         Map<Integer, Meal> catalog = viewModel.getMealsById().getValue();
         if (catalog != null) {
-            for (Meal catalogMeal : catalog.values()) {
-                if (catalogMeal.getId() > 6) {
-                    availableMeals.add(catalogMeal);
-                }
-            }
+            availableMeals.addAll(catalog.values());
         }
 
         String[] mealNames = new String[availableMeals.size()];
         for (int i = 0; i < availableMeals.size(); i++) mealNames[i] = String.format(Locale.getDefault(), "%s (%.0f kcal)", availableMeals.get(i).getFoodName(), availableMeals.get(i).getCalories());
         
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Scegli un pasto rapido").setItems(mealNames, (dialog, which) -> showCategorySelectionDialog(availableMeals.get(which)))
-               .setPositiveButton("Add food", (dialog, id) -> showAddFoodDialog())
-               .setNegativeButton("Annulla", (dialog, id) -> dialog.cancel()).create().show();
+        builder.setTitle("Scegli un pasto rapido");
+
+        ListView listView = new ListView(requireContext());
+
+        // We create the dialog first so we can dismiss it from inside the adapter
+        AlertDialog dialog = builder
+                .setView(listView)
+                .setPositiveButton("Add food", (d, id) -> showAddFoodDialog())
+                .setNegativeButton("Annulla", (d, id) -> d.cancel())
+                .create();
+
+        ArrayAdapter<Meal> adapter = new ArrayAdapter<Meal>(requireContext(), R.layout.list_item_food, availableMeals) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                if (convertView == null) {
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_food, parent, false);
+                }
+                Meal meal = getItem(position);
+                TextView nameTv = convertView.findViewById(R.id.foodNameTextView);
+                ImageButton deleteBtn = convertView.findViewById(R.id.deleteFoodButton);
+
+                if (meal != null) {
+                    nameTv.setText(String.format(Locale.getDefault(), "%s (%.0f kcal)", meal.getFoodName(), meal.getCalories()));
+                    deleteBtn.setOnClickListener(v -> {
+                        viewModel.deleteMealFromCatalog(meal).observe(getViewLifecycleOwner(), result -> {
+                            if (result.isSuccess()) {
+                                remove(meal);
+                                notifyDataSetChanged();
+                                Toast.makeText(getContext(), "Togliere il cibo dal pasto!", Toast.LENGTH_SHORT).show();
+                            } else if (result.isError()) {
+                                Toast.makeText(getContext(), "Togliere il cibo dal pasto!", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    });
+
+                    // Set click listener on the whole row to select the meal
+                    convertView.setOnClickListener(v -> {
+                        dialog.dismiss();
+                        showCategorySelectionDialog(meal);
+                    });
+                }
+                return convertView;
+            }
+        };
+
+        listView.setAdapter(adapter);
+        dialog.show();
     }
 
     private void showCategorySelectionDialog(Meal template) {
@@ -319,7 +365,11 @@ public class DietFragment extends Fragment {
             .setView(dialogView)
             .setPositiveButton("Aggiungi", (dialog, id) -> {
                 MealCategory category = spinner.getSelectedItemPosition() == 0 ? MealCategory.COLAZIONE : (spinner.getSelectedItemPosition() == 1 ? MealCategory.PRANZO : MealCategory.CENA);
-                viewModel.logMealForSelectedDay(template, category);
+                viewModel.logMealForSelectedDay(template, category).observe(getViewLifecycleOwner(), result -> {
+                    if (result.isError()) {
+                        Toast.makeText(requireContext(), "Errore nell'aggiunta del pasto", Toast.LENGTH_SHORT).show();
+                    }
+                });
             })
             .setNegativeButton("Indietro", (dialog, id) -> showChooseMealDialog()).create().show();
     }
