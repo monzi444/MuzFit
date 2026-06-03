@@ -24,9 +24,10 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.muzfit.model.Food;
 import com.example.muzfit.model.Meal;
+import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.User;
+import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.R;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DietFragment extends Fragment {
 
@@ -52,6 +54,7 @@ public class DietFragment extends Fragment {
     private Calendar currentWeekStart;
     private int calorieGoal = 0;
     private float caloriesAssumed = 0;
+    private List<UserMeal> lastUserMeals = new ArrayList<>();
 
     @Nullable
     @Override
@@ -109,11 +112,18 @@ public class DietFragment extends Fragment {
             setupCalendar();
         });
 
-        viewModel.getMeals().observe(getViewLifecycleOwner(), result -> {
+        viewModel.getMealCatalog().observe(getViewLifecycleOwner(), result -> {
             if (result.isSuccess()) {
-                List<Meal> mealList = ((com.example.muzfit.model.Result.Success<List<Meal>>) result).getData();
-                updateTotalsFromMeals(mealList);
-                populateFoodContainersFromMeals(mealList);
+                viewModel.updateMealsById(((com.example.muzfit.model.Result.Success<List<Meal>>) result).getData());
+                refreshDietUi();
+            }
+        });
+
+        viewModel.getUserMealsForToday().observe(getViewLifecycleOwner(), result -> {
+            if (result.isSuccess()) {
+                List<UserMeal> userMeals = ((com.example.muzfit.model.Result.Success<List<UserMeal>>) result).getData();
+                lastUserMeals = userMeals != null ? userMeals : new ArrayList<>();
+                refreshDietUi();
             }
         });
 
@@ -122,10 +132,19 @@ public class DietFragment extends Fragment {
         return view;
     }
 
-    private void updateTotalsFromMeals(List<Meal> mealList) {
+    private void refreshDietUi() {
+        updateTotalsFromUserMeals(lastUserMeals);
+        populateFoodContainersFromUserMeals(lastUserMeals);
+    }
+
+    private void updateTotalsFromUserMeals(List<UserMeal> userMeals) {
         float totalKcal = 0, totalCarbs = 0, totalProtein = 0, totalFat = 0;
-        if (mealList != null) {
-            for (Meal meal : mealList) {
+        if (userMeals != null) {
+            for (UserMeal userMeal : userMeals) {
+                Meal meal = viewModel.getMealFor(userMeal);
+                if (meal == null) {
+                    continue;
+                }
                 totalKcal += meal.getCalories();
                 totalCarbs += meal.getCarbs();
                 totalProtein += meal.getProtein();
@@ -148,7 +167,7 @@ public class DietFragment extends Fragment {
         }
     }
 
-    private void populateFoodContainersFromMeals(List<Meal> mealList) {
+    private void populateFoodContainersFromUserMeals(List<UserMeal> userMeals) {
         containerColazione.removeAllViews();
         containerPranzo.removeAllViews();
         containerCena.removeAllViews();
@@ -156,21 +175,25 @@ public class DietFragment extends Fragment {
         int countColazione = 0, countPranzo = 0, countCena = 0;
         LayoutInflater inflater = LayoutInflater.from(requireContext());
 
-        if (mealList != null) {
-            for (Meal meal : mealList) {
+        if (userMeals != null) {
+            for (UserMeal userMeal : userMeals) {
+                Meal meal = viewModel.getMealFor(userMeal);
+                if (meal == null) {
+                    continue;
+                }
                 View itemView = inflater.inflate(R.layout.list_item_food, null);
                 TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
                 ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
                 nameTv.setText(String.format(Locale.getDefault(), "%s (%.0f kcal)", meal.getFoodName(), meal.getCalories()));
-                deleteBtn.setOnClickListener(v -> viewModel.deleteMeal(meal.getId()));
+                deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal));
 
-                if (meal.getCategory() == Food.Category.COLAZIONE) {
+                if (userMeal.getCategory() == MealCategory.COLAZIONE) {
                     containerColazione.addView(itemView);
                     countColazione++;
-                } else if (meal.getCategory() == Food.Category.PRANZO) {
+                } else if (userMeal.getCategory() == MealCategory.PRANZO) {
                     containerPranzo.addView(itemView);
                     countPranzo++;
-                } else if (meal.getCategory() == Food.Category.CENA) {
+                } else if (userMeal.getCategory() == MealCategory.CENA) {
                     containerCena.addView(itemView);
                     countCena++;
                 }
@@ -219,13 +242,17 @@ public class DietFragment extends Fragment {
 
     private void showChooseMealDialog() {
         List<Meal> availableMeals = new ArrayList<>();
-        availableMeals.add(new Meal(0, "Mela", 95, 25, 1, 0, Food.Category.PRANZO));
-        availableMeals.add(new Meal(0, "Pasta al pomodoro", 350, 70, 10, 5, Food.Category.PRANZO));
-        availableMeals.add(new Meal(0, "Petto di Pollo", 165, 0, 31, 4, Food.Category.PRANZO));
+        availableMeals.add(new Meal(0, "Mela", 95, 25, 1, 0));
+        availableMeals.add(new Meal(0, "Pasta al pomodoro", 350, 70, 10, 5));
+        availableMeals.add(new Meal(0, "Petto di Pollo", 165, 0, 31, 4));
         
-        List<Meal> customList = viewModel.getCustomMeals().getValue();
-        if (customList != null) {
-            availableMeals.addAll(customList);
+        Map<Integer, Meal> catalog = viewModel.getMealsById().getValue();
+        if (catalog != null) {
+            for (Meal catalogMeal : catalog.values()) {
+                if (catalogMeal.getId() > 6) {
+                    availableMeals.add(catalogMeal);
+                }
+            }
         }
 
         String[] mealNames = new String[availableMeals.size()];
@@ -254,8 +281,8 @@ public class DietFragment extends Fragment {
         new AlertDialog.Builder(requireContext()).setTitle("Seleziona categoria")
             .setView(dialogView)
             .setPositiveButton("Aggiungi", (dialog, id) -> {
-                Food.Category category = spinner.getSelectedItemPosition() == 0 ? Food.Category.COLAZIONE : (spinner.getSelectedItemPosition() == 1 ? Food.Category.PRANZO : Food.Category.CENA);
-                viewModel.addMeal(new Meal(0, template.getFoodName(), template.getCalories(), template.getCarbs(), template.getProtein(), template.getFat(), category));
+                MealCategory category = spinner.getSelectedItemPosition() == 0 ? MealCategory.COLAZIONE : (spinner.getSelectedItemPosition() == 1 ? MealCategory.PRANZO : MealCategory.CENA);
+                viewModel.logMealForToday(template, category);
             })
             .setNegativeButton("Indietro", (dialog, id) -> showChooseMealDialog()).create().show();
     }
@@ -275,7 +302,7 @@ public class DietFragment extends Fragment {
             .setPositiveButton("Salva", (dialog, id) -> {
                 String name = nameEt.getText().toString(), calS = calEt.getText().toString();
                 if (!name.isEmpty() && !calS.isEmpty()) {
-                    viewModel.addCustomMeal(new Meal(0, name, Float.parseFloat(calS), carbEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(carbEt.getText().toString()), protEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(protEt.getText().toString()), fatEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(fatEt.getText().toString()), Food.Category.PRANZO));
+                    viewModel.addMealToCatalog(new Meal(0, name, Float.parseFloat(calS), carbEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(carbEt.getText().toString()), protEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(protEt.getText().toString()), fatEt.getText().toString().isEmpty() ? 0 : Float.parseFloat(fatEt.getText().toString())));
                     showChooseMealDialog();
                 }
             })

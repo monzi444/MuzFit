@@ -3,6 +3,7 @@ package com.example.muzfit.repository.diet;
 import androidx.lifecycle.LiveData;
 
 import com.example.muzfit.model.Meal;
+import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.UserMeal;
 
@@ -10,13 +11,13 @@ import java.util.List;
 
 public interface IDietRepository {
 
-    LiveData<Result<List<Meal>>> getMeals();
+    LiveData<Result<List<UserMeal>>> getUserMealsForDay(String username, long dateMillis);
 
-    LiveData<Result<List<UserMeal>>> getUserMeals(String username, long dateMillis);
+    LiveData<Result<List<Meal>>> getMealCatalog();
 
-    LiveData<Result<Void>> logMeal(UserMeal userMeal);
+    LiveData<Result<Meal>> addMealToCatalog(Meal meal);
 
-    LiveData<Result<Meal>> addMeal(Meal meal);
+    LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username);
 
-    LiveData<Result<Void>> deleteMeal(int id);
+    LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal);
 }

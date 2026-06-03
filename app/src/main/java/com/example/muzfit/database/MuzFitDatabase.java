@@ -27,7 +27,7 @@ import com.example.muzfit.model.WorkoutExercise;
                 UserMeal.class,
                 WeightEntry.class
         },
-        version = 1,
+        version = 2,
         exportSchema = false
 )
 @TypeConverters(StringListConverter.class)
@@ -47,6 +47,7 @@ public abstract class MuzFitDatabase extends RoomDatabase {
                                     MuzFitDatabase.class,
                                     DATABASE_NAME
                             )
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }

@@ -52,6 +52,13 @@ public interface MuzFitDao {
     List<UserMeal> getUserMeals(String username);
 
     @Query(
+            "SELECT * FROM UserMeal WHERE username = :username " +
+                    "AND dateMillis >= :startOfDayMillis AND dateMillis < :endOfDayMillis " +
+                    "ORDER BY dateMillis"
+    )
+    List<UserMeal> getUserMealsForDay(String username, long startOfDayMillis, long endOfDayMillis);
+
+    @Query(
             "SELECT COALESCE(SUM(Meal.calories), 0) " +
                     "FROM UserMeal " +
                     "JOIN Meal ON Meal.id = UserMeal.mealId " +

@@ -17,7 +17,6 @@ import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
 import com.example.muzfit.service.ExerciseApiService;
 import com.example.muzfit.service.MuzFitApiService;
-import com.example.muzfit.source.diet.DietApiDataSource;
 import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
 import com.example.muzfit.source.training.catalog.ExerciseCatalogApiDataSource;
@@ -48,7 +47,7 @@ public final class ServiceLocator {
     private ServiceLocator() {
         muzFitApiService = createMuzFitApiService();
         ExerciseApiService exerciseApiService = createExerciseApiService();
-        dietRepository = new DietRepository(new DietApiDataSource(muzFitApiService));
+        dietRepository = new DietRepository();
         trainingRepository = new TrainingRepository(
                 new TrainingApiDataSource(muzFitApiService),
                 new ExerciseCatalogApiDataSource(exerciseApiService),
@@ -89,6 +88,10 @@ public final class ServiceLocator {
                     if (profileRepository instanceof ProfileRepository) {
                         ((ProfileRepository) profileRepository).setLocalDatabase(database);
                         ((ProfileRepository) profileRepository).setSeedFuture(seedFuture);
+                    }
+                    if (dietRepository instanceof DietRepository) {
+                        ((DietRepository) dietRepository).setLocalDatabase(database);
+                        ((DietRepository) dietRepository).setSeedFuture(seedFuture);
                     }
                 }
             }

@@ -2,8 +2,8 @@ package com.example.muzfit.database;
 
 import com.example.muzfit.model.Exercise;
 import com.example.muzfit.model.ExerciseSet;
-import com.example.muzfit.model.Food;
 import com.example.muzfit.model.Meal;
+import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.model.WeightEntry;
@@ -65,12 +65,12 @@ public final class MuzFitDatabaseSeeder {
 
     private static void seedMeals(MuzFitDao dao) {
         dao.insertMeals(Arrays.asList(
-                new Meal(1, "Yogurt greco con avena", 390.0f, 50.0f, 29.0f, 9.0f, Food.Category.COLAZIONE),
-                new Meal(2, "Riso basmati pollo e zucchine", 710.0f, 86.0f, 48.0f, 18.0f, Food.Category.PRANZO),
-                new Meal(3, "Pasta integrale al tonno", 680.0f, 82.0f, 42.0f, 16.0f, Food.Category.PRANZO),
-                new Meal(4, "Salmone patate e insalata", 640.0f, 46.0f, 43.0f, 28.0f, Food.Category.CENA),
-                new Meal(5, "Frullato banana e proteine", 330.0f, 38.0f, 31.0f, 6.0f, Food.Category.COLAZIONE),
-                new Meal(6, "Tacchino verdure e pane", 560.0f, 52.0f, 45.0f, 15.0f, Food.Category.CENA)
+                new Meal(1, "Yogurt greco con avena", 390.0f, 50.0f, 29.0f, 9.0f),
+                new Meal(2, "Riso basmati pollo e zucchine", 710.0f, 86.0f, 48.0f, 18.0f),
+                new Meal(3, "Pasta integrale al tonno", 680.0f, 82.0f, 42.0f, 16.0f),
+                new Meal(4, "Salmone patate e insalata", 640.0f, 46.0f, 43.0f, 28.0f),
+                new Meal(5, "Frullato banana e proteine", 330.0f, 38.0f, 31.0f, 6.0f),
+                new Meal(6, "Tacchino verdure e pane", 560.0f, 52.0f, 45.0f, 15.0f)
         ));
     }
 
@@ -156,12 +156,12 @@ public final class MuzFitDatabaseSeeder {
     }
 
     private static void seedUserMeals(MuzFitDao dao) {
-        dao.insertUserMeal(new UserMeal(1, Constants.DEFAULT_USERNAME, daysAgo(0, 8, 0)));
-        dao.insertUserMeal(new UserMeal(2, Constants.DEFAULT_USERNAME, daysAgo(0, 13, 0)));
-        dao.insertUserMeal(new UserMeal(4, Constants.DEFAULT_USERNAME, daysAgo(0, 20, 15)));
-        dao.insertUserMeal(new UserMeal(5, Constants.DEFAULT_USERNAME, daysAgo(1, 16, 30)));
-        dao.insertUserMeal(new UserMeal(3, Constants.DEFAULT_USERNAME, daysAgo(2, 13, 15)));
-        dao.insertUserMeal(new UserMeal(6, Constants.DEFAULT_USERNAME, daysAgo(2, 20, 0)));
+        dao.insertUserMeal(new UserMeal(1, Constants.DEFAULT_USERNAME, daysAgo(0, 8, 0), MealCategory.COLAZIONE));
+        dao.insertUserMeal(new UserMeal(2, Constants.DEFAULT_USERNAME, daysAgo(0, 13, 0), MealCategory.PRANZO));
+        dao.insertUserMeal(new UserMeal(4, Constants.DEFAULT_USERNAME, daysAgo(0, 20, 15), MealCategory.CENA));
+        dao.insertUserMeal(new UserMeal(5, Constants.DEFAULT_USERNAME, daysAgo(1, 16, 30), MealCategory.COLAZIONE));
+        dao.insertUserMeal(new UserMeal(3, Constants.DEFAULT_USERNAME, daysAgo(2, 13, 15), MealCategory.PRANZO));
+        dao.insertUserMeal(new UserMeal(6, Constants.DEFAULT_USERNAME, daysAgo(2, 20, 0), MealCategory.CENA));
     }
 
     private static void seedWeightEntries(MuzFitDao dao) {
