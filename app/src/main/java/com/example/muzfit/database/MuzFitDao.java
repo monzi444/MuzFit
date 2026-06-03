@@ -48,8 +48,18 @@ public interface MuzFitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertMeals(List<Meal> meals);
 
+    @Delete
+    void deleteMeal(Meal meal);
+
     @Query("SELECT * FROM UserMeal WHERE username = :username")
     List<UserMeal> getUserMeals(String username);
+
+    @Query(
+            "SELECT * FROM UserMeal WHERE username = :username " +
+                    "AND dateMillis >= :startOfDayMillis AND dateMillis < :endOfDayMillis " +
+                    "ORDER BY dateMillis"
+    )
+    List<UserMeal> getUserMealsForDay(String username, long startOfDayMillis, long endOfDayMillis);
 
     @Query(
             "SELECT COALESCE(SUM(Meal.calories), 0) " +

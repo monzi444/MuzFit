@@ -17,7 +17,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.muzfit.R;
-import com.example.muzfit.model.Food;
 import com.example.muzfit.model.Meal;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
@@ -103,8 +102,8 @@ public class QuickFragment extends Fragment {
                         float fat = fatStr.isEmpty() ? 0 : Float.parseFloat(fatStr);
 
                         // Added to the custom list that will be visible in "Scegli pasto"
-                        Meal customMeal = new Meal(0, name, calories, carbs, protein, fat, Food.Category.PRANZO);
-                        dietViewModel.addCustomMeal(customMeal);
+                        Meal customMeal = new Meal(0, name, calories, carbs, protein, fat);
+                        dietViewModel.addMealToCatalog(customMeal);
                         
                         Toast.makeText(getContext(), "Cibo creato! Ora lo trovi in 'Scegli pasto' nella pagina Dieta", Toast.LENGTH_SHORT).show();
                     } else {

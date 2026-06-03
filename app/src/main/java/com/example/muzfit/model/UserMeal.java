@@ -29,15 +29,22 @@ public class UserMeal {
     @NonNull
     private String username = "";
     private long dateMillis;
+    private MealCategory category = MealCategory.PRANZO;
 
     public UserMeal() {
     }
 
     @Ignore
     public UserMeal(int mealId, String username, long dateMillis) {
+        this(mealId, username, dateMillis, MealCategory.PRANZO);
+    }
+
+    @Ignore
+    public UserMeal(int mealId, String username, long dateMillis, MealCategory category) {
         this.mealId = mealId;
         this.username = username != null ? username : "";
         this.dateMillis = dateMillis;
+        this.category = category != null ? category : MealCategory.PRANZO;
     }
 
     public int getMealId() {
@@ -63,5 +70,13 @@ public class UserMeal {
 
     public void setDateMillis(long dateMillis) {
         this.dateMillis = dateMillis;
+    }
+
+    public MealCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(MealCategory category) {
+        this.category = category != null ? category : MealCategory.PRANZO;
     }
 }

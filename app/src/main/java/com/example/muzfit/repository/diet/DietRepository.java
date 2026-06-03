@@ -3,19 +3,17 @@ package com.example.muzfit.repository.diet;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.muzfit.database.MuzFitDao;
 import com.example.muzfit.database.MuzFitDatabase;
-import com.example.muzfit.model.Food;
+import com.example.muzfit.database.MuzFitDao;
 import com.example.muzfit.model.Meal;
+import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.UserMeal;
-import com.example.muzfit.source.common.DataSourceCallback;
-import com.example.muzfit.source.diet.BaseDietDataSource;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.DateParser;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,15 +23,14 @@ public class DietRepository implements IDietRepository {
 
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
-    private final BaseDietDataSource dietDataSource;
     private MuzFitDao localDao;
     private Future<?> seedFuture;
+    private final MutableLiveData<Result<List<UserMeal>>> userMealsForDayLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Result<List<Meal>>> mealCatalogLiveData = new MutableLiveData<>();
+    private String observedUsername;
+    private long observedDateMillis;
 
-    private final MutableLiveData<Result<List<Meal>>> mealsLiveData = new MutableLiveData<>();
-    private List<Meal> cachedMeals = new ArrayList<>();
-
-    public DietRepository(BaseDietDataSource dietDataSource) {
-        this.dietDataSource = dietDataSource;
+    public DietRepository() {
     }
 
     public void setLocalDatabase(MuzFitDatabase database) {
@@ -46,132 +43,224 @@ public class DietRepository implements IDietRepository {
         this.seedFuture = seedFuture;
     }
 
-    private void awaitSeedIfNeeded() {
-        if (seedFuture != null) {
-            try {
-                seedFuture.get();
-            } catch (Exception ignored) {
-            }
-        }
+    @Override
+    public LiveData<Result<List<UserMeal>>> getUserMealsForDay(String username, long dateMillis) {
+        observedUsername = username;
+        observedDateMillis = dateMillis;
+        userMealsForDayLiveData.postValue(new Result.Loading<>());
+        EXECUTOR.execute(this::loadObservedUserMealsForDay);
+        return userMealsForDayLiveData;
     }
 
     @Override
-    public LiveData<Result<List<Meal>>> getMeals() {
-        if (mealsLiveData.getValue() == null) {
-            mealsLiveData.setValue(new Result.Loading<>());
-            refreshMeals();
-        }
-        return mealsLiveData;
-    }
-
-    private void refreshMeals() {
-        dietDataSource.fetchMeals(new DataSourceCallback<List<Meal>>() {
-            @Override
-            public void onSuccess(List<Meal> data) {
-                if (localDao != null) {
-                    EXECUTOR.execute(() -> localDao.insertMeals(data));
+    public LiveData<Result<List<Meal>>> getMealCatalog() {
+        mealCatalogLiveData.setValue(new Result.Loading<>());
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao == null) {
+                    mealCatalogLiveData.postValue(new Result.Error<>("Local database is not initialized"));
+                    return;
                 }
-                cachedMeals = new ArrayList<>(data);
-                mealsLiveData.postValue(new Result.Success<>(cachedMeals));
-            }
-
-            @Override
-            public void onError(String message) {
-                if (localDao != null) {
-                    EXECUTOR.execute(() -> {
-                        awaitSeedIfNeeded();
-                        cachedMeals = localDao.getMeals();
-                        mealsLiveData.postValue(new Result.Success<>(cachedMeals));
-                    });
-                } else {
-                    mealsLiveData.postValue(new Result.Error<>(message));
-                }
+                mealCatalogLiveData.postValue(new Result.Success<>(localDao.getMeals()));
+            } catch (Exception e) {
+                mealCatalogLiveData.postValue(new Result.Error<>(errorMessage(e)));
             }
         });
+        return mealCatalogLiveData;
     }
 
     @Override
-    public LiveData<Result<List<UserMeal>>> getUserMeals(String username, long dateMillis) {
-        MutableLiveData<Result<List<UserMeal>>> liveData = new MutableLiveData<>();
+    public LiveData<Result<Meal>> addMealToCatalog(Meal meal) {
+        MutableLiveData<Result<Meal>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        dietDataSource.fetchAllUserMeals(new DataSourceCallback<List<UserMeal>>() {
-            @Override
-            public void onSuccess(List<UserMeal> data) {
-                List<UserMeal> myUserMeals = new ArrayList<>();
-                List<UserMeal> filtered = new ArrayList<>();
-                for (UserMeal userMeal : data) {
-                    if (username.equals(userMeal.getUsername())) {
-                        myUserMeals.add(userMeal);
-                        if (DateParser.isSameDay(userMeal.getDateMillis(), dateMillis)) {
-                            filtered.add(userMeal);
-                        }
-                    }
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao == null) {
+                    liveData.postValue(new Result.Error<>("Local database is not initialized"));
+                    return;
                 }
-                if (localDao != null) {
-                    EXECUTOR.execute(() -> localDao.insertUserMeals(myUserMeals));
-                }
-                liveData.postValue(new Result.Success<>(filtered));
-            }
-
-            @Override
-            public void onError(String message) {
-                if (localDao != null) {
-                    EXECUTOR.execute(() -> {
-                        awaitSeedIfNeeded();
-                        List<UserMeal> allUserMeals = localDao.getUserMeals(username);
-                        List<UserMeal> filtered = new ArrayList<>();
-                        for (UserMeal userMeal : allUserMeals) {
-                            if (DateParser.isSameDay(userMeal.getDateMillis(), dateMillis)) {
-                                filtered.add(userMeal);
-                            }
-                        }
-                        liveData.postValue(new Result.Success<>(filtered));
-                    });
-                } else {
-                    liveData.postValue(new Result.Error<>(message));
-                }
+                Meal stored = resolveOrInsertMeal(meal);
+                liveData.postValue(new Result.Success<>(stored));
+                refreshMealCatalog();
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(errorMessage(e)));
             }
         });
         return liveData;
     }
 
     @Override
-    public LiveData<Result<Void>> logMeal(UserMeal userMeal) {
+    public LiveData<Result<Void>> deleteMealFromCatalog(Meal meal) {
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        // We only log to local if offline for now, or just simulate success
-        if (localDao != null) {
-            EXECUTOR.execute(() -> {
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao == null) {
+                    liveData.postValue(new Result.Error<>("Local database is not initialized"));
+                    return;
+                }
+                localDao.deleteMeal(meal);
+                liveData.postValue(new Result.Success<>(null));
+                refreshMealCatalog();
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(errorMessage(e)));
+            }
+        });
+        return liveData;
+    }
+
+    @Override
+    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis) {
+        MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao == null) {
+                    liveData.postValue(new Result.Error<>("Local database is not initialized"));
+                    return;
+                }
+                int mealId = resolveOrInsertMeal(meal).getId();
+                UserMeal userMeal = new UserMeal(mealId, username, dateMillis, category);
                 localDao.insertUserMeal(userMeal);
                 liveData.postValue(new Result.Success<>(null));
-            });
-        } else {
-            liveData.setValue(new Result.Success<>(null));
-        }
+                refreshUserMealsForDay();
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(errorMessage(e)));
+            }
+        });
         return liveData;
     }
 
     @Override
-    public LiveData<Result<Meal>> addMeal(Meal meal) {
-        MutableLiveData<Result<Meal>> liveData = new MutableLiveData<>();
-        meal.setId(cachedMeals.size() + 1);
-        cachedMeals.add(meal);
-        mealsLiveData.setValue(new Result.Success<>(cachedMeals));
-        liveData.setValue(new Result.Success<>(meal));
-        return liveData;
-    }
-
-    @Override
-    public LiveData<Result<Void>> deleteMeal(int id) {
+    public LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal) {
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
-        for (int i = 0; i < cachedMeals.size(); i++) {
-            if (cachedMeals.get(i).getId() == id) {
-                cachedMeals.remove(i);
-                break;
+        liveData.setValue(new Result.Loading<>());
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao == null) {
+                    liveData.postValue(new Result.Error<>("Local database is not initialized"));
+                    return;
+                }
+                localDao.deleteUserMeal(userMeal);
+                liveData.postValue(new Result.Success<>(null));
+                refreshUserMealsForDay();
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(errorMessage(e)));
+            }
+        });
+        return liveData;
+    }
+
+    private void refreshUserMealsForDay() {
+        if (observedUsername == null) {
+            return;
+        }
+        EXECUTOR.execute(this::loadObservedUserMealsForDay);
+    }
+
+    private void loadObservedUserMealsForDay() {
+        if (observedUsername == null) {
+            userMealsForDayLiveData.postValue(new Result.Error<>("No day is being observed"));
+            return;
+        }
+        try {
+            awaitSeedIfNeeded();
+            if (localDao == null) {
+                userMealsForDayLiveData.postValue(new Result.Error<>("Local database is not initialized"));
+                return;
+            }
+            long startOfDay = getStartOfDayMillis(observedDateMillis);
+            long endOfDay = getEndOfDayMillis(startOfDay);
+            List<UserMeal> userMeals = localDao.getUserMealsForDay(
+                    observedUsername,
+                    startOfDay,
+                    endOfDay
+            );
+            userMealsForDayLiveData.postValue(new Result.Success<>(userMeals));
+        } catch (Exception e) {
+            userMealsForDayLiveData.postValue(new Result.Error<>(errorMessage(e)));
+        }
+    }
+
+    private void refreshMealCatalog() {
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao != null) {
+                    mealCatalogLiveData.postValue(new Result.Success<>(localDao.getMeals()));
+                }
+            } catch (Exception ignored) {
+            }
+        });
+    }
+
+    private Meal resolveOrInsertMeal(Meal meal) {
+        if (meal.getId() > 0) {
+            Meal existing = localDao.getMeal(meal.getId());
+            if (existing != null) {
+                return existing;
+            }
+            localDao.insertMeal(meal);
+            return meal;
+        }
+        for (Meal existing : localDao.getMeals()) {
+            if (sameMealDefinition(existing, meal)) {
+                return existing;
             }
         }
-        mealsLiveData.setValue(new Result.Success<>(cachedMeals));
-        liveData.setValue(new Result.Success<>(null));
-        return liveData;
+        int nextId = 1;
+        for (Meal existing : localDao.getMeals()) {
+            nextId = Math.max(nextId, existing.getId() + 1);
+        }
+        Meal catalogMeal = new Meal(
+                nextId,
+                meal.getFoodName(),
+                meal.getCalories(),
+                meal.getCarbs(),
+                meal.getProtein(),
+                meal.getFat()
+        );
+        localDao.insertMeal(catalogMeal);
+        return catalogMeal;
+    }
+
+    private static boolean sameMealDefinition(Meal left, Meal right) {
+        return left.getFoodName().equals(right.getFoodName())
+                && left.getCalories() == right.getCalories()
+                && left.getCarbs() == right.getCarbs()
+                && left.getProtein() == right.getProtein()
+                && left.getFat() == right.getFat();
+    }
+
+    private void awaitSeedIfNeeded() throws Exception {
+        if (seedFuture != null) {
+            seedFuture.get();
+        }
+    }
+
+    private static long getStartOfDayMillis(long dateMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(dateMillis);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private static long getEndOfDayMillis(long startOfDayMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(startOfDayMillis);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        return calendar.getTimeInMillis();
+    }
+
+    private static String errorMessage(Exception e) {
+        return e.getMessage() != null ? e.getMessage() : Constants.ERROR_DATABASE;
     }
 }

@@ -2,7 +2,7 @@ package com.example.muzfit.database;
 
 import androidx.room.TypeConverter;
 
-import com.example.muzfit.model.Food;
+import com.example.muzfit.model.MealCategory;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -30,15 +30,15 @@ public class StringListConverter {
     }
 
     @TypeConverter
-    public String fromFoodCategory(Food.Category category) {
-        return category != null ? category.name() : Food.Category.PRANZO.name();
+    public String fromMealCategory(MealCategory category) {
+        return category != null ? category.name() : MealCategory.PRANZO.name();
     }
 
     @TypeConverter
-    public Food.Category toFoodCategory(String value) {
+    public MealCategory toMealCategory(String value) {
         if (value == null || value.trim().isEmpty()) {
-            return Food.Category.PRANZO;
+            return MealCategory.PRANZO;
         }
-        return Food.Category.valueOf(value);
+        return MealCategory.valueOf(value);
     }
 }
