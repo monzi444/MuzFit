@@ -32,7 +32,8 @@ Data layer:  Repository  -->  RemoteDataSource (Retrofit Service -> API, Firebas
 | Package                | Contents                                                 |
 |------------------------|----------------------------------------------------------|
 | `model`                | POJOs / Room `@Entity` / `Result`                        |
-| `ui.<feature>`         | `Activity`, `fragment/`, `viewmodel/`                    |
+| `ui`                   | App shell `MainActivity` (bottom-nav host)               |
+| `ui.<feature>`         | Feature `Activity`, `fragment/`, `viewmodel/` (e.g. `ui.auth`) |
 | `repository.<feature>` | `I<Feature>Repository`, `<Feature>Repository`, callbacks |
 | `source.<feature>`     | `Base...DataSource` + concrete remote/local data sources |
 | `service`              | Retrofit interfaces (`<Feature>APIService`)              |

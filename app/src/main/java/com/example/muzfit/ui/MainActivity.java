@@ -1,4 +1,4 @@
-package com.example.muzfit;
+package com.example.muzfit.ui;
 
 import android.os.Bundle;
 
@@ -9,13 +9,14 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import com.example.muzfit.R;
 import com.example.muzfit.ui.dashboard.fragment.HomeFragment;
-import com.example.muzfit.utils.ServiceLocator;
-import com.example.muzfit.ui.quick.fragment.QuickFragment;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.example.muzfit.ui.training.fragment.WorkoutFragment;
 import com.example.muzfit.ui.diet.fragment.DietFragment;
 import com.example.muzfit.ui.profile.fragment.ProfileFragment;
+import com.example.muzfit.ui.quick.fragment.QuickFragment;
+import com.example.muzfit.ui.training.fragment.WorkoutFragment;
+import com.example.muzfit.utils.ServiceLocator;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 

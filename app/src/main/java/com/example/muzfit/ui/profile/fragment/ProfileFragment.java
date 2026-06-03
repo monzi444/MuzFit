@@ -21,7 +21,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.muzfit.LoginActivity;
+import com.example.muzfit.ui.auth.LoginActivity;
 import com.example.muzfit.R;
 import com.example.muzfit.model.Gender;
 import com.example.muzfit.model.Result;
