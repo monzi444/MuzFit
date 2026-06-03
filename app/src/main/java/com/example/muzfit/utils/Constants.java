@@ -31,6 +31,8 @@ public final class Constants {
     public static final String ERROR_USER_NOT_FOUND = "User not found";
     public static final String ERROR_WORKOUT_NOT_FOUND = "Workout not found";
     public static final String ERROR_FIREBASE_NOT_IMPLEMENTED = "Firebase not implemented yet";
+    public static final String ERROR_DATABASE = "Local database error";
+    public static final String ERROR_AUTH_SIGN_OUT = "Sign out failed";
 
     private Constants() {
     }

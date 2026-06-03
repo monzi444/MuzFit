@@ -4,12 +4,15 @@ import android.content.Context;
 
 import com.example.muzfit.database.MuzFitDatabase;
 import com.example.muzfit.database.MuzFitDatabaseSeeder;
+import com.example.muzfit.repository.auth.AuthRepository;
+import com.example.muzfit.repository.auth.IAuthRepository;
 import com.example.muzfit.repository.dashboard.DashboardRepository;
 import com.example.muzfit.repository.dashboard.IDashboardRepository;
 import com.example.muzfit.repository.diet.DietRepository;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.repository.profile.ProfileRepository;
+import com.example.muzfit.source.auth.AuthFirebaseDataSource;
 import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
 import com.example.muzfit.service.ExerciseApiService;
@@ -19,6 +22,7 @@ import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
 import com.example.muzfit.source.training.catalog.ExerciseCatalogApiDataSource;
 import com.example.muzfit.source.training.firebase.TrainingFirebaseDataSource;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.concurrent.Future;
 
@@ -39,6 +43,7 @@ public final class ServiceLocator {
     private final ITrainingRepository trainingRepository;
     private final IProfileRepository profileRepository;
     private final IDashboardRepository dashboardRepository;
+    private final IAuthRepository authRepository;
 
     private ServiceLocator() {
         muzFitApiService = createMuzFitApiService();
@@ -51,6 +56,7 @@ public final class ServiceLocator {
         );
         profileRepository = new ProfileRepository(new ProfileApiDataSource(muzFitApiService));
         dashboardRepository = new DashboardRepository();
+        authRepository = new AuthRepository(new AuthFirebaseDataSource(FirebaseAuth.getInstance()));
     }
 
     public static ServiceLocator getInstance() {
@@ -80,6 +86,10 @@ public final class ServiceLocator {
                         ((DashboardRepository) dashboardRepository).setLocalDatabase(database);
                         ((DashboardRepository) dashboardRepository).setSeedFuture(seedFuture);
                     }
+                    if (profileRepository instanceof ProfileRepository) {
+                        ((ProfileRepository) profileRepository).setLocalDatabase(database);
+                        ((ProfileRepository) profileRepository).setSeedFuture(seedFuture);
+                    }
                 }
             }
         }
@@ -103,6 +113,10 @@ public final class ServiceLocator {
 
     public IDashboardRepository getDashboardRepository() {
         return dashboardRepository;
+    }
+
+    public IAuthRepository getAuthRepository() {
+        return authRepository;
     }
 
     private static MuzFitApiService createMuzFitApiService() {

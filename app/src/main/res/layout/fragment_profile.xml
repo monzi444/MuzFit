@@ -113,7 +113,7 @@
                         style="@style/MuzFit.Text.Label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Età" />
+                        android:text="@string/profile_gender_label" />
 
                     <TextView
                         android:id="@+id/tv_eta"
