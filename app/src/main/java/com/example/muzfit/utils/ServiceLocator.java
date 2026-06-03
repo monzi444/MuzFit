@@ -48,7 +48,7 @@ public final class ServiceLocator {
     private ServiceLocator() {
         muzFitApiService = createMuzFitApiService();
         ExerciseApiService exerciseApiService = createExerciseApiService();
-        dietRepository = new DietRepository(new DietApiDataSource(muzFitApiService));
+        dietRepository = new DietRepository();
         trainingRepository = new TrainingRepository(
                 new TrainingApiDataSource(muzFitApiService),
                 new ExerciseCatalogApiDataSource(exerciseApiService),
