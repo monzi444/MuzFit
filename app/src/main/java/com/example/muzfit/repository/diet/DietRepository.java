@@ -3,14 +3,16 @@ package com.example.muzfit.repository.diet;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.muzfit.database.MuzFitDao;
 import com.example.muzfit.database.MuzFitDatabase;
+import com.example.muzfit.database.MuzFitDao;
 import com.example.muzfit.model.Meal;
 import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.utils.Constants;
+import com.example.muzfit.utils.DateParser;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -104,7 +106,7 @@ public class DietRepository implements IDietRepository {
     }
 
     @Override
-    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username) {
+    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis) {
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         EXECUTOR.execute(() -> {
@@ -115,7 +117,7 @@ public class DietRepository implements IDietRepository {
                     return;
                 }
                 int mealId = resolveOrInsertMeal(meal).getId();
-                UserMeal userMeal = new UserMeal(mealId, username, System.currentTimeMillis(), category);
+                UserMeal userMeal = new UserMeal(mealId, username, dateMillis, category);
                 localDao.insertUserMeal(userMeal);
                 liveData.postValue(new Result.Success<>(null));
                 refreshUserMealsForDay();
@@ -161,7 +163,6 @@ public class DietRepository implements IDietRepository {
                     mealCatalogLiveData.postValue(new Result.Success<>(localDao.getMeals()));
                 }
             } catch (Exception ignored) {
-                // Keep the last catalog value on refresh failure.
             }
         });
     }

@@ -2,6 +2,7 @@ package com.example.muzfit.ui.diet.viewmodel;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import com.example.muzfit.model.Meal;
@@ -19,6 +20,7 @@ public class DietViewModel extends ViewModel {
 
     private final IDietRepository repository;
     private final MutableLiveData<Map<Integer, Meal>> mealsById = new MutableLiveData<>(new HashMap<>());
+    private final MutableLiveData<Long> selectedDateMillis = new MutableLiveData<>(System.currentTimeMillis());
 
     public DietViewModel(IDietRepository repository) {
         this.repository = repository;
@@ -46,12 +48,18 @@ public class DietViewModel extends ViewModel {
         return map.get(userMeal.getMealId());
     }
 
-    public LiveData<Result<List<UserMeal>>> getUserMealsForDay(String username, long dateMillis) {
-        return repository.getUserMealsForDay(username, dateMillis);
+    public void setSelectedDate(long dateMillis) {
+        selectedDateMillis.setValue(dateMillis);
     }
 
-    public LiveData<Result<List<UserMeal>>> getUserMealsForToday() {
-        return repository.getUserMealsForDay(Constants.DEFAULT_USERNAME, System.currentTimeMillis());
+    public LiveData<Long> getSelectedDateMillis() {
+        return selectedDateMillis;
+    }
+
+    public LiveData<Result<List<UserMeal>>> getUserMealsForSelectedDay() {
+        return Transformations.switchMap(selectedDateMillis, date -> 
+            repository.getUserMealsForDay(Constants.DEFAULT_USERNAME, date)
+        );
     }
 
     public LiveData<Result<List<Meal>>> getMealCatalog() {
@@ -62,12 +70,13 @@ public class DietViewModel extends ViewModel {
         return repository.addMealToCatalog(meal);
     }
 
-    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username) {
-        return repository.logMeal(meal, category, username);
+    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis) {
+        return repository.logMeal(meal, category, username, dateMillis);
     }
 
-    public LiveData<Result<Void>> logMealForToday(Meal meal, MealCategory category) {
-        return repository.logMeal(meal, category, Constants.DEFAULT_USERNAME);
+    public LiveData<Result<Void>> logMealForSelectedDay(Meal meal, MealCategory category) {
+        Long date = selectedDateMillis.getValue();
+        return repository.logMeal(meal, category, Constants.DEFAULT_USERNAME, date != null ? date : System.currentTimeMillis());
     }
 
     public LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal) {

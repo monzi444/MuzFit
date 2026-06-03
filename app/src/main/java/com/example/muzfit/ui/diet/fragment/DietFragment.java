@@ -119,12 +119,16 @@ public class DietFragment extends Fragment {
             }
         });
 
-        viewModel.getUserMealsForToday().observe(getViewLifecycleOwner(), result -> {
+        viewModel.getUserMealsForSelectedDay().observe(getViewLifecycleOwner(), result -> {
             if (result.isSuccess()) {
                 List<UserMeal> userMeals = ((com.example.muzfit.model.Result.Success<List<UserMeal>>) result).getData();
                 lastUserMeals = userMeals != null ? userMeals : new ArrayList<>();
                 refreshDietUi();
             }
+        });
+
+        viewModel.getSelectedDateMillis().observe(getViewLifecycleOwner(), date -> {
+            setupCalendar();
         });
 
         chooseMealButton.setOnClickListener(v -> showChooseMealDialog());
@@ -207,7 +211,7 @@ public class DietFragment extends Fragment {
 
     private void addEmptyStateText(LinearLayout container) {
         TextView emptyTv = new TextView(requireContext());
-        emptyTv.setText("Oggi non hai ancora effettuato pasti");
+        emptyTv.setText("Nessun pasto registrato per questa data");
         emptyTv.setPadding(16, 8, 16, 24);
         emptyTv.setAlpha(0.6f);
         emptyTv.setTypeface(null, Typeface.ITALIC);
@@ -217,25 +221,41 @@ public class DietFragment extends Fragment {
     private void setupCalendar() {
         Calendar today = Calendar.getInstance();
         int todayDayOfYear = today.get(Calendar.DAY_OF_YEAR), todayYear = today.get(Calendar.YEAR);
+        
+        Long selectedDateMillis = viewModel.getSelectedDateMillis().getValue();
+        Calendar selectedDate = Calendar.getInstance();
+        if (selectedDateMillis != null) {
+            selectedDate.setTimeInMillis(selectedDateMillis);
+        }
+        int selectedDayOfYear = selectedDate.get(Calendar.DAY_OF_YEAR);
+        int selectedYear = selectedDate.get(Calendar.YEAR);
+
         tvMonthYear.setText(String.format(Locale.getDefault(), "%s %d", currentWeekStart.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault()), currentWeekStart.get(Calendar.YEAR)));
         calendarGrid.removeAllViews();
         float density = getResources().getDisplayMetrics().density;
         int size = (int) (40 * density), margin = (int) (2 * density);
         Calendar tempCalendar = (Calendar) currentWeekStart.clone();
         for (int i = 0; i < 7; i++) {
+            final long timeMillis = tempCalendar.getTimeInMillis();
             final int dayNum = tempCalendar.get(Calendar.DAY_OF_MONTH), monthNum = tempCalendar.get(Calendar.MONTH), yearNum = tempCalendar.get(Calendar.YEAR), dayOfYear = tempCalendar.get(Calendar.DAY_OF_YEAR);
             TextView dayView = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
             params.width = 0; params.height = size; params.columnSpec = GridLayout.spec(i, 1f); params.setMargins(margin, margin, margin, margin);
             dayView.setLayoutParams(params); dayView.setGravity(Gravity.CENTER); dayView.setText(String.valueOf(dayNum)); dayView.setTextSize(14);
-            if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
+            
+            if (yearNum == selectedYear && dayOfYear == selectedDayOfYear) {
                 dayView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_goal));
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white)); dayView.setTypeface(null, Typeface.BOLD);
+            } else if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
+                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
+                dayView.setTypeface(null, Typeface.BOLD);
             } else {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
                 if (tempCalendar.after(today)) dayView.setAlpha(0.5f);
             }
-            dayView.setOnClickListener(v -> Toast.makeText(getContext(), "Data: " + dayNum + "/" + (monthNum + 1) + "/" + yearNum, Toast.LENGTH_SHORT).show());
+            dayView.setOnClickListener(v -> {
+                viewModel.setSelectedDate(timeMillis);
+            });
             calendarGrid.addView(dayView); tempCalendar.add(Calendar.DAY_OF_YEAR, 1);
         }
     }
@@ -282,7 +302,7 @@ public class DietFragment extends Fragment {
             .setView(dialogView)
             .setPositiveButton("Aggiungi", (dialog, id) -> {
                 MealCategory category = spinner.getSelectedItemPosition() == 0 ? MealCategory.COLAZIONE : (spinner.getSelectedItemPosition() == 1 ? MealCategory.PRANZO : MealCategory.CENA);
-                viewModel.logMealForToday(template, category);
+                viewModel.logMealForSelectedDay(template, category);
             })
             .setNegativeButton("Indietro", (dialog, id) -> showChooseMealDialog()).create().show();
     }
