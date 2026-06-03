@@ -61,4 +61,9 @@
         android:layout_marginTop="4dp"
         android:text="@string/create_routine_button" />
 
+    <!-- Dynamic Spacer to prevent overlap with Floating Navbar -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="140dp" />
+
 </LinearLayout>

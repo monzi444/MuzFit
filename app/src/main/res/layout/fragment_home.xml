@@ -8,7 +8,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:clipToPadding="false">
 
         <TextView
             android:layout_width="wrap_content"
@@ -298,6 +299,11 @@
                     android:padding="8dp" />
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
+
+        <!-- Dynamic Spacer to prevent overlap with Floating Navbar -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="140dp" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
