@@ -293,12 +293,13 @@ public class DietFragment extends Fragment {
             
             if (yearNum == selectedYear && dayOfYear == selectedDayOfYear) {
                 dayView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_goal));
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white)); dayView.setTypeface(null, Typeface.BOLD);
+                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
+                dayView.setTypeface(null, Typeface.BOLD);
             } else if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
                 dayView.setTypeface(null, Typeface.BOLD);
             } else {
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
                 if (tempCalendar.after(today)) dayView.setAlpha(0.5f);
             }
             dayView.setOnClickListener(v -> {
