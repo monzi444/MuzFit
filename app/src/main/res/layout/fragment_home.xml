@@ -226,7 +226,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="Calories Burned"
+            android:text="Calorie Assunte"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -253,9 +253,10 @@
                     android:padding="16dp">
 
                     <TextView
+                        android:id="@+id/intake_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Today"
+                        android:text="Oggi"
                         android:textColor="@color/calorie_color"
                         android:textStyle="bold" />
 

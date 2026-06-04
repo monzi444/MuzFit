@@ -23,16 +23,32 @@ public class DashboardViewModel extends ViewModel {
         return repository.getConsumedCalories();
     }
 
+    public LiveData<Result<Float>> getConsumedCalories(long dateMillis) {
+        return repository.getConsumedCalories(dateMillis);
+    }
+
     public LiveData<Result<Float>> getConsumedCarbs() {
         return repository.getConsumedCarbs();
+    }
+
+    public LiveData<Result<Float>> getConsumedCarbs(long dateMillis) {
+        return repository.getConsumedCarbs(dateMillis);
     }
 
     public LiveData<Result<Float>> getConsumedProteins() {
         return repository.getConsumedProteins();
     }
 
+    public LiveData<Result<Float>> getConsumedProteins(long dateMillis) {
+        return repository.getConsumedProteins(dateMillis);
+    }
+
     public LiveData<Result<Float>> getConsumedFats() {
         return repository.getConsumedFats();
+    }
+
+    public LiveData<Result<Float>> getConsumedFats(long dateMillis) {
+        return repository.getConsumedFats(dateMillis);
     }
 
     public LiveData<Result<User>> getMacroGoals() {
@@ -45,6 +61,14 @@ public class DashboardViewModel extends ViewModel {
 
     public LiveData<Result<int[]>> getDailyCaloriesBurned() {
         return repository.getDailyCaloriesBurned();
+    }
+
+    public LiveData<Result<int[]>> getDailyCaloriesConsumed(long dateMillis) {
+        return repository.getDailyCaloriesConsumed(dateMillis);
+    }
+
+    public LiveData<Result<Integer>> getCaloriesBurned(long dateMillis) {
+        return repository.getCaloriesBurned(dateMillis);
     }
 
     public LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month) {

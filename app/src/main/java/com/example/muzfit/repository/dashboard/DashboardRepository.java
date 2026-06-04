@@ -45,22 +45,42 @@ public class DashboardRepository implements IDashboardRepository {
 
     @Override
     public LiveData<Result<Float>> getConsumedCalories() {
-        return getConsumedMacroFromDatabase(Macro.CALORIES);
+        return getConsumedCalories(System.currentTimeMillis());
+    }
+
+    @Override
+    public LiveData<Result<Float>> getConsumedCalories(long dateMillis) {
+        return getConsumedMacroFromDatabase(Macro.CALORIES, dateMillis);
     }
 
     @Override
     public LiveData<Result<Float>> getConsumedCarbs() {
-        return getConsumedMacroFromDatabase(Macro.CARBS);
+        return getConsumedCarbs(System.currentTimeMillis());
+    }
+
+    @Override
+    public LiveData<Result<Float>> getConsumedCarbs(long dateMillis) {
+        return getConsumedMacroFromDatabase(Macro.CARBS, dateMillis);
     }
 
     @Override
     public LiveData<Result<Float>> getConsumedProteins() {
-        return getConsumedMacroFromDatabase(Macro.PROTEINS);
+        return getConsumedProteins(System.currentTimeMillis());
+    }
+
+    @Override
+    public LiveData<Result<Float>> getConsumedProteins(long dateMillis) {
+        return getConsumedMacroFromDatabase(Macro.PROTEINS, dateMillis);
     }
 
     @Override
     public LiveData<Result<Float>> getConsumedFats() {
-        return getConsumedMacroFromDatabase(Macro.FATS);
+        return getConsumedFats(System.currentTimeMillis());
+    }
+
+    @Override
+    public LiveData<Result<Float>> getConsumedFats(long dateMillis) {
+        return getConsumedMacroFromDatabase(Macro.FATS, dateMillis);
     }
 
     @Override
@@ -112,6 +132,10 @@ public class DashboardRepository implements IDashboardRepository {
 
     @Override
     public LiveData<Result<int[]>> getDailyCaloriesBurned() {
+        return getDailyCaloriesBurned(System.currentTimeMillis());
+    }
+
+    public LiveData<Result<int[]>> getDailyCaloriesBurned(long dateMillis) {
         MutableLiveData<Result<int[]>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         if (localDao == null) {
@@ -122,14 +146,78 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
-                long startOfWeek = getStartOfTrailingWeekMillis();
-                long endOfToday = getEndOfDayMillis(getStartOfDayMillis(System.currentTimeMillis()));
+                long startOfWeek = getStartOfCurrentWeekMillis(dateMillis);
+                long endOfWeek = getEndOfDayMillis(startOfWeek + (6 * 24L * 60L * 60L * 1000L));
                 List<Workout> workouts = localDao.getWorkoutsBetween(
                         Constants.DEFAULT_USERNAME,
                         startOfWeek,
-                        endOfToday
+                        endOfWeek
                 );
                 liveData.postValue(new Result.Success<>(buildDailyCaloriesBurned(startOfWeek, workouts)));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
+            }
+        });
+        return liveData;
+    }
+
+    @Override
+    public LiveData<Result<int[]>> getDailyCaloriesConsumed(long dateMillis) {
+        MutableLiveData<Result<int[]>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
+        }
+
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                long startOfWeek = getStartOfCurrentWeekMillis(dateMillis);
+                int[] dailyConsumed = new int[WEEK_DAYS];
+                for (int i = 0; i < WEEK_DAYS; i++) {
+                    long currentDayStart = startOfWeek + (i * 24L * 60L * 60L * 1000L);
+                    long currentDayEnd = getEndOfDayMillis(currentDayStart);
+                    dailyConsumed[i] = (int) localDao.getConsumedCalories(Constants.DEFAULT_USERNAME, currentDayStart, currentDayEnd);
+                }
+                liveData.postValue(new Result.Success<>(dailyConsumed));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
+            }
+        });
+        return liveData;
+    }
+
+    @Override
+    public LiveData<Result<Integer>> getCaloriesBurned(long dateMillis) {
+        MutableLiveData<Result<Integer>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
+        }
+
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                long startOfDay = getStartOfDayMillis(dateMillis);
+                long endOfDay = getEndOfDayMillis(startOfDay);
+                List<Workout> workouts = localDao.getWorkoutsBetween(
+                        Constants.DEFAULT_USERNAME,
+                        startOfDay,
+                        endOfDay
+                );
+                int total = 0;
+                for (Workout workout : workouts) {
+                    List<WorkoutExercise> workoutExercises = localDao.getWorkoutExercises(
+                            workout.getId(),
+                            Constants.DEFAULT_USERNAME
+                    );
+                    for (WorkoutExercise workoutExercise : workoutExercises) {
+                        total += workoutExercise.getCalories();
+                    }
+                }
+                liveData.postValue(new Result.Success<>(total));
             } catch (Exception e) {
                 liveData.postValue(new Result.Error<>(e.getMessage()));
             }
@@ -164,7 +252,7 @@ public class DashboardRepository implements IDashboardRepository {
         return liveData;
     }
 
-    private LiveData<Result<Float>> getConsumedMacroFromDatabase(Macro macro) {
+    private LiveData<Result<Float>> getConsumedMacroFromDatabase(Macro macro, long dateMillis) {
         MutableLiveData<Result<Float>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         if (localDao == null) {
@@ -175,7 +263,7 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
-                long startOfDay = getStartOfDayMillis(System.currentTimeMillis());
+                long startOfDay = getStartOfDayMillis(dateMillis);
                 long endOfDay = getEndOfDayMillis(startOfDay);
                 liveData.postValue(new Result.Success<>(
                         getConsumedMacroValue(macro, startOfDay, endOfDay)
@@ -225,10 +313,13 @@ public class DashboardRepository implements IDashboardRepository {
         return calendar.getTimeInMillis();
     }
 
-    private long getStartOfTrailingWeekMillis() {
+    private long getStartOfCurrentWeekMillis(long dateMillis) {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(getStartOfDayMillis(System.currentTimeMillis()));
-        calendar.add(Calendar.DAY_OF_YEAR, -(WEEK_DAYS - 1));
+        calendar.setTimeInMillis(getStartOfDayMillis(dateMillis));
+        calendar.setFirstDayOfWeek(Calendar.MONDAY);
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        int offsetToMonday = (dayOfWeek == Calendar.SUNDAY) ? -6 : (Calendar.MONDAY - dayOfWeek);
+        calendar.add(Calendar.DAY_OF_YEAR, offsetToMonday);
         return calendar.getTimeInMillis();
     }
 
