@@ -10,9 +10,9 @@ public class User {
 
     @PrimaryKey
     @NonNull
-    private String username = "";
+    private String uid = "";
     private String name = "";
-    private String password = "";
+    private String profileImageUri = "";
     private float weight;
     private float height;
     private int genderCode;
@@ -26,12 +26,12 @@ public class User {
     }
 
     @Ignore
-    public User(String username, String name, String password, float weight, float height,
+    public User(String uid, String name, String profileImageUri, float weight, float height,
                 int genderCode, int calorieBurnGoal, int calorieGoal,
                 float carbGoal, float proteinGoal, float fatGoal) {
-        this.username = username != null ? username : "";
+        this.uid = uid != null ? uid : "";
         this.name = name;
-        this.password = password;
+        this.profileImageUri = profileImageUri != null ? profileImageUri : "";
         this.weight = weight;
         this.height = height;
         this.genderCode = genderCode;
@@ -43,12 +43,12 @@ public class User {
     }
 
     @NonNull
-    public String getUsername() {
-        return username;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getName() {
@@ -59,12 +59,12 @@ public class User {
         this.name = name;
     }
 
-    public String getPassword() {
-        return password;
+    public String getProfileImageUri() {
+        return profileImageUri;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setProfileImageUri(String profileImageUri) {
+        this.profileImageUri = profileImageUri != null ? profileImageUri : "";
     }
 
     public float getWeight() {

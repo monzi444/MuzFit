@@ -126,7 +126,7 @@ public class DietFragment extends Fragment {
 
         setupCalendar();
 
-        profileViewModel.getDefaultUser().observe(getViewLifecycleOwner(), result -> {
+        profileViewModel.getUser().observe(getViewLifecycleOwner(), result -> {
             if (result.isSuccess()) {
                 User user = ((com.example.muzfit.model.Result.Success<User>) result).getData();
                 calorieGoal = user.getCalorieGoal();

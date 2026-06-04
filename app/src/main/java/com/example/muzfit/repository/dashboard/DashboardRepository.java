@@ -11,7 +11,7 @@ import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.model.Workout;
 import com.example.muzfit.model.WorkoutExercise;
-import com.example.muzfit.utils.Constants;
+import com.example.muzfit.utils.RepositorySupport;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -95,7 +95,8 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
-                User user = localDao.getUser(Constants.DEFAULT_USERNAME);
+                String uid = RepositorySupport.currentUidOrDefault();
+                User user = RepositorySupport.ensureLocalUser(localDao, uid);
                 if (user == null) {
                     liveData.postValue(new Result.Error<>("User not found"));
                     return;
@@ -120,8 +121,10 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
+                String uid = RepositorySupport.currentUidOrDefault();
+                RepositorySupport.ensureLocalUser(localDao, uid);
                 liveData.postValue(new Result.Success<>(
-                        localDao.getWeightEntries(Constants.DEFAULT_USERNAME)
+                        localDao.getWeightEntries(uid)
                 ));
             } catch (Exception e) {
                 liveData.postValue(new Result.Error<>(e.getMessage()));
@@ -146,14 +149,15 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
+                String uid = RepositorySupport.currentUidOrDefault();
                 long startOfWeek = getStartOfCurrentWeekMillis(dateMillis);
                 long endOfWeek = getEndOfDayMillis(startOfWeek + (6 * 24L * 60L * 60L * 1000L));
                 List<Workout> workouts = localDao.getWorkoutsBetween(
-                        Constants.DEFAULT_USERNAME,
+                        uid,
                         startOfWeek,
                         endOfWeek
                 );
-                liveData.postValue(new Result.Success<>(buildDailyCaloriesBurned(startOfWeek, workouts)));
+                liveData.postValue(new Result.Success<>(buildDailyCaloriesBurned(uid, startOfWeek, workouts)));
             } catch (Exception e) {
                 liveData.postValue(new Result.Error<>(e.getMessage()));
             }
@@ -173,12 +177,13 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
+                String uid = RepositorySupport.currentUidOrDefault();
                 long startOfWeek = getStartOfCurrentWeekMillis(dateMillis);
                 int[] dailyConsumed = new int[WEEK_DAYS];
                 for (int i = 0; i < WEEK_DAYS; i++) {
                     long currentDayStart = startOfWeek + (i * 24L * 60L * 60L * 1000L);
                     long currentDayEnd = getEndOfDayMillis(currentDayStart);
-                    dailyConsumed[i] = (int) localDao.getConsumedCalories(Constants.DEFAULT_USERNAME, currentDayStart, currentDayEnd);
+                    dailyConsumed[i] = (int) localDao.getConsumedCalories(uid, currentDayStart, currentDayEnd);
                 }
                 liveData.postValue(new Result.Success<>(dailyConsumed));
             } catch (Exception e) {
@@ -200,10 +205,11 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
+                String uid = RepositorySupport.currentUidOrDefault();
                 long startOfDay = getStartOfDayMillis(dateMillis);
                 long endOfDay = getEndOfDayMillis(startOfDay);
                 List<Workout> workouts = localDao.getWorkoutsBetween(
-                        Constants.DEFAULT_USERNAME,
+                        uid,
                         startOfDay,
                         endOfDay
                 );
@@ -211,7 +217,7 @@ public class DashboardRepository implements IDashboardRepository {
                 for (Workout workout : workouts) {
                     List<WorkoutExercise> workoutExercises = localDao.getWorkoutExercises(
                             workout.getId(),
-                            Constants.DEFAULT_USERNAME
+                            uid
                     );
                     for (WorkoutExercise workoutExercise : workoutExercises) {
                         total += workoutExercise.getCalories();
@@ -237,10 +243,11 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
+                String uid = RepositorySupport.currentUidOrDefault();
                 long startOfMonth = getStartOfMonthMillis(year, month);
                 long endOfMonth = getEndOfMonthMillis(year, month);
                 List<Workout> workouts = localDao.getWorkoutsBetween(
-                        Constants.DEFAULT_USERNAME,
+                        uid,
                         startOfMonth,
                         endOfMonth
                 );
@@ -263,10 +270,11 @@ public class DashboardRepository implements IDashboardRepository {
         EXECUTOR.execute(() -> {
             try {
                 awaitSeedIfNeeded();
+                String uid = RepositorySupport.currentUidOrDefault();
                 long startOfDay = getStartOfDayMillis(dateMillis);
                 long endOfDay = getEndOfDayMillis(startOfDay);
                 liveData.postValue(new Result.Success<>(
-                        getConsumedMacroValue(macro, startOfDay, endOfDay)
+                        getConsumedMacroValue(uid, macro, startOfDay, endOfDay)
                 ));
             } catch (Exception e) {
                 liveData.postValue(new Result.Error<>(e.getMessage()));
@@ -281,16 +289,16 @@ public class DashboardRepository implements IDashboardRepository {
         }
     }
 
-    private float getConsumedMacroValue(Macro macro, long startOfDayMillis, long endOfDayMillis) {
+    private float getConsumedMacroValue(String uid, Macro macro, long startOfDayMillis, long endOfDayMillis) {
         switch (macro) {
             case CALORIES:
-                return localDao.getConsumedCalories(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+                return localDao.getConsumedCalories(uid, startOfDayMillis, endOfDayMillis);
             case CARBS:
-                return localDao.getConsumedCarbs(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+                return localDao.getConsumedCarbs(uid, startOfDayMillis, endOfDayMillis);
             case PROTEINS:
-                return localDao.getConsumedProteins(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+                return localDao.getConsumedProteins(uid, startOfDayMillis, endOfDayMillis);
             case FATS:
-                return localDao.getConsumedFats(Constants.DEFAULT_USERNAME, startOfDayMillis, endOfDayMillis);
+                return localDao.getConsumedFats(uid, startOfDayMillis, endOfDayMillis);
             default:
                 return 0f;
         }
@@ -323,7 +331,7 @@ public class DashboardRepository implements IDashboardRepository {
         return calendar.getTimeInMillis();
     }
 
-    private int[] buildDailyCaloriesBurned(long startOfWeekMillis, List<Workout> workouts) {
+    private int[] buildDailyCaloriesBurned(String uid, long startOfWeekMillis, List<Workout> workouts) {
         int[] dailyCalories = new int[WEEK_DAYS];
         if (workouts == null) {
             return dailyCalories;
@@ -338,7 +346,7 @@ public class DashboardRepository implements IDashboardRepository {
             int total = 0;
             List<WorkoutExercise> workoutExercises = localDao.getWorkoutExercises(
                     workout.getId(),
-                    Constants.DEFAULT_USERNAME
+                    uid
             );
             for (WorkoutExercise workoutExercise : workoutExercises) {
                 total += workoutExercise.getCalories();

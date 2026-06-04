@@ -22,13 +22,12 @@ public final class ApiMapper {
         if (dto == null) {
             return new User();
         }
-        String username = dto.getUsername() != null ? dto.getUsername() : "";
+        String uid = dto.getUsername() != null ? dto.getUsername() : "";
         String name = dto.getName() != null ? dto.getName() : "";
-        String password = dto.getPassword() != null ? dto.getPassword() : "";
         return new User(
-                username,
+                uid,
                 name,
-                password,
+                "",
                 dto.getWeight(),
                 dto.getHeight(),
                 dto.getGenderCode(),
@@ -74,8 +73,8 @@ public final class ApiMapper {
         if (dto == null) {
             return new UserMeal();
         }
-        String username = dto.getUsername() != null ? dto.getUsername() : "";
-        return new UserMeal(dto.getMealId(), username, DateParser.parseApiDate(dto.getDate()));
+        String uid = dto.getUsername() != null ? dto.getUsername() : "";
+        return new UserMeal(dto.getMealId(), uid, DateParser.parseApiDate(dto.getDate()));
     }
 
     public static List<UserMeal> toUserMeals(List<PastoUtenteDto> dtos) {
@@ -94,12 +93,12 @@ public final class ApiMapper {
             return new Workout();
         }
         String description = dto.getDescription() != null ? dto.getDescription() : "";
-        String username = dto.getUsername() != null ? dto.getUsername() : "";
+        String uid = dto.getUsername() != null ? dto.getUsername() : "";
         return new Workout(
                 dto.getId(),
                 DateParser.parseApiDate(dto.getDate()),
                 description,
-                username
+                uid
         );
     }
 
@@ -138,11 +137,11 @@ public final class ApiMapper {
         if (dto == null) {
             return new WorkoutExercise();
         }
-        String username = dto.getUsername() != null ? dto.getUsername() : "";
+        String uid = dto.getUsername() != null ? dto.getUsername() : "";
         return new WorkoutExercise(
                 dto.getCalories(),
                 dto.getWorkoutId(),
-                username,
+                uid,
                 dto.getExerciseId()
         );
     }
@@ -162,13 +161,13 @@ public final class ApiMapper {
         if (dto == null) {
             return new ExerciseSet();
         }
-        String username = dto.getUsername() != null ? dto.getUsername() : "";
+        String uid = dto.getUsername() != null ? dto.getUsername() : "";
         return new ExerciseSet(
                 dto.getId(),
                 dto.getRepetitions(),
                 dto.getWeight(),
                 dto.getWorkoutId(),
-                username,
+                uid,
                 dto.getExerciseId()
         );
     }
@@ -188,8 +187,8 @@ public final class ApiMapper {
         if (dto == null) {
             return new WeightEntry();
         }
-        String username = dto.getUsername() != null ? dto.getUsername() : "";
-        return new WeightEntry(DateParser.parseApiDate(dto.getDate()), dto.getWeight(), username);
+        String uid = dto.getUsername() != null ? dto.getUsername() : "";
+        return new WeightEntry(DateParser.parseApiDate(dto.getDate()), dto.getWeight(), uid);
     }
 
     public static List<WeightEntry> toWeightEntries(List<PesoDto> dtos) {

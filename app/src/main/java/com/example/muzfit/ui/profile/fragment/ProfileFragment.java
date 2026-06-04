@@ -1,6 +1,7 @@
 package com.example.muzfit.ui.profile.fragment;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.example.muzfit.ui.auth.LoginActivity;
 import com.example.muzfit.R;
 import com.example.muzfit.model.Gender;
@@ -56,7 +58,13 @@ public class ProfileFragment extends Fragment {
     private final ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) {
-                    ivAvatar.setImageURI(uri);
+                    persistReadPermission(uri);
+                    loadAvatar(uri.toString());
+                    if (currentUser != null) {
+                        User updated = copyUser(currentUser);
+                        updated.setProfileImageUri(uri.toString());
+                        saveProfile(updated, R.string.profile_update_success);
+                    }
                 }
             });
 
@@ -93,6 +101,19 @@ public class ProfileFragment extends Fragment {
         tvCarbo = view.findViewById(R.id.tv_carbo);
         tvProteine = view.findViewById(R.id.tv_proteine);
         tvGrassi = view.findViewById(R.id.tv_grassi);
+        bindLoadingPlaceholders();
+    }
+
+    private void bindLoadingPlaceholders() {
+        tvNomeUtente.setText(R.string.profile_name_fallback);
+        tvEmailUtente.setText(R.string.profile_stat_placeholder);
+        tvPeso.setText(getString(R.string.profile_weight_format, 0f));
+        tvAltezza.setText(getString(R.string.profile_height_format, 0f));
+        tvEta.setText(R.string.profile_stat_placeholder);
+        tvObiettivoKcal.setText(getString(R.string.profile_kcal_display, 0));
+        tvCarbo.setText(getString(R.string.profile_macro_carbs, 0f));
+        tvProteine.setText(getString(R.string.profile_macro_protein, 0f));
+        tvGrassi.setText(getString(R.string.profile_macro_fat, 0f));
     }
 
     private void setupClickListeners(View view) {
@@ -110,7 +131,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void observeProfileData() {
-        profileViewModel.getDefaultUser().observe(getViewLifecycleOwner(), result -> {
+        profileViewModel.getUser().observe(getViewLifecycleOwner(), result -> {
             if (result.isLoading()) {
                 return;
             }
@@ -131,7 +152,7 @@ public class ProfileFragment extends Fragment {
             if (email != null && !email.isEmpty()) {
                 tvEmailUtente.setText(email);
             } else if (currentUser != null) {
-                tvEmailUtente.setText(formatUsernameHandle(currentUser.getUsername()));
+                tvEmailUtente.setText(formatUidHandle(currentUser.getUid()));
             }
         });
     }
@@ -140,10 +161,16 @@ public class ProfileFragment extends Fragment {
         if (user == null) {
             return;
         }
-        tvNomeUtente.setText(user.getName());
+        if (user.getProfileImageUri() != null && !user.getProfileImageUri().isEmpty()) {
+            loadAvatar(user.getProfileImageUri());
+        }
+        String displayName = user.getName() != null && !user.getName().trim().isEmpty()
+                ? user.getName().trim()
+                : getString(R.string.profile_name_fallback);
+        tvNomeUtente.setText(displayName);
         if (tvEmailUtente.getText().toString().isEmpty()
                 || tvEmailUtente.getText().toString().equals("utente@example.com")) {
-            tvEmailUtente.setText(formatUsernameHandle(user.getUsername()));
+            tvEmailUtente.setText(formatUidHandle(user.getUid()));
         }
         tvPeso.setText(getString(R.string.profile_weight_format, user.getWeight()));
         tvAltezza.setText(getString(R.string.profile_height_format, user.getHeight()));
@@ -301,9 +328,9 @@ public class ProfileFragment extends Fragment {
 
     private static User copyUser(User source) {
         User copy = new User();
-        copy.setUsername(source.getUsername());
+        copy.setUid(source.getUid());
         copy.setName(source.getName());
-        copy.setPassword(source.getPassword());
+        copy.setProfileImageUri(source.getProfileImageUri());
         copy.setWeight(source.getWeight());
         copy.setHeight(source.getHeight());
         copy.setGenderCode(source.getGenderCode());
@@ -346,7 +373,25 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private String formatUsernameHandle(String username) {
-        return getString(R.string.profile_username_display, "@" + username);
+    private String formatUidHandle(String uid) {
+        return getString(R.string.profile_username_display, "@" + uid);
+    }
+
+    private void loadAvatar(String imageUri) {
+        Glide.with(this)
+                .load(Uri.parse(imageUri))
+                .placeholder(R.drawable.ic_launcher_background)
+                .error(R.drawable.ic_launcher_background)
+                .into(ivAvatar);
+    }
+
+    private void persistReadPermission(Uri uri) {
+        try {
+            requireContext().getContentResolver().takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+            );
+        } catch (RuntimeException ignored) {
+        }
     }
 }

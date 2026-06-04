@@ -10,13 +10,13 @@ import java.util.List;
 
 public interface IProfileRepository {
 
-    LiveData<Result<User>> getUser(String username);
+    LiveData<Result<User>> getUser();
 
     LiveData<Result<Void>> updateUser(User user);
 
     LiveData<Result<Void>> updateGoals(User user);
 
-    LiveData<Result<List<WeightEntry>>> getWeightHistory(String username);
+    LiveData<Result<List<WeightEntry>>> getWeightHistory();
 
     LiveData<Result<Void>> addWeightEntry(WeightEntry weightEntry);
 }
