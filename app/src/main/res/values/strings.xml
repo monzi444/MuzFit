@@ -51,7 +51,7 @@
     <string name="food_removed_toast">Food removed!</string>
     <string name="catalog_food_removed_toast">Removed from list</string>
     <string name="catalog_meal_remove_in_use">You can\'t remove meals that you have eaten</string>
-    <string name="meal_entry_format">%1$s (%2$s kcal)</string>
+    <string name="meal_entry_kcal_unit">kcal</string>
     <string name="delete_food">Delete</string>
     <string name="workout_page_title">Workout</string>
     <string name="saved_routines_label">Saved routines</string>

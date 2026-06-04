@@ -716,8 +716,12 @@ public class DietFragment extends Fragment {
     }
 
     private String formatMealEntry(Meal meal) {
-        String calories = Integer.toString(Math.round(meal.getCalories()));
-        return getString(R.string.meal_entry_format, meal.getFoodName(), calories);
+        return meal.getFoodName()
+                + " ("
+                + Math.round(meal.getCalories())
+                + " "
+                + getString(R.string.meal_entry_kcal_unit)
+                + ")";
     }
 
     private CharSequence resolveCatalogDeleteError(String message) {
