@@ -15,29 +15,29 @@ public interface ITrainingRepository {
 
     LiveData<Result<List<Exercise>>> searchExerciseCatalog(String query, String bodyPart);
 
-    LiveData<Result<List<WorkoutRoutine>>> getRoutines(String username);
+    LiveData<Result<List<WorkoutRoutine>>> getRoutines();
 
-    LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String username);
+    LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine);
 
-    LiveData<Result<Void>> deleteRoutine(String routineName, String username);
+    LiveData<Result<Void>> deleteRoutine(String routineName);
 
-    LiveData<Result<List<Workout>>> getWorkouts(String username);
+    LiveData<Result<List<Workout>>> getWorkouts();
 
-    LiveData<Result<Workout>> getWorkout(int workoutId, String username);
+    LiveData<Result<Workout>> getWorkout(int workoutId);
 
     LiveData<Result<Void>> saveWorkout(Workout workout);
 
-    LiveData<Result<Void>> deleteWorkout(int workoutId, String username);
+    LiveData<Result<Void>> deleteWorkout(int workoutId);
 
     LiveData<Result<List<Exercise>>> getExercises();
 
     LiveData<Result<List<Exercise>>> searchExercises(String query);
 
-    LiveData<Result<List<WorkoutExercise>>> getWorkoutExercises(int workoutId, String username);
+    LiveData<Result<List<WorkoutExercise>>> getWorkoutExercises(int workoutId);
 
     LiveData<Result<Void>> addWorkoutExercise(WorkoutExercise workoutExercise);
 
-    LiveData<Result<List<ExerciseSet>>> getExerciseSets(int workoutId, String username, int exerciseId);
+    LiveData<Result<List<ExerciseSet>>> getExerciseSets(int workoutId, int exerciseId);
 
     LiveData<Result<Void>> saveExerciseSet(ExerciseSet exerciseSet);
 }

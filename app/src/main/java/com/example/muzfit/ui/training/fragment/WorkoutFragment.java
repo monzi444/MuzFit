@@ -133,7 +133,7 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void loadRoutines() {
-        viewModel.getRoutinesForDefaultUser().observe(getViewLifecycleOwner(), result -> {
+        viewModel.getRoutines().observe(getViewLifecycleOwner(), result -> {
             if (!isAdded()) return;
             if (result.isLoading()) {
                 // Show loading if needed
@@ -158,7 +158,7 @@ public class WorkoutFragment extends Fragment {
                 .setTitle(R.string.delete_confirm_title)
                 .setMessage(R.string.delete_confirm_message)
                 .setPositiveButton(R.string.delete, (dialog, which) -> {
-                    viewModel.deleteRoutineForDefaultUser(routine.getName()).observe(getViewLifecycleOwner(), result -> {
+                    viewModel.deleteRoutine(routine.getName()).observe(getViewLifecycleOwner(), result -> {
                         if (!isAdded()) return;
                         if (result.isLoading()) return;
                         if (result.isSuccess()) {
@@ -259,7 +259,7 @@ public class WorkoutFragment extends Fragment {
 
             WorkoutRoutine newRoutine = new WorkoutRoutine(name, finalExercises);
 
-            viewModel.saveRoutineForDefaultUser(newRoutine).observe(getViewLifecycleOwner(), result -> {
+            viewModel.saveRoutine(newRoutine).observe(getViewLifecycleOwner(), result -> {
                 if (!isAdded()) return;
                 if (result.isLoading()) return;
 

@@ -8,7 +8,7 @@ import androidx.room.Index;
 
 @Entity(
         tableName = "UserMeal",
-        primaryKeys = {"mealId", "username", "dateMillis"},
+        primaryKeys = {"mealId", "uid", "dateMillis"},
         foreignKeys = {
                 @ForeignKey(
                         entity = Meal.class,
@@ -17,17 +17,17 @@ import androidx.room.Index;
                 ),
                 @ForeignKey(
                         entity = User.class,
-                        parentColumns = "username",
-                        childColumns = "username"
+                        parentColumns = "uid",
+                        childColumns = "uid"
                 )
         },
-        indices = {@Index("mealId"), @Index("username")}
+        indices = {@Index("mealId"), @Index("uid")}
 )
 public class UserMeal {
 
     private int mealId;
     @NonNull
-    private String username = "";
+    private String uid = "";
     private long dateMillis;
     private MealCategory category = MealCategory.PRANZO;
 
@@ -35,14 +35,14 @@ public class UserMeal {
     }
 
     @Ignore
-    public UserMeal(int mealId, String username, long dateMillis) {
-        this(mealId, username, dateMillis, MealCategory.PRANZO);
+    public UserMeal(int mealId, String uid, long dateMillis) {
+        this(mealId, uid, dateMillis, MealCategory.PRANZO);
     }
 
     @Ignore
-    public UserMeal(int mealId, String username, long dateMillis, MealCategory category) {
+    public UserMeal(int mealId, String uid, long dateMillis, MealCategory category) {
         this.mealId = mealId;
-        this.username = username != null ? username : "";
+        this.uid = uid != null ? uid : "";
         this.dateMillis = dateMillis;
         this.category = category != null ? category : MealCategory.PRANZO;
     }
@@ -56,12 +56,12 @@ public class UserMeal {
     }
 
     @NonNull
-    public String getUsername() {
-        return username;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public long getDateMillis() {

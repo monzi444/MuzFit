@@ -119,8 +119,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        FirebaseUser currentUser = auth.getCurrentUser();
-        updateUI(currentUser);
+        updateUI(auth.getCurrentUser());
     }
 
     private void loginWithEmail() {
@@ -162,7 +161,7 @@ public class LoginActivity extends AppCompatActivity {
                     setLoading(false);
                     if (task.isSuccessful()) {
                         Toast.makeText(this, R.string.account_created_toast, Toast.LENGTH_SHORT).show();
-                        updateUI(auth.getCurrentUser());
+                        openProfileSetupActivity();
                     } else {
                         String message = task.getException() != null
                                 ? task.getException().getMessage()
@@ -207,7 +206,14 @@ public class LoginActivity extends AppCompatActivity {
                     setLoading(false);
                     if (task.isSuccessful()) {
                         Toast.makeText(this, R.string.login_success_toast, Toast.LENGTH_SHORT).show();
-                        updateUI(auth.getCurrentUser());
+                        boolean isNewUser = task.getResult() != null
+                                && task.getResult().getAdditionalUserInfo() != null
+                                && task.getResult().getAdditionalUserInfo().isNewUser();
+                        if (isNewUser) {
+                            openProfileSetupActivity();
+                        } else {
+                            updateUI(auth.getCurrentUser());
+                        }
                     } else {
                         String message = task.getException() != null
                                 ? task.getException().getMessage()
@@ -245,6 +251,12 @@ public class LoginActivity extends AppCompatActivity {
 
     private void openMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    private void openProfileSetupActivity() {
+        Intent intent = new Intent(this, ProfileSetupActivity.class);
         startActivity(intent);
         finish();
     }

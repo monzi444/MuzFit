@@ -10,7 +10,6 @@ import com.example.muzfit.model.Workout;
 import com.example.muzfit.model.WorkoutExercise;
 import com.example.muzfit.model.WorkoutRoutine;
 import com.example.muzfit.repository.training.ITrainingRepository;
-import com.example.muzfit.utils.Constants;
 
 import java.util.List;
 
@@ -26,48 +25,32 @@ public class TrainingViewModel extends ViewModel {
         return repository.searchExerciseCatalog(query, bodyPart);
     }
 
-    public LiveData<Result<List<WorkoutRoutine>>> getRoutines(String username) {
-        return repository.getRoutines(username);
+    public LiveData<Result<List<WorkoutRoutine>>> getRoutines() {
+        return repository.getRoutines();
     }
 
-    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String username) {
-        return repository.saveRoutine(routine, username);
+    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine) {
+        return repository.saveRoutine(routine);
     }
 
-    public LiveData<Result<Void>> deleteRoutine(String routineName, String username) {
-        return repository.deleteRoutine(routineName, username);
+    public LiveData<Result<Void>> deleteRoutine(String routineName) {
+        return repository.deleteRoutine(routineName);
     }
 
-    public LiveData<Result<List<WorkoutRoutine>>> getRoutinesForDefaultUser() {
-        return repository.getRoutines(Constants.DEFAULT_USERNAME);
+    public LiveData<Result<List<Workout>>> getWorkouts() {
+        return repository.getWorkouts();
     }
 
-    public LiveData<Result<Void>> saveRoutineForDefaultUser(WorkoutRoutine routine) {
-        return repository.saveRoutine(routine, Constants.DEFAULT_USERNAME);
-    }
-
-    public LiveData<Result<Void>> deleteRoutineForDefaultUser(String routineName) {
-        return repository.deleteRoutine(routineName, Constants.DEFAULT_USERNAME);
-    }
-
-    public LiveData<Result<List<Workout>>> getWorkouts(String username) {
-        return repository.getWorkouts(username);
-    }
-
-    public LiveData<Result<List<Workout>>> getWorkoutsForDefaultUser() {
-        return repository.getWorkouts(Constants.DEFAULT_USERNAME);
-    }
-
-    public LiveData<Result<Workout>> getWorkout(int workoutId, String username) {
-        return repository.getWorkout(workoutId, username);
+    public LiveData<Result<Workout>> getWorkout(int workoutId) {
+        return repository.getWorkout(workoutId);
     }
 
     public LiveData<Result<Void>> saveWorkout(Workout workout) {
         return repository.saveWorkout(workout);
     }
 
-    public LiveData<Result<Void>> deleteWorkout(int workoutId, String username) {
-        return repository.deleteWorkout(workoutId, username);
+    public LiveData<Result<Void>> deleteWorkout(int workoutId) {
+        return repository.deleteWorkout(workoutId);
     }
 
     public LiveData<Result<List<Exercise>>> getExercises() {
@@ -78,16 +61,16 @@ public class TrainingViewModel extends ViewModel {
         return repository.searchExercises(query);
     }
 
-    public LiveData<Result<List<WorkoutExercise>>> getWorkoutExercises(int workoutId, String username) {
-        return repository.getWorkoutExercises(workoutId, username);
+    public LiveData<Result<List<WorkoutExercise>>> getWorkoutExercises(int workoutId) {
+        return repository.getWorkoutExercises(workoutId);
     }
 
     public LiveData<Result<Void>> addWorkoutExercise(WorkoutExercise workoutExercise) {
         return repository.addWorkoutExercise(workoutExercise);
     }
 
-    public LiveData<Result<List<ExerciseSet>>> getExerciseSets(int workoutId, String username, int exerciseId) {
-        return repository.getExerciseSets(workoutId, username, exerciseId);
+    public LiveData<Result<List<ExerciseSet>>> getExerciseSets(int workoutId, int exerciseId) {
+        return repository.getExerciseSets(workoutId, exerciseId);
     }
 
     public LiveData<Result<Void>> saveExerciseSet(ExerciseSet exerciseSet) {

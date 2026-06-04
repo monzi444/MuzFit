@@ -7,9 +7,9 @@ import java.util.List;
 
 public abstract class BaseTrainingFirebaseDataSource {
 
-    public abstract void fetchRoutines(String username, DataSourceCallback<List<WorkoutRoutine>> callback);
+    public abstract void fetchRoutines(String uid, DataSourceCallback<List<WorkoutRoutine>> callback);
 
-    public abstract void saveRoutine(WorkoutRoutine routine, String username, DataSourceCallback<Void> callback);
+    public abstract void saveRoutine(WorkoutRoutine routine, String uid, DataSourceCallback<Void> callback);
 
-    public abstract void deleteRoutine(String routineName, String username, DataSourceCallback<Void> callback);
+    public abstract void deleteRoutine(String routineName, String uid, DataSourceCallback<Void> callback);
 }

@@ -8,29 +8,29 @@ import androidx.room.Index;
 
 @Entity(
         tableName = "WeightEntry",
-        primaryKeys = {"dateMillis", "username"},
+        primaryKeys = {"dateMillis", "uid"},
         foreignKeys = @ForeignKey(
                 entity = User.class,
-                parentColumns = "username",
-                childColumns = "username"
+                parentColumns = "uid",
+                childColumns = "uid"
         ),
-        indices = @Index("username")
+        indices = @Index("uid")
 )
 public class WeightEntry {
 
     private long dateMillis;
     private float weight;
     @NonNull
-    private String username = "";
+    private String uid = "";
 
     public WeightEntry() {
     }
 
     @Ignore
-    public WeightEntry(long dateMillis, float weight, String username) {
+    public WeightEntry(long dateMillis, float weight, String uid) {
         this.dateMillis = dateMillis;
         this.weight = weight;
-        this.username = username != null ? username : "";
+        this.uid = uid != null ? uid : "";
     }
 
     public long getDateMillis() {
@@ -50,11 +50,11 @@ public class WeightEntry {
     }
 
     @NonNull
-    public String getUsername() {
-        return username;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 }

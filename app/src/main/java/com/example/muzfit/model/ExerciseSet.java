@@ -11,25 +11,25 @@ import androidx.room.Index;
         primaryKeys = {
                 "id",
                 "workoutId",
-                "username",
+                "uid",
                 "exerciseId"
         },
         foreignKeys = @ForeignKey(
                 entity = WorkoutExercise.class,
                 parentColumns = {
                         "workoutId",
-                        "username",
+                        "uid",
                         "exerciseId"
                 },
                 childColumns = {
                         "workoutId",
-                        "username",
+                        "uid",
                         "exerciseId"
                 }
         ),
         indices = @Index({
                 "workoutId",
-                "username",
+                "uid",
                 "exerciseId"
         })
 )
@@ -40,7 +40,7 @@ public class ExerciseSet {
     private int weight;
     private int workoutId;
     @NonNull
-    private String username = "";
+    private String uid = "";
     @NonNull
     private String exerciseId = "";
 
@@ -49,18 +49,18 @@ public class ExerciseSet {
 
     @Ignore
     public ExerciseSet(int id, int repetitions, int weight,
-                       int workoutId, String username, int exerciseId) {
-        this(id, repetitions, weight, workoutId, username, String.valueOf(exerciseId));
+                       int workoutId, String uid, int exerciseId) {
+        this(id, repetitions, weight, workoutId, uid, String.valueOf(exerciseId));
     }
 
     @Ignore
     public ExerciseSet(int id, int repetitions, int weight,
-                       int workoutId, String username, String exerciseId) {
+                       int workoutId, String uid, String exerciseId) {
         this.id = id;
         this.repetitions = repetitions;
         this.weight = weight;
         this.workoutId = workoutId;
-        this.username = username != null ? username : "";
+        this.uid = uid != null ? uid : "";
         this.exerciseId = exerciseId != null ? exerciseId : "";
     }
 
@@ -97,12 +97,12 @@ public class ExerciseSet {
     }
 
     @NonNull
-    public String getUsername() {
-        return username;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     @NonNull

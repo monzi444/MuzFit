@@ -10,14 +10,14 @@ import androidx.room.Index;
         tableName = "WorkoutExercise",
         primaryKeys = {
                 "workoutId",
-                "username",
+                "uid",
                 "exerciseId"
         },
         foreignKeys = {
                 @ForeignKey(
                         entity = Workout.class,
-                        parentColumns = {"id", "username"},
-                        childColumns = {"workoutId", "username"}
+                        parentColumns = {"id", "uid"},
+                        childColumns = {"workoutId", "uid"}
                 ),
                 @ForeignKey(
                         entity = Exercise.class,
@@ -26,7 +26,7 @@ import androidx.room.Index;
                 )
         },
         indices = {
-                @Index({"workoutId", "username"}),
+                @Index({"workoutId", "uid"}),
                 @Index("exerciseId")
         }
 )
@@ -35,7 +35,7 @@ public class WorkoutExercise {
     private int calories;
     private int workoutId;
     @NonNull
-    private String username = "";
+    private String uid = "";
     @NonNull
     private String exerciseId = "";
 
@@ -43,15 +43,15 @@ public class WorkoutExercise {
     }
 
     @Ignore
-    public WorkoutExercise(int calories, int workoutId, String username, int exerciseId) {
-        this(calories, workoutId, username, String.valueOf(exerciseId));
+    public WorkoutExercise(int calories, int workoutId, String uid, int exerciseId) {
+        this(calories, workoutId, uid, String.valueOf(exerciseId));
     }
 
     @Ignore
-    public WorkoutExercise(int calories, int workoutId, String username, String exerciseId) {
+    public WorkoutExercise(int calories, int workoutId, String uid, String exerciseId) {
         this.calories = calories;
         this.workoutId = workoutId;
-        this.username = username != null ? username : "";
+        this.uid = uid != null ? uid : "";
         this.exerciseId = exerciseId != null ? exerciseId : "";
     }
 
@@ -72,12 +72,12 @@ public class WorkoutExercise {
     }
 
     @NonNull
-    public String getUsername() {
-        return username;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     @NonNull
