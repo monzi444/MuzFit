@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import android.widget.EditText;
@@ -25,7 +26,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -51,10 +51,13 @@ import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
 import com.example.muzfit.utils.Constants;
+import com.example.muzfit.utils.MuzFitToast;
 import com.example.muzfit.utils.ServiceLocator;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -222,13 +225,12 @@ public class DietFragment extends Fragment {
                 deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal)
                         .observe(getViewLifecycleOwner(), result -> {
                             if (result.isSuccess()) {
-                                Toast.makeText(requireContext(), R.string.food_removed_toast, Toast.LENGTH_SHORT).show();
+                                MuzFitToast.show(requireContext(), R.string.food_removed_toast);
                             } else if (result.isError()) {
-                                Toast.makeText(
+                                MuzFitToast.showError(
                                         requireContext(),
-                                        ((com.example.muzfit.model.Result.Error<?>) result).getMessage(),
-                                        Toast.LENGTH_SHORT
-                                ).show();
+                                        ((com.example.muzfit.model.Result.Error<?>) result).getMessage()
+                                );
                             }
                         }));
 
@@ -328,19 +330,29 @@ public class DietFragment extends Fragment {
         window.setLayout(width, height);
     }
 
+    private enum MealCatalogSort {
+        NAME_ASC,
+        NAME_DESC,
+        CALORIES_ASC,
+        CALORIES_DESC
+    }
+
     private void showChooseMealDialog() {
-        List<Meal> availableMeals = new ArrayList<>();
-        availableMeals.add(new Meal(0, "Apple", 95, 25, 1, 0));
-        availableMeals.add(new Meal(0, "Pasta with tomato sauce", 350, 70, 10, 5));
-        availableMeals.add(new Meal(0, "Chicken breast", 165, 0, 31, 4));
+        List<Meal> masterMeals = new ArrayList<>();
+        masterMeals.add(new Meal(0, "Apple", 95, 25, 1, 0));
+        masterMeals.add(new Meal(0, "Pasta with tomato sauce", 350, 70, 10, 5));
+        masterMeals.add(new Meal(0, "Chicken breast", 165, 0, 31, 4));
 
         Map<Integer, Meal> catalog = viewModel.getMealsById().getValue();
         if (catalog != null) {
-            availableMeals.addAll(catalog.values());
+            masterMeals.addAll(catalog.values());
         }
 
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_choose_meal, null);
         ListView listView = dialogView.findViewById(R.id.lvChooseMeal);
+        TextView emptyView = dialogView.findViewById(R.id.tvChooseMealEmpty);
+        EditText searchField = dialogView.findViewById(R.id.etChooseMealSearch);
+        AutoCompleteTextView sortField = dialogView.findViewById(R.id.actvChooseMealSort);
 
         chooseMealDialog = styledDialogBuilder()
                 .setView(dialogView)
@@ -353,7 +365,23 @@ public class DietFragment extends Fragment {
         });
         dialogView.findViewById(R.id.btnCancelChooseMeal).setOnClickListener(v -> dismissChooseMealDialog());
 
-        ArrayAdapter<Meal> adapter = new ArrayAdapter<Meal>(requireContext(), R.layout.list_item_food, availableMeals) {
+        final MealCatalogSort[] selectedSort = {MealCatalogSort.NAME_ASC};
+        String[] sortLabels = new String[]{
+                getString(R.string.choose_meal_sort_name_asc),
+                getString(R.string.choose_meal_sort_name_desc),
+                getString(R.string.choose_meal_sort_calories_asc),
+                getString(R.string.choose_meal_sort_calories_desc)
+        };
+        ArrayAdapter<String> sortAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                sortLabels
+        );
+        sortField.setAdapter(sortAdapter);
+        sortField.setText(sortLabels[0], false);
+
+        ArrayAdapter<Meal>[] listAdapterRef = new ArrayAdapter[1];
+        listAdapterRef[0] = new ArrayAdapter<Meal>(requireContext(), R.layout.list_item_food, new ArrayList<>()) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -369,15 +397,21 @@ public class DietFragment extends Fragment {
                     deleteBtn.setOnClickListener(v -> {
                         viewModel.deleteMealFromCatalog(meal).observe(getViewLifecycleOwner(), result -> {
                             if (result.isSuccess()) {
-                                remove(meal);
-                                notifyDataSetChanged();
-                                Toast.makeText(getContext(), R.string.catalog_food_removed_toast, Toast.LENGTH_SHORT).show();
+                                masterMeals.remove(meal);
+                                refreshChooseMealList(
+                                        masterMeals,
+                                        listAdapterRef[0],
+                                        searchField,
+                                        selectedSort[0],
+                                        emptyView,
+                                        listView
+                                );
+                                MuzFitToast.show(getContext(), R.string.catalog_food_removed_toast);
                             } else if (result.isError()) {
-                                Toast.makeText(
+                                MuzFitToast.showError(
                                         getContext(),
-                                        ((Result.Error<?>) result).getMessage(),
-                                        Toast.LENGTH_SHORT
-                                ).show();
+                                        resolveCatalogDeleteError(((Result.Error<?>) result).getMessage())
+                                );
                             }
                         });
                     });
@@ -392,10 +426,75 @@ public class DietFragment extends Fragment {
             }
         };
 
-        listView.setAdapter(adapter);
+        sortField.setOnItemClickListener((parent, view, position, id) -> {
+            selectedSort[0] = MealCatalogSort.values()[position];
+            refreshChooseMealList(masterMeals, listAdapterRef[0], searchField, selectedSort[0], emptyView, listView);
+        });
+
+        listView.setAdapter(listAdapterRef[0]);
+        searchField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                refreshChooseMealList(masterMeals, listAdapterRef[0], searchField, selectedSort[0], emptyView, listView);
+            }
+        });
+
+        refreshChooseMealList(masterMeals, listAdapterRef[0], searchField, selectedSort[0], emptyView, listView);
         chooseMealDialog.setOnDismissListener(d -> chooseMealDialog = null);
         chooseMealDialog.show();
         applyLargeDialogWindowStyle(chooseMealDialog);
+    }
+
+    private void refreshChooseMealList(
+            List<Meal> masterMeals,
+            ArrayAdapter<Meal> adapter,
+            EditText searchField,
+            MealCatalogSort sort,
+            TextView emptyView,
+            ListView listView
+    ) {
+        String query = searchField.getText() != null
+                ? searchField.getText().toString().trim().toLowerCase(Locale.ROOT)
+                : "";
+        List<Meal> filtered = new ArrayList<>();
+        for (Meal meal : masterMeals) {
+            if (meal == null || meal.getFoodName() == null) {
+                continue;
+            }
+            if (query.isEmpty() || meal.getFoodName().toLowerCase(Locale.ROOT).contains(query)) {
+                filtered.add(meal);
+            }
+        }
+        Comparator<Meal> comparator;
+        if (sort == MealCatalogSort.NAME_DESC) {
+            comparator = Comparator.comparing(
+                    m -> m.getFoodName().toLowerCase(Locale.ROOT),
+                    Comparator.reverseOrder()
+            );
+        } else if (sort == MealCatalogSort.CALORIES_ASC) {
+            comparator = Comparator.comparing(Meal::getCalories);
+        } else if (sort == MealCatalogSort.CALORIES_DESC) {
+            comparator = Comparator.comparing(Meal::getCalories).reversed();
+        } else {
+            comparator = Comparator.comparing(m -> m.getFoodName().toLowerCase(Locale.ROOT));
+        }
+        Collections.sort(filtered, comparator);
+
+        adapter.clear();
+        adapter.addAll(filtered);
+        adapter.notifyDataSetChanged();
+
+        boolean isEmpty = filtered.isEmpty();
+        emptyView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        listView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 
     private void showCategorySelectionDialog(Meal template) {
@@ -616,6 +715,13 @@ public class DietFragment extends Fragment {
         confirmDialog.show();
     }
 
+    private CharSequence resolveCatalogDeleteError(String message) {
+        if (message != null && Constants.ERROR_MEAL_IN_USE.equals(message)) {
+            return getString(R.string.catalog_meal_remove_in_use);
+        }
+        return message != null ? message : getString(R.string.catalog_meal_remove_in_use);
+    }
+
     private void dismissChooseMealDialog() {
         if (chooseMealDialog != null && chooseMealDialog.isShowing()) {
             chooseMealDialog.dismiss();
@@ -648,15 +754,11 @@ public class DietFragment extends Fragment {
                 return;
             }
             if (result.isError()) {
-                Toast.makeText(
-                        requireContext(),
-                        ((Result.Error<?>) result).getMessage(),
-                        Toast.LENGTH_SHORT
-                ).show();
+                MuzFitToast.showError(requireContext(), ((Result.Error<?>) result).getMessage());
                 return;
             }
             viewModel.getMealCatalog();
-            Toast.makeText(requireContext(), R.string.food_logged_toast, Toast.LENGTH_SHORT).show();
+            MuzFitToast.show(requireContext(), R.string.food_logged_toast);
         });
     }
 
@@ -664,7 +766,7 @@ public class DietFragment extends Fragment {
         String name = nameEt.getText() != null ? nameEt.getText().toString().trim() : "";
         String calS = calEt.getText() != null ? calEt.getText().toString().trim() : "";
         if (name.isEmpty() || calS.isEmpty()) {
-            Toast.makeText(requireContext(), R.string.food_name_required_toast, Toast.LENGTH_SHORT).show();
+            MuzFitToast.showError(requireContext(), getString(R.string.food_name_required_toast));
             return false;
         }
         Meal meal = new Meal(

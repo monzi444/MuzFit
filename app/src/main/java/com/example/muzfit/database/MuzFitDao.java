@@ -51,6 +51,9 @@ public interface MuzFitDao {
     @Delete
     void deleteMeal(Meal meal);
 
+    @Query("SELECT COUNT(*) FROM UserMeal WHERE mealId = :mealId")
+    int countUserMealsForMeal(int mealId);
+
     @Query("SELECT * FROM UserMeal WHERE username = :username")
     List<UserMeal> getUserMeals(String username);
 

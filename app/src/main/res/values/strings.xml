@@ -3,7 +3,7 @@
     <string name="greeting_prefix">Hi, %s!</string>
     <string name="diet_page_title">Diet</string>
     <string name="diet_calories_remaining">Remaining</string>
-    <string name="diet_kcal_consumed">kcal consumed</string>
+    <string name="diet_kcal_label">Kcal</string>
     <string name="diet_carbs_label">Carbs</string>
     <string name="diet_protein_label">Protein</string>
     <string name="diet_fat_label">Fat</string>
@@ -11,8 +11,15 @@
     <string name="diet_section_lunch">Lunch</string>
     <string name="diet_section_dinner">Dinner</string>
     <string name="diet_empty_meals">No meals logged for this day</string>
-    <string name="add_food_button">Add food</string>
+    <string name="add_food_button">Add a new meal</string>
     <string name="choose_meal_title">Choose a meal</string>
+    <string name="choose_meal_search_hint">Search saved meals…</string>
+    <string name="choose_meal_sort_hint">Sort by</string>
+    <string name="choose_meal_empty">No meals match your search</string>
+    <string name="choose_meal_sort_name_asc">Name (A–Z)</string>
+    <string name="choose_meal_sort_name_desc">Name (Z–A)</string>
+    <string name="choose_meal_sort_calories_asc">Calories (low to high)</string>
+    <string name="choose_meal_sort_calories_desc">Calories (high to low)</string>
     <string name="choose_meal_button">Add meal</string>
     <string name="food_added_toast">Food added!</string>
     <string name="add_food_search_title">Search food</string>
@@ -43,6 +50,7 @@
     <string name="food_logged_toast">Meal logged!</string>
     <string name="food_removed_toast">Food removed!</string>
     <string name="catalog_food_removed_toast">Removed from list</string>
+    <string name="catalog_meal_remove_in_use">You can\'t remove meals that you have eaten</string>
     <string name="meal_entry_format">%1$s (%2$d kcal)</string>
     <string name="delete_food">Delete</string>
     <string name="workout_page_title">Workout</string>

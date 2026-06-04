@@ -139,82 +139,112 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_height="80dp"
             android:layout_marginBottom="16dp"
-            android:baselineAligned="false">
+            android:baselineAligned="false"
+            android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/MuzFitDietStatCard"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginEnd="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp">
+                android:layout_weight="1">
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/diet_kcal_consumed" android:textSize="12sp" />
-                    <TextView android:id="@+id/tvTotalCalories" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textStyle="bold" />
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="10dp">
+
+                    <TextView
+                        style="@style/MuzFitDietStatLabel"
+                        android:text="@string/diet_kcal_label" />
+
+                    <TextView
+                        android:id="@+id/tvTotalCalories"
+                        style="@style/MuzFitDietStatValue"
+                        android:text="0" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/MuzFitDietStatCard"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:layout_marginStart="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp">
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp"
+                android:layout_weight="1">
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/diet_carbs_label" android:textSize="12sp" />
-                    <TextView android:id="@+id/tvTotalCarbs" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0g" android:textStyle="bold" />
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="10dp">
+
+                    <TextView
+                        style="@style/MuzFitDietStatLabel"
+                        android:text="@string/diet_carbs_label" />
+
+                    <TextView
+                        android:id="@+id/tvTotalCarbs"
+                        style="@style/MuzFitDietStatValueCarbs"
+                        android:text="0g" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/MuzFitDietStatCard"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:layout_marginStart="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp">
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="4dp"
+                android:layout_weight="1">
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/diet_protein_label" android:textSize="12sp" />
-                    <TextView android:id="@+id/tvTotalProtein" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0g" android:textStyle="bold" />
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="10dp">
+
+                    <TextView
+                        style="@style/MuzFitDietStatLabel"
+                        android:text="@string/diet_protein_label" />
+
+                    <TextView
+                        android:id="@+id/tvTotalProtein"
+                        style="@style/MuzFitDietStatValueProtein"
+                        android:text="0g" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/MuzFitDietStatCard"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:layout_marginStart="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp">
+                android:layout_weight="1">
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp"
-                    android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/diet_fat_label" android:textSize="12sp" />
-                    <TextView android:id="@+id/tvTotalFat" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0g" android:textStyle="bold" />
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="10dp">
+
+                    <TextView
+                        style="@style/MuzFitDietStatLabel"
+                        android:text="@string/diet_fat_label" />
+
+                    <TextView
+                        android:id="@+id/tvTotalFat"
+                        style="@style/MuzFitDietStatValueFat"
+                        android:text="0g" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

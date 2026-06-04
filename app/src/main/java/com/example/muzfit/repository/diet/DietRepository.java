@@ -108,6 +108,10 @@ public class DietRepository implements IDietRepository {
                     liveData.postValue(new Result.Error<>("Local database is not initialized"));
                     return;
                 }
+                if (meal.getId() > 0 && localDao.countUserMealsForMeal(meal.getId()) > 0) {
+                    liveData.postValue(new Result.Error<>(Constants.ERROR_MEAL_IN_USE));
+                    return;
+                }
                 localDao.deleteMeal(meal);
                 liveData.postValue(new Result.Success<>(null));
                 refreshMealCatalog();
@@ -304,6 +308,13 @@ public class DietRepository implements IDietRepository {
     }
 
     private static String errorMessage(Exception e) {
-        return e.getMessage() != null ? e.getMessage() : Constants.ERROR_DATABASE;
+        String message = e.getMessage();
+        if (message != null
+                && (message.contains("FOREIGN KEY")
+                || message.contains("SQLITE_CONSTRAINT_FOREIGNKEY")
+                || message.contains("787"))) {
+            return Constants.ERROR_MEAL_IN_USE;
+        }
+        return message != null ? message : Constants.ERROR_DATABASE;
     }
 }
