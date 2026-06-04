@@ -492,13 +492,15 @@ public class HomeFragment extends Fragment {
         
         float density = getResources().getDisplayMetrics().density;
         int size = (int) (40 * density);
-        int margin = (int) (4 * density);
+        int margin = (int) (2 * density);
 
+        int column = 0;
         for (DashboardCalendarDay day : data) {
             TextView dayView = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = size;
+            params.width = 0;
             params.height = size;
+            params.columnSpec = GridLayout.spec(column, 1f);
             params.setMargins(margin, margin, margin, margin);
             dayView.setLayoutParams(params);
             dayView.setGravity(Gravity.CENTER);
@@ -538,6 +540,10 @@ public class HomeFragment extends Fragment {
             }
             
             grid.addView(dayView);
+            column++;
+            if (column == 7) {
+                column = 0;
+            }
         }
     }
 }
