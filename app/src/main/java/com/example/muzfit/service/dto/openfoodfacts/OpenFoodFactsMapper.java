@@ -149,7 +149,7 @@ public final class OpenFoodFactsMapper {
     public static String formatSearchSubtitle(Meal meal) {
         return String.format(
                 Locale.getDefault(),
-                "%.0f kcal · P %.0fg · C %.0fg · G %.0fg",
+                "%.0f kcal · P %.0fg · C %.0fg · F %.0fg",
                 meal.getCalories(),
                 meal.getProtein(),
                 meal.getCarbs(),

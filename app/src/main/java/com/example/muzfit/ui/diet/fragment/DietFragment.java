@@ -2,6 +2,8 @@ package com.example.muzfit.ui.diet.fragment;
 
 import android.app.AlertDialog;
 import android.content.res.ColorStateList;
+import android.util.DisplayMetrics;
+import android.view.Window;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -216,11 +218,11 @@ public class DietFragment extends Fragment {
                 View itemView = inflater.inflate(R.layout.list_item_food, null);
                 TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
                 ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
-                nameTv.setText(String.format(Locale.getDefault(), "%s (%.0f kcal)", meal.getFoodName(), meal.getCalories()));
+                nameTv.setText(getString(R.string.meal_entry_format, meal.getFoodName(), Math.round(meal.getCalories())));
                 deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal)
                         .observe(getViewLifecycleOwner(), result -> {
                             if (result.isSuccess()) {
-                                Toast.makeText(requireContext(), "Togliere il cibo dal pasto!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), R.string.food_removed_toast, Toast.LENGTH_SHORT).show();
                             } else if (result.isError()) {
                                 Toast.makeText(
                                         requireContext(),
@@ -250,7 +252,7 @@ public class DietFragment extends Fragment {
 
     private void addEmptyStateText(LinearLayout container) {
         TextView emptyTv = new TextView(requireContext());
-        emptyTv.setText("Nessun pasto registrato per questa data");
+        emptyTv.setText(R.string.diet_empty_meals);
         emptyTv.setPadding(16, 8, 16, 24);
         emptyTv.setAlpha(0.6f);
         emptyTv.setTypeface(null, Typeface.ITALIC);
@@ -269,7 +271,12 @@ public class DietFragment extends Fragment {
         int selectedDayOfYear = selectedDate.get(Calendar.DAY_OF_YEAR);
         int selectedYear = selectedDate.get(Calendar.YEAR);
 
-        tvMonthYear.setText(String.format(Locale.getDefault(), "%s %d", currentWeekStart.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault()), currentWeekStart.get(Calendar.YEAR)));
+        tvMonthYear.setText(String.format(
+                Locale.ENGLISH,
+                "%s %d",
+                currentWeekStart.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH),
+                currentWeekStart.get(Calendar.YEAR)
+        ));
         calendarGrid.removeAllViews();
         float density = getResources().getDisplayMetrics().density;
         int size = (int) (40 * density), margin = (int) (2 * density);
@@ -309,11 +316,23 @@ public class DietFragment extends Fragment {
         }
     }
 
+    private void applyLargeDialogWindowStyle(AlertDialog dialog) {
+        applyDialogWindowStyle(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) {
+            return;
+        }
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int width = (int) (metrics.widthPixels * 0.92f);
+        int height = (int) (metrics.heightPixels * 0.78f);
+        window.setLayout(width, height);
+    }
+
     private void showChooseMealDialog() {
         List<Meal> availableMeals = new ArrayList<>();
-        availableMeals.add(new Meal(0, "Mela", 95, 25, 1, 0));
-        availableMeals.add(new Meal(0, "Pasta al pomodoro", 350, 70, 10, 5));
-        availableMeals.add(new Meal(0, "Petto di Pollo", 165, 0, 31, 4));
+        availableMeals.add(new Meal(0, "Apple", 95, 25, 1, 0));
+        availableMeals.add(new Meal(0, "Pasta with tomato sauce", 350, 70, 10, 5));
+        availableMeals.add(new Meal(0, "Chicken breast", 165, 0, 31, 4));
 
         Map<Integer, Meal> catalog = viewModel.getMealsById().getValue();
         if (catalog != null) {
@@ -346,15 +365,19 @@ public class DietFragment extends Fragment {
                 ImageButton deleteBtn = convertView.findViewById(R.id.deleteFoodButton);
 
                 if (meal != null) {
-                    nameTv.setText(String.format(Locale.getDefault(), "%s (%.0f kcal)", meal.getFoodName(), meal.getCalories()));
+                    nameTv.setText(getString(R.string.meal_entry_format, meal.getFoodName(), Math.round(meal.getCalories())));
                     deleteBtn.setOnClickListener(v -> {
                         viewModel.deleteMealFromCatalog(meal).observe(getViewLifecycleOwner(), result -> {
                             if (result.isSuccess()) {
                                 remove(meal);
                                 notifyDataSetChanged();
-                                Toast.makeText(getContext(), "Togliere il cibo dal pasto!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), R.string.catalog_food_removed_toast, Toast.LENGTH_SHORT).show();
                             } else if (result.isError()) {
-                                Toast.makeText(getContext(), "Togliere il cibo dal pasto!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(
+                                        getContext(),
+                                        ((Result.Error<?>) result).getMessage(),
+                                        Toast.LENGTH_SHORT
+                                ).show();
                             }
                         });
                     });
@@ -371,8 +394,8 @@ public class DietFragment extends Fragment {
 
         listView.setAdapter(adapter);
         chooseMealDialog.setOnDismissListener(d -> chooseMealDialog = null);
-        applyDialogWindowStyle(chooseMealDialog);
         chooseMealDialog.show();
+        applyLargeDialogWindowStyle(chooseMealDialog);
     }
 
     private void showCategorySelectionDialog(Meal template) {
