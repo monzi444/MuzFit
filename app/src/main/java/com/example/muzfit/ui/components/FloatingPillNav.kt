@@ -45,7 +45,7 @@ fun FloatingPillNav(
         NavTab("profile", "Profile", LinearIcons.Profile)
     )
 
-    val glassBgColor = Color(0x851C1E1E) // rgba(28, 30, 30, 0.52)
+    val glassBgColor = colorResource(id = R.color.muz_glass_bg)
     val limeColor = colorResource(id = R.color.muz_primary_lime)
     val onSurfaceVariant = colorResource(id = R.color.muz_on_surface_variant)
     val glassBorderColor = colorResource(id = R.color.muz_glass_border)

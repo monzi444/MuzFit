@@ -29,10 +29,10 @@ public class CalorieHistogramView extends View {
 
     private void init() {
         barPaint.setColor(ContextCompat.getColor(getContext(), R.color.calorie_color));
-        textPaint.setColor(android.graphics.Color.GRAY);
+        textPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface_variant));
         textPaint.setTextSize(24f);
         textPaint.setTextAlign(Paint.Align.CENTER);
-        valuePaint.setColor(android.graphics.Color.DKGRAY);
+        valuePaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface));
         valuePaint.setTextSize(20f);
         valuePaint.setTextAlign(Paint.Align.CENTER);
     }
