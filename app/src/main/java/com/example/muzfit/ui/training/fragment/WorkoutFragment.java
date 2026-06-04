@@ -154,7 +154,7 @@ public class WorkoutFragment extends Fragment {
 
     private void showDeleteConfirmDialog(int position) {
         WorkoutRoutine routine = routineList.get(position);
-        new AlertDialog.Builder(requireContext())
+        new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
                 .setTitle(R.string.delete_confirm_title)
                 .setMessage(R.string.delete_confirm_message)
                 .setPositiveButton(R.string.delete, (dialog, which) -> {
@@ -178,7 +178,7 @@ public class WorkoutFragment extends Fragment {
 
     private void showRoutineOptionsDialog(WorkoutRoutine routine, int position) {
         String[] options = {"Edit", "Delete"};
-        new AlertDialog.Builder(requireContext())
+        new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
                 .setTitle("Routine Options")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
@@ -191,7 +191,7 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void showManageRoutineDialog(@Nullable WorkoutRoutine routineToEdit) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_manage_exercises, null);
         TextInputEditText etRoutineName = dialogView.findViewById(R.id.etRoutineName);
         RecyclerView rvSelectedExercises = dialogView.findViewById(R.id.rvSelectedExercises);
@@ -277,7 +277,7 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void showRoutineDialog(List<Exercise> selectedExercises, Runnable onComplete) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_workout, null);
         // We hide the name field in this sub-dialog since it's already in the parent
         dialogView.findViewById(R.id.tilRoutineName).setVisibility(View.GONE);
@@ -339,7 +339,7 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void showExercisePreviewDialog(Exercise exercise, Runnable onConfirm) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_exercise_preview, null);
         TextView tvPreviewName = dialogView.findViewById(R.id.tvPreviewName);
         ImageView ivExerciseGif = dialogView.findViewById(R.id.ivExerciseGif);
