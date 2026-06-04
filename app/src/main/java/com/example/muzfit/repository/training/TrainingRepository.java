@@ -152,18 +152,34 @@ public class TrainingRepository implements ITrainingRepository {
             EXECUTOR.execute(() -> {
                 try {
                     awaitSeedIfNeeded();
-                    // Crea un nuovo ID per il workout (usa timestamp come fallback)
-                    int workoutId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
                     
-                    // 1. Salva i dettagli degli esercizi scelti per questa routine (presi dall'API ExerciseDB)
-                    // Questi vengono salvati nella tabella Exercise del DB locale
+                    // 1. Check if routine with same name already exists to handle "Edit"
+                    List<Workout> existingWorkouts = localDao.getWorkouts(username);
+                    Workout targetWorkout = null;
+                    for (Workout w : existingWorkouts) {
+                        if (routine.getName().equals(w.getDescription())) {
+                            targetWorkout = w;
+                            break;
+                        }
+                    }
+
+                    int workoutId;
+                    if (targetWorkout != null) {
+                        // Edit mode: reuse existing ID and clear old exercises
+                        workoutId = targetWorkout.getId();
+                        localDao.deleteExerciseSets(workoutId, username);
+                        localDao.deleteWorkoutExercises(workoutId, username);
+                    } else {
+                        // Create mode: new ID
+                        workoutId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+                        Workout workout = new Workout(workoutId, System.currentTimeMillis(), routine.getName(), username);
+                        localDao.insertWorkout(workout);
+                    }
+                    
+                    // 2. Save/Update exercises details
                     localDao.insertExercises(routine.getExercises());
 
-                    // 2. Inserisce il Workout nella tabella Workout del DB locale
-                    Workout workout = new Workout(workoutId, System.currentTimeMillis(), routine.getName(), username);
-                    localDao.insertWorkout(workout);
-                    
-                    // 3. Collega gli esercizi al workout nella tabella WorkoutExercise (WorkoutRoutine nel tuo schema)
+                    // 3. Link exercises to workout
                     List<WorkoutExercise> wes = new ArrayList<>();
                     for (Exercise e : routine.getExercises()) {
                         wes.add(new WorkoutExercise(0, workoutId, username, e.getId()));
@@ -185,17 +201,41 @@ public class TrainingRepository implements ITrainingRepository {
     public LiveData<Result<Void>> deleteRoutine(String routineName, String username) {
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        trainingFirebaseDataSource.deleteRoutine(routineName, username, new DataSourceCallback<Void>() {
-            @Override
-            public void onSuccess(Void data) {
-                liveData.postValue(new Result.Success<>(null));
-            }
 
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao != null) {
+                    List<Workout> workouts = localDao.getWorkouts(username);
+                    for (Workout w : workouts) {
+                        if (routineName.equals(w.getDescription())) {
+                            localDao.deleteExerciseSets(w.getId(), username);
+                            localDao.deleteWorkoutExercises(w.getId(), username);
+                            localDao.deleteWorkout(w);
+                        }
+                    }
+                }
+                
+                // Also call Firebase if needed
+                trainingFirebaseDataSource.deleteRoutine(routineName, username, new DataSourceCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void data) {
+                        liveData.postValue(new Result.Success<>(null));
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        // Even if firebase fails, we consider it a success if local worked, 
+                        // or we can report error. Let's at least post success for now 
+                        // as local is the primary source for the user.
+                        liveData.postValue(new Result.Success<>(null));
+                    }
+                });
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
             }
         });
+
         return liveData;
     }
 

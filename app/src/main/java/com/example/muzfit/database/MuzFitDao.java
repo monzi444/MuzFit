@@ -161,6 +161,9 @@ public interface MuzFitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertWorkoutExercises(List<WorkoutExercise> workoutExercises);
 
+    @Query("DELETE FROM WorkoutExercise WHERE workoutId = :workoutId AND username = :username")
+    void deleteWorkoutExercises(int workoutId, String username);
+
     @Query("DELETE FROM WorkoutExercise WHERE username = :username")
     void deleteWorkoutExercises(String username);
 
@@ -177,6 +180,9 @@ public interface MuzFitDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertExerciseSets(List<ExerciseSet> exerciseSets);
+
+    @Query("DELETE FROM ExerciseSet WHERE workoutId = :workoutId AND username = :username")
+    void deleteExerciseSets(int workoutId, String username);
 
     @Query("DELETE FROM ExerciseSet WHERE username = :username")
     void deleteExerciseSets(String username);

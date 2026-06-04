@@ -38,20 +38,12 @@
         android:text="@string/start_workout_button" />
 
     <Button
-        android:id="@+id/editRoutineButton"
+        android:id="@+id/btnRoutineOptions"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="@string/edit_routine_button" />
-
-    <Button
-        android:id="@+id/deleteRoutineButton"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@android:color/holo_red_dark"
-        android:text="@string/delete_routine_button" />
+        android:text="Options" />
 
     <Button
         android:id="@+id/createRoutineButton"

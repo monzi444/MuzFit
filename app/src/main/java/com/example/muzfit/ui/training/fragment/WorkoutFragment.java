@@ -33,6 +33,9 @@ import java.util.List;
 
 import com.example.muzfit.R;
 import com.example.muzfit.adapter.ExerciseSearchAdapter;
+import androidx.recyclerview.widget.ItemTouchHelper;
+
+import com.example.muzfit.adapter.SelectedExercisesAdapter;
 import com.example.muzfit.adapter.WorkoutAdapter;
 import com.example.muzfit.model.Exercise;
 import com.example.muzfit.model.Result;
@@ -46,8 +49,7 @@ public class WorkoutFragment extends Fragment {
 
     private ListView routineListView;
     private Button startWorkoutButton;
-    private Button editRoutineButton;
-    private Button deleteRoutineButton;
+    private Button btnRoutineOptions;
     private Button createRoutineButton;
     private WorkoutAdapter adapter;
     private TrainingViewModel viewModel;
@@ -66,8 +68,8 @@ public class WorkoutFragment extends Fragment {
 
         routineListView = view.findViewById(R.id.routineListView);
         startWorkoutButton = view.findViewById(R.id.startWorkoutButton);
-        editRoutineButton = view.findViewById(R.id.editRoutineButton);
-        deleteRoutineButton = view.findViewById(R.id.deleteRoutineButton);
+        btnRoutineOptions = view.findViewById(R.id.btnRoutineOptions);
+        btnRoutineOptions.setText("Edit/Delete");
         createRoutineButton = view.findViewById(R.id.createRoutineButton);
 
         adapter = new WorkoutAdapter(requireContext(), routineList);
@@ -105,29 +107,25 @@ public class WorkoutFragment extends Fragment {
         createRoutineButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showRoutineDialog(null);
+                List<Exercise> selectedExercises = new ArrayList<>();
+                showRoutineDialog(selectedExercises, () -> {
+                    if (!selectedExercises.isEmpty()) {
+                        showManageRoutineDialog(new WorkoutRoutine(getNextDefaultWorkoutName(), selectedExercises));
+                    } else {
+                        Toast.makeText(getContext(), "Select at least one exercise to continue", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
 
-        editRoutineButton.setOnClickListener(new View.OnClickListener() {
+        btnRoutineOptions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (selectedPosition < 0) {
                     Toast.makeText(getContext(), getString(R.string.select_routine_toast), Toast.LENGTH_SHORT).show();
                     return;
                 }
-                showRoutineDialog(routineList.get(selectedPosition));
-            }
-        });
-
-        deleteRoutineButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (selectedPosition < 0) {
-                    Toast.makeText(getContext(), getString(R.string.select_routine_toast), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                showDeleteConfirmDialog(selectedPosition);
+                showRoutineOptionsDialog(routineList.get(selectedPosition), selectedPosition);
             }
         });
 
@@ -155,39 +153,142 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void showDeleteConfirmDialog(int position) {
+        WorkoutRoutine routine = routineList.get(position);
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.delete_confirm_title)
                 .setMessage(R.string.delete_confirm_message)
                 .setPositiveButton(R.string.delete, (dialog, which) -> {
-                    routineList.remove(position);
-                    selectedPosition = -1;
-                    routineListView.clearChoices();
-                    adapter.notifyDataSetChanged();
-                    Toast.makeText(getContext(), R.string.routine_deleted_toast, Toast.LENGTH_SHORT).show();
+                    viewModel.deleteRoutineForDefaultUser(routine.getName()).observe(getViewLifecycleOwner(), result -> {
+                        if (!isAdded()) return;
+                        if (result.isLoading()) return;
+                        if (result.isSuccess()) {
+                            loadRoutines(); // Refresh full list from DB
+                            selectedPosition = -1;
+                            routineListView.clearChoices();
+                            Toast.makeText(getContext(), R.string.routine_deleted_toast, Toast.LENGTH_SHORT).show();
+                        } else {
+                            String msg = ((Result.Error<Void>) result).getMessage();
+                            Toast.makeText(getContext(), "Error deleting: " + msg, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
-    private void showRoutineDialog(@Nullable WorkoutRoutine routineToEdit) {
+    private void showRoutineOptionsDialog(WorkoutRoutine routine, int position) {
+        String[] options = {"Edit", "Delete"};
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Routine Options")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showManageRoutineDialog(routine);
+                    } else if (which == 1) {
+                        showDeleteConfirmDialog(position);
+                    }
+                })
+                .show();
+    }
+
+    private void showManageRoutineDialog(@Nullable WorkoutRoutine routineToEdit) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_manage_exercises, null);
+        TextInputEditText etRoutineName = dialogView.findViewById(R.id.etRoutineName);
+        RecyclerView rvSelectedExercises = dialogView.findViewById(R.id.rvSelectedExercises);
+        Button btnAddNewExercise = dialogView.findViewById(R.id.btnAddNewExercise);
+
+        List<SelectedExercisesAdapter.SelectableExercise> selectableExercises = new ArrayList<>();
+        if (routineToEdit != null) {
+            etRoutineName.setText(routineToEdit.getName());
+            for (Exercise e : routineToEdit.getExercises()) {
+                selectableExercises.add(new SelectedExercisesAdapter.SelectableExercise(e));
+            }
+        } else {
+            etRoutineName.setText(getNextDefaultWorkoutName());
+        }
+
+        final ItemTouchHelper[] ith = new ItemTouchHelper[1];
+        SelectedExercisesAdapter selectedAdapter = new SelectedExercisesAdapter(selectableExercises, viewHolder -> {
+            if (ith[0] != null) ith[0].startDrag(viewHolder);
+        });
+
+        ith[0] = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                selectedAdapter.onItemMove(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+        });
+
+        rvSelectedExercises.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvSelectedExercises.setAdapter(selectedAdapter);
+        ith[0].attachToRecyclerView(rvSelectedExercises);
+
+        btnAddNewExercise.setOnClickListener(v -> {
+            List<Exercise> newlyAdded = new ArrayList<>();
+            showRoutineDialog(newlyAdded, () -> {
+                for (Exercise e : newlyAdded) {
+                    selectableExercises.add(new SelectedExercisesAdapter.SelectableExercise(e));
+                }
+                selectedAdapter.notifyDataSetChanged();
+            });
+        });
+
+        builder.setTitle(routineToEdit == null ? R.string.create_routine_title : R.string.edit_routine_title);
+        builder.setView(dialogView);
+        builder.setPositiveButton(R.string.save, (dialog, which) -> {
+            if (etRoutineName.getText() == null) {
+                return;
+            }
+            String name = etRoutineName.getText().toString().trim();
+            if (name.isEmpty()) {
+                Toast.makeText(getContext(), getString(R.string.routine_name_required_toast), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            List<Exercise> finalExercises = new ArrayList<>();
+            for (SelectedExercisesAdapter.SelectableExercise se : selectableExercises) {
+                if (se.isSelected) {
+                    finalExercises.add(se.exercise);
+                }
+            }
+
+            WorkoutRoutine newRoutine = new WorkoutRoutine(name, finalExercises);
+
+            viewModel.saveRoutineForDefaultUser(newRoutine).observe(getViewLifecycleOwner(), result -> {
+                if (!isAdded()) return;
+                if (result.isLoading()) return;
+
+                if (result.isSuccess()) {
+                    loadRoutines();
+                    Toast.makeText(getContext(), getString(R.string.routine_created_toast), Toast.LENGTH_SHORT).show();
+                } else {
+                    String msg = ((Result.Error<Void>) result).getMessage();
+                    Toast.makeText(getContext(), "Errore salvataggio: " + msg, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    private void showRoutineDialog(List<Exercise> selectedExercises, Runnable onComplete) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_workout, null);
-        TextInputEditText etRoutineName = dialogView.findViewById(R.id.etRoutineName);
+        // We hide the name field in this sub-dialog since it's already in the parent
+        dialogView.findViewById(R.id.tilRoutineName).setVisibility(View.GONE);
+        
         EditText etSearchExercise = dialogView.findViewById(R.id.etSearchExercise);
         RecyclerView rvExerciseResults = dialogView.findViewById(R.id.rvExerciseResults);
         TextView tvSelectedExercisesCount = dialogView.findViewById(R.id.tvSelectedExercisesCount);
         ChipGroup cgBodyParts = dialogView.findViewById(R.id.cgBodyParts);
 
-        List<Exercise> selectedExercises = new ArrayList<>();
-        if (routineToEdit != null) {
-            etRoutineName.setText(routineToEdit.getName());
-            selectedExercises.addAll(routineToEdit.getExercises());
-        } else {
-            etRoutineName.setText(getNextDefaultWorkoutName());
-        }
-
         List<Exercise> searchResults = new ArrayList<>();
-        
+
         ExerciseSearchAdapter searchAdapter = new ExerciseSearchAdapter(searchResults, exercise -> {
             showExercisePreviewDialog(exercise, () -> {
                 selectedExercises.add(exercise);
@@ -199,7 +300,8 @@ public class WorkoutFragment extends Fragment {
         rvExerciseResults.setAdapter(searchAdapter);
 
         tvSelectedExercisesCount.setText(getString(R.string.selected_exercises_count, selectedExercises.size()));
-        tvSelectedExercisesCount.setOnClickListener(v -> showSelectedExercisesRecap(selectedExercises, tvSelectedExercisesCount));
+        // In this case, we don't need the recap click because we have the main list
+        tvSelectedExercisesCount.setClickable(false);
 
         cgBodyParts.setOnCheckedChangeListener((group, checkedId) -> {
             String query = etSearchExercise.getText().toString().trim();
@@ -225,35 +327,15 @@ public class WorkoutFragment extends Fragment {
             public void afterTextChanged(Editable s) {}
         });
 
-        builder.setTitle(routineToEdit == null ? R.string.create_routine_title : R.string.edit_routine_title);
+        builder.setTitle(R.string.search_exercises);
         builder.setView(dialogView);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> {
-            if (etRoutineName.getText() == null) {
-                return;
-            }
-            String name = etRoutineName.getText().toString().trim();
-            if (name.isEmpty()) {
-                Toast.makeText(getContext(), getString(R.string.routine_name_required_toast), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            
-            WorkoutRoutine newRoutine = new WorkoutRoutine(name, new ArrayList<>(selectedExercises));
-            
-            viewModel.saveRoutineForDefaultUser(newRoutine).observe(getViewLifecycleOwner(), result -> {
-                if (!isAdded()) return;
-                if (result.isLoading()) return;
-                
-                if (result.isSuccess()) {
-                    loadRoutines(); // Ricarica la lista dal database per confermare il salvataggio
-                    Toast.makeText(getContext(), getString(R.string.routine_created_toast), Toast.LENGTH_SHORT).show();
-                } else {
-                    String msg = ((Result.Error<Void>) result).getMessage();
-                    Toast.makeText(getContext(), "Errore salvataggio: " + msg, Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
-        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
+        builder.setPositiveButton(R.string.save, (dialog, which) -> onComplete.run());
         builder.show();
+    }
+
+    private void showRoutineDialog(@Nullable WorkoutRoutine routineToEdit) {
+        // Redundant now, but kept for compatibility or simplified if needed
+        showManageRoutineDialog(routineToEdit);
     }
 
     private void showExercisePreviewDialog(Exercise exercise, Runnable onConfirm) {
