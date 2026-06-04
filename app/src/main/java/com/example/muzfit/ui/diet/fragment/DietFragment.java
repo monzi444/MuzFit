@@ -221,7 +221,7 @@ public class DietFragment extends Fragment {
                 View itemView = inflater.inflate(R.layout.list_item_food, null);
                 TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
                 ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
-                nameTv.setText(getString(R.string.meal_entry_format, meal.getFoodName(), Math.round(meal.getCalories())));
+                nameTv.setText(formatMealEntry(meal));
                 deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal)
                         .observe(getViewLifecycleOwner(), result -> {
                             if (result.isSuccess()) {
@@ -393,7 +393,7 @@ public class DietFragment extends Fragment {
                 ImageButton deleteBtn = convertView.findViewById(R.id.deleteFoodButton);
 
                 if (meal != null) {
-                    nameTv.setText(getString(R.string.meal_entry_format, meal.getFoodName(), Math.round(meal.getCalories())));
+                    nameTv.setText(formatMealEntry(meal));
                     deleteBtn.setOnClickListener(v -> {
                         viewModel.deleteMealFromCatalog(meal).observe(getViewLifecycleOwner(), result -> {
                             if (result.isSuccess()) {
@@ -713,6 +713,11 @@ public class DietFragment extends Fragment {
         dialogView.findViewById(R.id.btnConfirmCancel).setOnClickListener(v -> confirmDialog.dismiss());
         applyDialogWindowStyle(confirmDialog);
         confirmDialog.show();
+    }
+
+    private String formatMealEntry(Meal meal) {
+        String calories = Integer.toString(Math.round(meal.getCalories()));
+        return getString(R.string.meal_entry_format, meal.getFoodName(), calories);
     }
 
     private CharSequence resolveCatalogDeleteError(String message) {
