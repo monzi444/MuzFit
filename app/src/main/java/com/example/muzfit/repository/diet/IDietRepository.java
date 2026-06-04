@@ -23,5 +23,7 @@ public interface IDietRepository {
 
     LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal);
 
-    LiveData<Result<List<Meal>>> searchFoods(String query);
+    LiveData<Result<List<Meal>>> getFoodSearchResults();
+
+    void searchFoods(String query);
 }

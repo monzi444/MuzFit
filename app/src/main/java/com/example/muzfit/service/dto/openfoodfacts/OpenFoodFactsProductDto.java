@@ -7,6 +7,12 @@ public class OpenFoodFactsProductDto {
     @SerializedName("product_name")
     private String productName;
 
+    @SerializedName("product_name_fr")
+    private String productNameFr;
+
+    @SerializedName("abbreviated_product_name")
+    private String abbreviatedProductName;
+
     @SerializedName("generic_name")
     private String genericName;
 
@@ -15,6 +21,14 @@ public class OpenFoodFactsProductDto {
 
     public String getProductName() {
         return productName;
+    }
+
+    public String getProductNameFr() {
+        return productNameFr;
+    }
+
+    public String getAbbreviatedProductName() {
+        return abbreviatedProductName;
     }
 
     public String getGenericName() {

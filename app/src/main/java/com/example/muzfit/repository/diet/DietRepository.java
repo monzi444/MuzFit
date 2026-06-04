@@ -30,6 +30,8 @@ public class DietRepository implements IDietRepository {
     private Future<?> seedFuture;
     private final MutableLiveData<Result<List<UserMeal>>> userMealsForDayLiveData = new MutableLiveData<>();
     private final MutableLiveData<Result<List<Meal>>> mealCatalogLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Result<List<Meal>>> foodSearchLiveData = new MutableLiveData<>();
+    private String activeSearchQuery = "";
     private String observedUsername;
     private long observedDateMillis;
 
@@ -140,25 +142,40 @@ public class DietRepository implements IDietRepository {
     }
 
     @Override
-    public LiveData<Result<List<Meal>>> searchFoods(String query) {
-        MutableLiveData<Result<List<Meal>>> liveData = new MutableLiveData<>();
-        liveData.setValue(new Result.Loading<>());
+    public LiveData<Result<List<Meal>>> getFoodSearchResults() {
+        return foodSearchLiveData;
+    }
+
+    @Override
+    public void searchFoods(String query) {
+        String normalizedQuery = query != null ? query.trim() : "";
+        activeSearchQuery = normalizedQuery;
+        if (normalizedQuery.length() < Constants.OFF_FOOD_SEARCH_MIN_QUERY_LENGTH) {
+            foodSearchLiveData.setValue(new Result.Success<>(new ArrayList<>()));
+            return;
+        }
+        foodSearchLiveData.setValue(new Result.Loading<>());
         openFoodFactsDataSource.searchFoods(
-                query,
+                normalizedQuery,
                 Constants.OFF_FOOD_SEARCH_LIMIT,
                 new DataSourceCallback<List<Meal>>() {
                     @Override
                     public void onSuccess(List<Meal> data) {
-                        liveData.postValue(new Result.Success<>(data));
+                        if (!normalizedQuery.equals(activeSearchQuery)) {
+                            return;
+                        }
+                        foodSearchLiveData.postValue(new Result.Success<>(data));
                     }
 
                     @Override
                     public void onError(String message) {
-                        liveData.postValue(new Result.Error<>(message));
+                        if (!normalizedQuery.equals(activeSearchQuery)) {
+                            return;
+                        }
+                        foodSearchLiveData.postValue(new Result.Error<>(message));
                     }
                 }
         );
-        return liveData;
     }
 
     @Override

@@ -9,6 +9,7 @@
     <string name="add_food_search_title">Cerca cibo</string>
     <string name="add_food_search_subtitle">Cerca nel database Open Food Facts</string>
     <string name="add_food_search_hint">es. pasta, mela, yogurt…</string>
+    <string name="food_search_loading">Ricerca in corso…</string>
     <string name="add_food_manual_button">Inserisci cibo manualmente</string>
     <string name="add_food_manual_title">Nuovo cibo</string>
     <string name="food_name_hint">Nome cibo</string>

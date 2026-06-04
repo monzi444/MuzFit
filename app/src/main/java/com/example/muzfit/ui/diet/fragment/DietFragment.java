@@ -5,6 +5,8 @@ import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -27,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -70,6 +73,16 @@ public class DietFragment extends Fragment {
     private AlertDialog chooseMealDialog;
     @Nullable
     private AlertDialog addFoodDialog;
+    private final Handler foodSearchHandler = new Handler(Looper.getMainLooper());
+    @Nullable
+    private Runnable pendingFoodSearchRunnable;
+    private String pendingFoodSearchQuery = "";
+    @Nullable
+    private List<Meal> activeSearchResults;
+    @Nullable
+    private FoodSearchAdapter activeSearchAdapter;
+    @Nullable
+    private View activeSearchLoadingContainer;
 
     @Nullable
     @Override
@@ -430,12 +443,15 @@ public class DietFragment extends Fragment {
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_food_search, null);
         EditText etSearchFood = dialogView.findViewById(R.id.etSearchFood);
         RecyclerView rvFoodResults = dialogView.findViewById(R.id.rvFoodResults);
+        activeSearchLoadingContainer = dialogView.findViewById(R.id.searchLoadingContainer);
 
-        List<Meal> searchResults = new ArrayList<>();
-        FoodSearchAdapter searchAdapter = new FoodSearchAdapter(searchResults, meal ->
+        activeSearchResults = new ArrayList<>();
+        activeSearchAdapter = new FoodSearchAdapter(activeSearchResults, meal ->
                 showFoodConfirmDialog(meal, () -> showCategorySelectionDialog(meal, true)));
         rvFoodResults.setLayoutManager(new LinearLayoutManager(requireContext()));
-        rvFoodResults.setAdapter(searchAdapter);
+        rvFoodResults.setAdapter(activeSearchAdapter);
+
+        viewModel.getFoodSearchResults().observe(getViewLifecycleOwner(), foodSearchObserver);
 
         etSearchFood.addTextChangedListener(new TextWatcher() {
             @Override
@@ -444,13 +460,7 @@ public class DietFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String query = s.toString().trim();
-                if (query.length() >= Constants.OFF_FOOD_SEARCH_MIN_QUERY_LENGTH) {
-                    searchFoods(query, searchResults, searchAdapter);
-                } else {
-                    searchResults.clear();
-                    searchAdapter.notifyDataSetChanged();
-                }
+                scheduleFoodSearch(s.toString().trim());
             }
 
             @Override
@@ -468,9 +478,74 @@ public class DietFragment extends Fragment {
         });
         dialogView.findViewById(R.id.btnCancelSearch).setOnClickListener(v -> dismissAddFoodDialog());
 
-        addFoodDialog.setOnDismissListener(d -> addFoodDialog = null);
+        addFoodDialog.setOnDismissListener(d -> {
+            cancelPendingFoodSearch();
+            viewModel.getFoodSearchResults().removeObserver(foodSearchObserver);
+            activeSearchResults = null;
+            activeSearchAdapter = null;
+            activeSearchLoadingContainer = null;
+            addFoodDialog = null;
+        });
         applyDialogWindowStyle(addFoodDialog);
         addFoodDialog.show();
+    }
+
+    private final Observer<Result<List<Meal>>> foodSearchObserver = result -> {
+        if (activeSearchResults == null || activeSearchAdapter == null || addFoodDialog == null || !addFoodDialog.isShowing()) {
+            return;
+        }
+        if (result.isLoading()) {
+            setFoodSearchLoading(true);
+            return;
+        }
+        setFoodSearchLoading(false);
+        activeSearchResults.clear();
+        if (result.isSuccess()) {
+            List<Meal> apiData = ((Result.Success<List<Meal>>) result).getData();
+            if (apiData != null) {
+                activeSearchResults.addAll(apiData);
+            }
+        }
+        activeSearchAdapter.notifyDataSetChanged();
+    };
+
+    private void setFoodSearchLoading(boolean loading) {
+        if (activeSearchLoadingContainer != null) {
+            activeSearchLoadingContainer.setVisibility(loading ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void scheduleFoodSearch(String query) {
+        pendingFoodSearchQuery = query;
+        if (pendingFoodSearchRunnable != null) {
+            foodSearchHandler.removeCallbacks(pendingFoodSearchRunnable);
+        }
+        if (query.length() < Constants.OFF_FOOD_SEARCH_MIN_QUERY_LENGTH) {
+            setFoodSearchLoading(false);
+            if (activeSearchResults != null && activeSearchAdapter != null) {
+                activeSearchResults.clear();
+                activeSearchAdapter.notifyDataSetChanged();
+            }
+            viewModel.searchFoods("");
+            return;
+        }
+        setFoodSearchLoading(true);
+        pendingFoodSearchRunnable = () -> {
+            if (query.equals(pendingFoodSearchQuery)) {
+                viewModel.searchFoods(query);
+            }
+        };
+        foodSearchHandler.postDelayed(pendingFoodSearchRunnable, Constants.OFF_FOOD_SEARCH_DEBOUNCE_MS);
+    }
+
+    private void cancelPendingFoodSearch() {
+        if (pendingFoodSearchRunnable != null) {
+            foodSearchHandler.removeCallbacks(pendingFoodSearchRunnable);
+            pendingFoodSearchRunnable = null;
+        }
+        pendingFoodSearchQuery = "";
+        setFoodSearchLoading(false);
+        viewModel.searchFoods("");
     }
 
     private void showManualFoodDialog() {
@@ -496,30 +571,6 @@ public class DietFragment extends Fragment {
         });
         applyDialogWindowStyle(manualDialog);
         manualDialog.show();
-    }
-
-    private void searchFoods(String query, List<Meal> results, FoodSearchAdapter adapter) {
-        viewModel.searchFoods(query).observe(getViewLifecycleOwner(), result -> {
-            if (!isAdded()) {
-                return;
-            }
-            if (result.isLoading()) {
-                return;
-            }
-            if (result.isError()) {
-                String message = ((Result.Error<List<Meal>>) result).getMessage();
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                results.clear();
-                adapter.notifyDataSetChanged();
-                return;
-            }
-            List<Meal> apiData = ((Result.Success<List<Meal>>) result).getData();
-            results.clear();
-            if (apiData != null) {
-                results.addAll(apiData);
-            }
-            adapter.notifyDataSetChanged();
-        });
     }
 
     private void showFoodConfirmDialog(Meal meal, Runnable onConfirm) {
@@ -552,8 +603,14 @@ public class DietFragment extends Fragment {
     private void dismissAddFoodDialog() {
         if (addFoodDialog != null && addFoodDialog.isShowing()) {
             addFoodDialog.dismiss();
+        } else {
+            cancelPendingFoodSearch();
+            viewModel.getFoodSearchResults().removeObserver(foodSearchObserver);
+            activeSearchResults = null;
+            activeSearchAdapter = null;
+            activeSearchLoadingContainer = null;
+            addFoodDialog = null;
         }
-        addFoodDialog = null;
     }
 
     private void dismissAllMealDialogs() {

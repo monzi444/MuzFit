@@ -41,14 +41,45 @@
             android:textColorHint="@color/muz_on_surface_variant" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvFoodResults"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:layout_marginTop="12dp"
-        android:background="@drawable/muzfit_category_card_bg"
-        android:nestedScrollingEnabled="true"
-        android:padding="4dp" />
+        android:background="@drawable/muzfit_category_card_bg">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvFoodResults"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:nestedScrollingEnabled="true"
+            android:padding="4dp" />
+
+        <LinearLayout
+            android:id="@+id/searchLoadingContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                app:indicatorColor="@color/muz_primary_lime"
+                app:indicatorSize="40dp"
+                app:trackColor="@color/muz_glass_border"
+                app:trackThickness="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/food_search_loading"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </FrameLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAddFoodManual"

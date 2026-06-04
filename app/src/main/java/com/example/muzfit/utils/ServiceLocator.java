@@ -17,7 +17,7 @@ import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
 import com.example.muzfit.service.ExerciseApiService;
 import com.example.muzfit.service.MuzFitApiService;
-import com.example.muzfit.service.OpenFoodFactsApiService;
+import com.example.muzfit.service.SearchALiciousApiService;
 import com.example.muzfit.source.diet.openfoodfacts.OpenFoodFactsApiDataSource;
 import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
@@ -49,8 +49,8 @@ public final class ServiceLocator {
     private ServiceLocator() {
         muzFitApiService = createMuzFitApiService();
         ExerciseApiService exerciseApiService = createExerciseApiService();
-        OpenFoodFactsApiService openFoodFactsApiService = createOpenFoodFactsApiService();
-        dietRepository = new DietRepository(new OpenFoodFactsApiDataSource(openFoodFactsApiService));
+        SearchALiciousApiService searchALiciousApiService = createSearchALiciousApiService();
+        dietRepository = new DietRepository(new OpenFoodFactsApiDataSource(searchALiciousApiService));
         trainingRepository = new TrainingRepository(
                 new TrainingApiDataSource(muzFitApiService),
                 new ExerciseCatalogApiDataSource(exerciseApiService),
@@ -161,7 +161,7 @@ public final class ServiceLocator {
         return retrofit.create(ExerciseApiService.class);
     }
 
-    private static OpenFoodFactsApiService createOpenFoodFactsApiService() {
+    private static SearchALiciousApiService createSearchALiciousApiService() {
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(chain -> {
                     Request request = chain.request().newBuilder()
@@ -172,11 +172,11 @@ public final class ServiceLocator {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(Constants.OPEN_FOOD_FACTS_BASE_URL)
+                .baseUrl(Constants.SEARCH_A_LICIOUS_BASE_URL)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        return retrofit.create(OpenFoodFactsApiService.class);
+        return retrofit.create(SearchALiciousApiService.class);
     }
 }
