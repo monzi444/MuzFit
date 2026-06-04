@@ -8,8 +8,8 @@
     <color name="muz_container_l2">#F5F5F5</color>
 
     <!-- Glassmorphism Surface -->
-    <color name="muz_glass_bg">#99F5F5F5</color>
-    <color name="muz_glass_border">#DDDDDD</color>
+    <color name="muz_glass_bg">#CCF0F0F0</color>
+    <color name="muz_glass_border">#CCCCCC</color>
 
     <!-- Skeuomorphic Physical Shadows -->
     <color name="muz_skeuo_shadow_dark">#26000000</color>

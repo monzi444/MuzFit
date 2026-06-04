@@ -504,9 +504,9 @@ public class HomeFragment extends Fragment {
             dayView.setGravity(Gravity.CENTER);
             dayView.setText(String.valueOf(day.getDayNumber()));
             dayView.setTextSize(14);
+            dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
 
             if (day.isCurrentMonth()) {
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
                 dayView.setOnClickListener(v -> {
                     Calendar calendar = Calendar.getInstance();
                     calendar.set(selectedYear, selectedMonth, day.getDayNumber());
@@ -519,8 +519,6 @@ public class HomeFragment extends Fragment {
                         Toast.LENGTH_SHORT
                     ).show();
                 });
-            } else {
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_grey));
             }
 
             switch (day.getLevel()) {

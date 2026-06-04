@@ -21,18 +21,25 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                style="@style/MuzFit.Text.Label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Dark Mode"
-                android:textSize="12sp" />
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="Light Mode"
+                android:src="@drawable/ic_sun"
+                app:tint="@color/muz_on_surface_variant" />
 
             <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switch_theme"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="Dark Mode"
+                android:src="@drawable/ic_moon"
+                app:tint="@color/muz_on_surface_variant" />
         </LinearLayout>
 
         <com.google.android.material.imageview.ShapeableImageView
