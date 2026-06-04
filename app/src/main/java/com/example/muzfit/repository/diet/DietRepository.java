@@ -11,6 +11,7 @@ import com.example.muzfit.model.Result;
 import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.source.common.DataSourceCallback;
 import com.example.muzfit.source.diet.openfoodfacts.BaseOpenFoodFactsDataSource;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.RepositorySupport;
 
@@ -26,6 +27,7 @@ public class DietRepository implements IDietRepository {
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     private final BaseOpenFoodFactsDataSource openFoodFactsDataSource;
+    private final FirestoreSyncDataSource firestoreSyncDataSource;
     private MuzFitDao localDao;
     private Future<?> seedFuture;
     private final MutableLiveData<Result<List<UserMeal>>> userMealsForDayLiveData = new MutableLiveData<>();
@@ -35,8 +37,10 @@ public class DietRepository implements IDietRepository {
     private String observedUid;
     private long observedDateMillis;
 
-    public DietRepository(BaseOpenFoodFactsDataSource openFoodFactsDataSource) {
+    public DietRepository(BaseOpenFoodFactsDataSource openFoodFactsDataSource,
+                          FirestoreSyncDataSource firestoreSyncDataSource) {
         this.openFoodFactsDataSource = openFoodFactsDataSource;
+        this.firestoreSyncDataSource = firestoreSyncDataSource;
     }
 
     public void setLocalDatabase(MuzFitDatabase database) {
@@ -138,6 +142,7 @@ public class DietRepository implements IDietRepository {
                 int mealId = resolveOrInsertMeal(meal).getId();
                 UserMeal userMeal = new UserMeal(mealId, currentUid, dateMillis, category);
                 localDao.insertUserMeal(userMeal);
+                firestoreSyncDataSource.saveLoggedMeal(userMeal, localDao.getMeal(mealId));
                 liveData.postValue(new Result.Success<>(null));
                 refreshUserMealsForDay();
             } catch (Exception e) {
@@ -196,6 +201,7 @@ public class DietRepository implements IDietRepository {
                     return;
                 }
                 localDao.deleteUserMeal(userMeal);
+                firestoreSyncDataSource.deleteLoggedMeal(userMeal);
                 liveData.postValue(new Result.Success<>(null));
                 refreshUserMealsForDay();
             } catch (Exception e) {

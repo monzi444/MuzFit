@@ -8,6 +8,8 @@ import com.example.muzfit.database.MuzFitDatabase;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
+import com.example.muzfit.source.common.DataSourceCallback;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.source.profile.BaseProfileDataSource;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.RepositorySupport;
@@ -22,11 +24,14 @@ public class ProfileRepository implements IProfileRepository {
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     private final BaseProfileDataSource profileDataSource;
+    private final FirestoreSyncDataSource firestoreSyncDataSource;
     private MuzFitDao localDao;
     private Future<?> seedFuture;
 
-    public ProfileRepository(BaseProfileDataSource profileDataSource) {
+    public ProfileRepository(BaseProfileDataSource profileDataSource,
+                             FirestoreSyncDataSource firestoreSyncDataSource) {
         this.profileDataSource = profileDataSource;
+        this.firestoreSyncDataSource = firestoreSyncDataSource;
     }
 
     public void setLocalDatabase(MuzFitDatabase database) {
@@ -45,6 +50,7 @@ public class ProfileRepository implements IProfileRepository {
         MutableLiveData<Result<User>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         loadLocalUser(currentUid, Constants.ERROR_USER_NOT_FOUND, liveData);
+        fetchRemoteUser(currentUid, liveData);
         return liveData;
     }
 
@@ -61,6 +67,7 @@ public class ProfileRepository implements IProfileRepository {
                     user.setUid(currentUid);
                     RepositorySupport.ensureLocalUser(localDao, currentUid);
                     localDao.updateUser(user);
+                    firestoreSyncDataSource.saveUser(user);
                     liveData.postValue(new Result.Success<>(null));
                 } catch (Exception e) {
                     liveData.postValue(new Result.Error<>(errorMessage(e)));
@@ -110,6 +117,7 @@ public class ProfileRepository implements IProfileRepository {
                     RepositorySupport.ensureLocalUser(localDao, currentUid);
                     weightEntry.setUid(currentUid);
                     localDao.insertWeightEntry(weightEntry);
+                    firestoreSyncDataSource.saveWeightEntry(weightEntry);
                     liveData.postValue(new Result.Success<>(null));
                 } catch (Exception e) {
                     liveData.postValue(new Result.Error<>(errorMessage(e)));
@@ -143,6 +151,25 @@ public class ProfileRepository implements IProfileRepository {
                 liveData.postValue(new Result.Success<>(user));
             } catch (Exception e) {
                 liveData.postValue(new Result.Error<>(errorMessage(e)));
+            }
+        });
+    }
+
+    private void fetchRemoteUser(String uid, MutableLiveData<Result<User>> liveData) {
+        if (!firestoreSyncDataSource.canSync(uid)) {
+            return;
+        }
+        firestoreSyncDataSource.fetchUser(uid, new DataSourceCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (localDao != null) {
+                    EXECUTOR.execute(() -> localDao.insertUser(user));
+                }
+                liveData.postValue(new Result.Success<>(user));
+            }
+
+            @Override
+            public void onError(String message) {
             }
         });
     }

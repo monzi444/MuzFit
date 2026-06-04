@@ -1,8 +1,8 @@
 package com.example.muzfit.source.training.firebase;
 
 import com.example.muzfit.model.WorkoutRoutine;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.source.common.DataSourceCallback;
-import com.example.muzfit.utils.Constants;
 
 import java.util.List;
 
@@ -11,18 +11,34 @@ import java.util.List;
  */
 public class TrainingFirebaseDataSource extends BaseTrainingFirebaseDataSource {
 
+    private final FirestoreSyncDataSource firestoreSyncDataSource;
+
+    public TrainingFirebaseDataSource(FirestoreSyncDataSource firestoreSyncDataSource) {
+        this.firestoreSyncDataSource = firestoreSyncDataSource;
+    }
+
     @Override
     public void fetchRoutines(String uid, DataSourceCallback<List<WorkoutRoutine>> callback) {
-        callback.onError(Constants.ERROR_FIREBASE_NOT_IMPLEMENTED);
+        firestoreSyncDataSource.fetchRoutines(uid, callback);
     }
 
     @Override
     public void saveRoutine(WorkoutRoutine routine, String uid, DataSourceCallback<Void> callback) {
-        callback.onError(Constants.ERROR_FIREBASE_NOT_IMPLEMENTED);
+        if (!firestoreSyncDataSource.canSync(uid)) {
+            callback.onSuccess(null);
+            return;
+        }
+        firestoreSyncDataSource.saveRoutine(uid, routine);
+        callback.onSuccess(null);
     }
 
     @Override
     public void deleteRoutine(String routineName, String uid, DataSourceCallback<Void> callback) {
-        callback.onError(Constants.ERROR_FIREBASE_NOT_IMPLEMENTED);
+        if (!firestoreSyncDataSource.canSync(uid)) {
+            callback.onSuccess(null);
+            return;
+        }
+        firestoreSyncDataSource.deleteRoutine(uid, routineName);
+        callback.onSuccess(null);
     }
 }

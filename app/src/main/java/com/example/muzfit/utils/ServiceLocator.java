@@ -19,11 +19,13 @@ import com.example.muzfit.service.ExerciseApiService;
 import com.example.muzfit.service.MuzFitApiService;
 import com.example.muzfit.service.SearchALiciousApiService;
 import com.example.muzfit.source.diet.openfoodfacts.OpenFoodFactsApiDataSource;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
 import com.example.muzfit.source.training.catalog.ExerciseCatalogApiDataSource;
 import com.example.muzfit.source.training.firebase.TrainingFirebaseDataSource;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.concurrent.Future;
 
@@ -50,13 +52,21 @@ public final class ServiceLocator {
         muzFitApiService = createMuzFitApiService();
         ExerciseApiService exerciseApiService = createExerciseApiService();
         SearchALiciousApiService searchALiciousApiService = createSearchALiciousApiService();
-        dietRepository = new DietRepository(new OpenFoodFactsApiDataSource(searchALiciousApiService));
+        FirestoreSyncDataSource firestoreSyncDataSource =
+                new FirestoreSyncDataSource(FirebaseFirestore.getInstance());
+        dietRepository = new DietRepository(
+                new OpenFoodFactsApiDataSource(searchALiciousApiService),
+                firestoreSyncDataSource
+        );
         trainingRepository = new TrainingRepository(
                 new TrainingApiDataSource(muzFitApiService),
                 new ExerciseCatalogApiDataSource(exerciseApiService),
-                new TrainingFirebaseDataSource()
+                new TrainingFirebaseDataSource(firestoreSyncDataSource)
         );
-        profileRepository = new ProfileRepository(new ProfileApiDataSource(muzFitApiService));
+        profileRepository = new ProfileRepository(
+                new ProfileApiDataSource(muzFitApiService),
+                firestoreSyncDataSource
+        );
         dashboardRepository = new DashboardRepository();
         authRepository = new AuthRepository(new AuthFirebaseDataSource(FirebaseAuth.getInstance()));
     }

@@ -103,7 +103,6 @@ public class TrainingRepository implements ITrainingRepository {
         MutableLiveData<Result<List<WorkoutRoutine>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
 
-        // Le routine create devono essere prese esclusivamente dal database locale
         if (localDao != null) {
             EXECUTOR.execute(() -> {
                 awaitSeedIfNeeded();
@@ -112,6 +111,18 @@ public class TrainingRepository implements ITrainingRepository {
         } else {
             liveData.postValue(new Result.Error<>(Constants.ERROR_DATABASE));
         }
+        trainingFirebaseDataSource.fetchRoutines(currentUid, new DataSourceCallback<List<WorkoutRoutine>>() {
+            @Override
+            public void onSuccess(List<WorkoutRoutine> data) {
+                if (data != null && !data.isEmpty()) {
+                    liveData.postValue(new Result.Success<>(data));
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+            }
+        });
 
         return liveData;
     }
@@ -189,6 +200,16 @@ public class TrainingRepository implements ITrainingRepository {
                         wes.add(new WorkoutExercise(0, workoutId, currentUid, e.getId()));
                     }
                     localDao.insertWorkoutExercises(wes);
+
+                    trainingFirebaseDataSource.saveRoutine(routine, currentUid, new DataSourceCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void data) {
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                        }
+                    });
                     
                     liveData.postValue(new Result.Success<>(null));
                 } catch (Exception e) {
