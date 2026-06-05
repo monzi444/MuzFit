@@ -1,15 +1,18 @@
 package com.example.muzfit.adapter;
 
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.muzfit.R;
 import com.example.muzfit.model.WorkoutRoutine;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.List;
 
@@ -41,7 +44,19 @@ public class WorkoutRecyclerAdapter extends RecyclerView.Adapter<WorkoutRecycler
         holder.tvName.setText(routine.getName());
         holder.tvDetails.setText(routine.getExerciseSummary());
 
-        holder.itemView.setActivated(selectedPosition == position);
+        MaterialCardView card = (MaterialCardView) holder.itemView;
+        
+        if (selectedPosition == position) {
+            // Evidenziato con bordo Lime e un leggero sfondo dedicato
+            card.setStrokeWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, holder.itemView.getResources().getDisplayMetrics()));
+            card.setStrokeColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.muz_primary_lime));
+            // Usiamo il colore di sfondo attivo coerente con il calendario
+            card.setCardBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.activity_high_bg));
+        } else {
+            // Stato normale: trasparente/glass
+            card.setStrokeWidth(0);
+            card.setCardBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.muz_glass_bg));
+        }
 
         holder.itemView.setOnClickListener(v -> {
             int oldPos = selectedPosition;

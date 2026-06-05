@@ -35,18 +35,32 @@
         android:layout_marginTop="24dp"
         android:clipToPadding="false"
         android:paddingStart="24dp"
-        android:paddingEnd="48dp"
-        android:paddingBottom="100dp"
+        android:paddingEnd="64dp"
+        android:paddingBottom="24dp"
         app:layout_constraintBottom_toTopOf="@+id/startWorkoutButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle" />
 
-    <include
-        android:id="@+id/alphabetScrollbar"
-        layout="@layout/view_alphabet_scrollbar"
-        android:layout_width="40dp"
+    <!-- Vertical red guideline for the scrollbar -->
+    <View
+        android:id="@+id/scrollbar_line"
+        android:layout_width="2dp"
         android:layout_height="0dp"
+        android:background="#22FF0000"
+        app:layout_constraintBottom_toBottomOf="@+id/routineRecyclerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/routineRecyclerView"
+        app:layout_constraintTop_toTopOf="@+id/routineRecyclerView"
+        android:layout_marginEnd="28dp" />
+
+    <LinearLayout
+        android:id="@+id/scrollbar_container"
+        android:layout_width="56dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:elevation="11dp"
         app:layout_constraintBottom_toBottomOf="@+id/routineRecyclerView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/routineRecyclerView" />
@@ -81,7 +95,7 @@
             android:layout_height="56dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:text="Options"
+            android:text="Edit/Delete"
             android:textColor="@color/muz_on_surface"
             app:strokeColor="@color/muz_glass_border" />
 

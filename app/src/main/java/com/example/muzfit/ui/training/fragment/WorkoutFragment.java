@@ -2,15 +2,16 @@ package com.example.muzfit.ui.training.fragment;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -75,7 +76,6 @@ public class WorkoutFragment extends Fragment {
         scrollbarContainer = view.findViewById(R.id.scrollbar_container);
         startWorkoutButton = view.findViewById(R.id.startWorkoutButton);
         btnRoutineOptions = view.findViewById(R.id.btnRoutineOptions);
-        btnRoutineOptions.setText("Edit/Delete");
         createRoutineButton = view.findViewById(R.id.createRoutineButton);
 
         adapter = new WorkoutRecyclerAdapter(routineList, position -> {
@@ -136,14 +136,9 @@ public class WorkoutFragment extends Fragment {
     private void loadRoutines() {
         viewModel.getRoutines().observe(getViewLifecycleOwner(), result -> {
             if (!isAdded()) return;
-            if (result.isLoading()) {
-                // Show loading if needed
-                return;
-            }
-            if (result.isError()) {
-                // If it's a "not implemented" error, we don't show a toast every time
-                return;
-            }
+            if (result.isLoading()) return;
+            if (result.isError()) return;
+            
             List<WorkoutRoutine> data = ((Result.Success<List<WorkoutRoutine>>) result).getData();
             if (data != null) {
                 routineList.clear();
@@ -159,51 +154,95 @@ public class WorkoutFragment extends Fragment {
         if (scrollbarContainer == null) return;
         scrollbarContainer.removeAllViews();
 
-        Set<Character> letters = new TreeSet<>();
+        Set<Character> lettersSet = new TreeSet<>();
         for (WorkoutRoutine r : routineList) {
             if (r.getName() != null && !r.getName().isEmpty()) {
-                letters.add(Character.toUpperCase(r.getName().charAt(0)));
+                lettersSet.add(Character.toUpperCase(r.getName().charAt(0)));
             }
         }
+        
+        List<Character> letters = new ArrayList<>(lettersSet);
+        if (letters.isEmpty()) return;
+
+        int primaryColor = ContextCompat.getColor(requireContext(), R.color.muz_primary_lime);
+        int variantColor = ContextCompat.getColor(requireContext(), R.color.muz_on_surface_variant);
+
+        // Calcolo DINAMICO basato sulla proporzione dello spazio
+        int numLetters = letters.size();
+        
+        // Formule più sensibili per il ridimensionamento
+        float scaleFactor = Math.max(0.4f, Math.min(1.0f, 12f / numLetters));
+        
+        int dotSizeDp = (int) (14 * scaleFactor);
+        if (dotSizeDp < 4) dotSizeDp = 4;
+        
+        int textSizeSp = (int) (12 * scaleFactor);
+        if (textSizeSp < 7) textSizeSp = 7;
 
         for (Character letter : letters) {
             LinearLayout itemLayout = new LinearLayout(requireContext());
             itemLayout.setOrientation(LinearLayout.VERTICAL);
             itemLayout.setGravity(Gravity.CENTER);
-            itemLayout.setPadding(0, 4, 0, 4);
+            
+            // Usiamo il peso (weight) per far sì che gli elementi si distribuiscano uniformemente
+            // e si rimpiccioliscano automaticamente per stare nel contenitore
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
+            itemLayout.setLayoutParams(itemParams);
 
             View dot = new View(requireContext());
-            dot.setLayoutParams(new LinearLayout.LayoutParams(
-                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()),
-                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics())
-            ));
-            dot.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_none)); // Using an existing circle or simple dot
-            dot.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime)));
+            int dotSizePx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dotSizeDp, getResources().getDisplayMetrics());
+            LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(dotSizePx, dotSizePx);
+            dot.setLayoutParams(dotParams);
+            
+            android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
+            shape.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            shape.setColor(primaryColor);
+            dot.setBackground(shape);
 
             TextView tv = new TextView(requireContext());
             tv.setText(String.valueOf(letter));
             tv.setGravity(Gravity.CENTER);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
-            tv.setVisibility(View.GONE); // Hidden initially
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp);
+            tv.setTextColor(variantColor);
+            tv.setTypeface(null, Typeface.BOLD);
             
             itemLayout.addView(dot);
             itemLayout.addView(tv);
+            
+            scrollbarContainer.addView(itemLayout);
+        }
 
-            itemLayout.setOnClickListener(v -> {
-                // Show letter briefly
-                tv.setVisibility(View.VISIBLE);
-                v.postDelayed(() -> tv.setVisibility(View.GONE), 1000);
-
-                for (int i = 0; i < routineList.size(); i++) {
-                    if (Character.toUpperCase(routineList.get(i).getName().charAt(0)) == letter) {
-                        ((LinearLayoutManager) routineRecyclerView.getLayoutManager())
-                                .scrollToPositionWithOffset(i, 0);
+        // Supporto per lo scroll al tocco/trascinamento
+        scrollbarContainer.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_MOVE || 
+                event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                
+                float y = event.getY();
+                int childCount = scrollbarContainer.getChildCount();
+                if (childCount == 0) return true;
+                
+                for (int i = 0; i < childCount; i++) {
+                    View child = scrollbarContainer.getChildAt(i);
+                    if (y >= child.getTop() && y <= child.getBottom()) {
+                        Character letter = letters.get(i);
+                        scrollToLetter(letter);
                         break;
                     }
                 }
-            });
-            scrollbarContainer.addView(itemLayout);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void scrollToLetter(Character letter) {
+        for (int i = 0; i < routineList.size(); i++) {
+            if (Character.toUpperCase(routineList.get(i).getName().charAt(0)) == letter) {
+                ((LinearLayoutManager) routineRecyclerView.getLayoutManager())
+                        .scrollToPositionWithOffset(i, 0);
+                break;
+            }
         }
     }
 
@@ -335,8 +374,8 @@ public class WorkoutFragment extends Fragment {
     private void showRoutineDialog(List<Exercise> selectedExercises, Runnable onComplete) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_workout, null);
-        // We hide the name field in this sub-dialog since it's already in the parent
-        dialogView.findViewById(R.id.tilRoutineName).setVisibility(View.GONE);
+        View til = dialogView.findViewById(R.id.tilRoutineName);
+        if (til != null) til.setVisibility(View.GONE);
         
         EditText etSearchExercise = dialogView.findViewById(R.id.etSearchExercise);
         RecyclerView rvExerciseResults = dialogView.findViewById(R.id.rvExerciseResults);
@@ -356,7 +395,6 @@ public class WorkoutFragment extends Fragment {
         rvExerciseResults.setAdapter(searchAdapter);
 
         tvSelectedExercisesCount.setText(getString(R.string.selected_exercises_count, selectedExercises.size()));
-        // In this case, we don't need the recap click because we have the main list
         tvSelectedExercisesCount.setClickable(false);
 
         cgBodyParts.setOnCheckedChangeListener((group, checkedId) -> {
@@ -390,7 +428,6 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void showRoutineDialog(@Nullable WorkoutRoutine routineToEdit) {
-        // Redundant now, but kept for compatibility or simplified if needed
         showManageRoutineDialog(routineToEdit);
     }
 
@@ -464,14 +501,9 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void searchExercises(String query, String bodyPart, List<Exercise> results, ExerciseSearchAdapter adapter) {
-        // Forza l'uso di searchExerciseCatalog che interroga l'API esterna ExerciseDB
         viewModel.searchExerciseCatalog(query, bodyPart).observe(getViewLifecycleOwner(), result -> {
-            if (!isAdded()) {
-                return;
-            }
-            if (result.isLoading()) {
-                return;
-            }
+            if (!isAdded()) return;
+            if (result.isLoading()) return;
             if (result.isError()) {
                 String message = ((Result.Error<List<Exercise>>) result).getMessage();
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
