@@ -48,7 +48,6 @@ public class HomeFragment extends Fragment {
     private static final float DEFAULT_PROTEIN_GOAL = 150f;
     private static final float DEFAULT_CARBS_GOAL = 250f;
     private static final float DEFAULT_FAT_GOAL = 70f;
-    private static final int DEFAULT_CALORIES_BURNED_GOAL = 2500;
 
     private DashboardViewModel viewModel;
     private GridLayout calendarGrid;
@@ -60,9 +59,6 @@ public class HomeFragment extends Fragment {
     private NutrientProgressBar proteinBar;
     private NutrientProgressBar carbsBar;
     private NutrientProgressBar fatBar;
-    private TextView caloriesCount;
-    private TextView intakeLabel;
-    private ProgressBar caloriesProgress;
     private CalorieHistogramView histogram;
     private WeightGraphView weightGraph;
     private Spinner monthSpinner;
@@ -79,7 +75,6 @@ public class HomeFragment extends Fragment {
     private float proteinGoal = DEFAULT_PROTEIN_GOAL;
     private float carbsGoal = DEFAULT_CARBS_GOAL;
     private float fatGoal = DEFAULT_FAT_GOAL;
-    private int caloriesBurnedGoal = DEFAULT_CALORIES_BURNED_GOAL;
     private int todayCaloriesBurned;
     private boolean isUpdatingCalendarSelection;
     private long selectedDateMillis = System.currentTimeMillis();
@@ -254,18 +249,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupCaloriesBurned(View view) {
-        caloriesCount = view.findViewById(R.id.today_calories_count);
-        intakeLabel = view.findViewById(R.id.intake_label);
-        caloriesProgress = view.findViewById(R.id.today_calories_progress);
         histogram = view.findViewById(R.id.weekly_calories_histogram);
 
-        if (caloriesCount != null) {
-            caloriesCount.setText("0");
-        }
-        if (caloriesProgress != null) {
-            caloriesProgress.setMax((int) calorieGoal);
-            caloriesProgress.setProgress(0);
-        }
         if (histogram != null) {
             histogram.setData(new int[7]);
         }
@@ -299,7 +284,6 @@ public class HomeFragment extends Fragment {
                 Float calories = ((Result.Success<Float>) result).getData();
                 consumedCalories = calories != null ? calories : 0f;
                 updateDailyCalorieBar();
-                updateIntakeBox(dateMillis);
             }
         });
 
@@ -343,29 +327,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void updateIntakeBox(long dateMillis) {
-        if (caloriesCount != null) {
-            caloriesCount.setText(String.format(Locale.getDefault(), "%,.0f", consumedCalories));
-        }
-        if (caloriesProgress != null) {
-            caloriesProgress.setMax((int) calorieGoal);
-            caloriesProgress.setProgress(Math.min((int) consumedCalories, (int) calorieGoal));
-        }
-        if (intakeLabel != null) {
-            Calendar today = Calendar.getInstance();
-            Calendar selected = Calendar.getInstance();
-            selected.setTimeInMillis(dateMillis);
-
-            if (today.get(Calendar.YEAR) == selected.get(Calendar.YEAR) &&
-                    today.get(Calendar.DAY_OF_YEAR) == selected.get(Calendar.DAY_OF_YEAR)) {
-                intakeLabel.setText("Oggi");
-            } else {
-                String monthName = selected.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
-                intakeLabel.setText(String.format(Locale.getDefault(), "%d %s",
-                        selected.get(Calendar.DAY_OF_MONTH), monthName));
-            }
-        }
-    }
 
     private void updateGoals(User user) {
         if (user == null) {
@@ -376,9 +337,6 @@ public class HomeFragment extends Fragment {
         proteinGoal = user.getProteinGoal() > 0 ? user.getProteinGoal() : DEFAULT_PROTEIN_GOAL;
         carbsGoal = user.getCarbGoal() > 0 ? user.getCarbGoal() : DEFAULT_CARBS_GOAL;
         fatGoal = user.getFatGoal() > 0 ? user.getFatGoal() : DEFAULT_FAT_GOAL;
-        caloriesBurnedGoal = user.getCalorieBurnGoal() > 0
-                ? user.getCalorieBurnGoal()
-                : DEFAULT_CALORIES_BURNED_GOAL;
 
         if (calorieBar != null) {
             updateDailyCalorieBar();
@@ -391,10 +349,6 @@ public class HomeFragment extends Fragment {
         }
         if (fatBar != null) {
             fatBar.setProgress(consumedFats, fatGoal, "g");
-        }
-        if (caloriesProgress != null) {
-            caloriesProgress.setMax((int) calorieGoal);
-            caloriesProgress.setProgress(Math.min((int) consumedCalories, (int) calorieGoal));
         }
     }
 
