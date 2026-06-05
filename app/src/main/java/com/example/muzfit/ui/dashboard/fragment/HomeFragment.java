@@ -222,7 +222,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.calorie_color),
                 ContextCompat.getColor(requireContext(), R.color.calorie_overflow)
             );
-            calorieBar.setProgress(0, calorieGoal);
+            calorieBar.setProgress(0, calorieGoal, "kcal");
         }
 
         proteinBar = view.findViewById(R.id.protein_progress);
@@ -231,7 +231,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.protein_color),
                 ContextCompat.getColor(requireContext(), R.color.protein_overflow)
             );
-            proteinBar.setProgress(0, proteinGoal);
+            proteinBar.setProgress(0, proteinGoal, "g");
         }
 
         carbsBar = view.findViewById(R.id.carbs_progress);
@@ -240,7 +240,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.carbs_color),
                 ContextCompat.getColor(requireContext(), R.color.carbs_overflow)
             );
-            carbsBar.setProgress(0, carbsGoal);
+            carbsBar.setProgress(0, carbsGoal, "g");
         }
 
         fatBar = view.findViewById(R.id.fat_progress);
@@ -249,7 +249,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.fat_color),
                 ContextCompat.getColor(requireContext(), R.color.fat_overflow)
             );
-            fatBar.setProgress(0, fatGoal);
+            fatBar.setProgress(0, fatGoal, "g");
         }
     }
 
@@ -307,7 +307,7 @@ public class HomeFragment extends Fragment {
             if (result instanceof Result.Success && proteinBar != null) {
                 Float proteins = ((Result.Success<Float>) result).getData();
                 consumedProteins = proteins != null ? proteins : 0f;
-                proteinBar.setProgress(consumedProteins, proteinGoal);
+                proteinBar.setProgress(consumedProteins, proteinGoal, "g");
             }
         });
 
@@ -315,7 +315,7 @@ public class HomeFragment extends Fragment {
             if (result instanceof Result.Success && carbsBar != null) {
                 Float carbs = ((Result.Success<Float>) result).getData();
                 consumedCarbs = carbs != null ? carbs : 0f;
-                carbsBar.setProgress(consumedCarbs, carbsGoal);
+                carbsBar.setProgress(consumedCarbs, carbsGoal, "g");
             }
         });
 
@@ -323,7 +323,7 @@ public class HomeFragment extends Fragment {
             if (result instanceof Result.Success && fatBar != null) {
                 Float fats = ((Result.Success<Float>) result).getData();
                 consumedFats = fats != null ? fats : 0f;
-                fatBar.setProgress(consumedFats, fatGoal);
+                fatBar.setProgress(consumedFats, fatGoal, "g");
             }
         });
 
@@ -384,13 +384,13 @@ public class HomeFragment extends Fragment {
             updateDailyCalorieBar();
         }
         if (proteinBar != null) {
-            proteinBar.setProgress(consumedProteins, proteinGoal);
+            proteinBar.setProgress(consumedProteins, proteinGoal, "g");
         }
         if (carbsBar != null) {
-            carbsBar.setProgress(consumedCarbs, carbsGoal);
+            carbsBar.setProgress(consumedCarbs, carbsGoal, "g");
         }
         if (fatBar != null) {
-            fatBar.setProgress(consumedFats, fatGoal);
+            fatBar.setProgress(consumedFats, fatGoal, "g");
         }
         if (caloriesProgress != null) {
             caloriesProgress.setMax((int) calorieGoal);
@@ -418,7 +418,7 @@ public class HomeFragment extends Fragment {
             return;
         }
         float netCalories = Math.max(0f, consumedCalories - todayCaloriesBurned);
-        calorieBar.setProgress(netCalories, calorieGoal);
+        calorieBar.setProgress(netCalories, calorieGoal, "kcal");
     }
 
     private void setupActivityGoalSummary(List<DashboardCalendarDay> calendarData) {
