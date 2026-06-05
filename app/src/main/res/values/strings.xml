@@ -149,4 +149,6 @@
     <string name="quick_action_workout">Start Workout</string>
     <string name="quick_action_weight">Log Body Weight</string>
     <string name="quick_action_goal">Update Goal</string>
+    <string name="see_execution">Vedi Esecuzione</string>
+    <string name="hide_execution">Nascondi Esecuzione</string>
 </resources>

@@ -1,58 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/MuzFit.Card.Glass"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:padding="8dp"
-    android:background="#FFFFFF"
-    android:layout_marginBottom="4dp">
+    android:layout_marginBottom="8dp">
 
-    <TextView
-        android:id="@+id/tvSetNumber"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Set 1"
-        android:minWidth="50dp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
 
-    <EditText
-        android:id="@+id/etWeight"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:hint="@string/weight_hint"
-        android:inputType="numberDecimal"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:autofillHints="none" />
+        <TextView
+            android:id="@+id/tvSetNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set 1"
+            android:minWidth="60dp"
+            android:textStyle="bold"
+            android:textColor="@color/muz_on_surface" />
 
-    <EditText
-        android:id="@+id/etReps"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:hint="Reps"
-        android:inputType="number"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:autofillHints="none" />
+        <EditText
+            android:id="@+id/etWeight"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/weight_hint"
+            android:inputType="numberDecimal"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:textColor="@color/muz_on_surface"
+            android:textColorHint="@color/muz_on_surface_variant"
+            android:backgroundTint="@color/muz_primary_lime"
+            android:autofillHints="none" />
 
-    <ImageButton
-        android:id="@+id/btnDeleteSet"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@android:drawable/ic_menu_close_clear_cancel"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="8dp"
-        app:tint="#FF0000"
-        android:contentDescription="Delete set" />
+        <EditText
+            android:id="@+id/etReps"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Reps"
+            android:inputType="number"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:textColor="@color/muz_on_surface"
+            android:textColorHint="@color/muz_on_surface_variant"
+            android:backgroundTint="@color/muz_primary_lime"
+            android:autofillHints="none" />
 
-    <CheckBox
-        android:id="@+id/cbSetDone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp" />
+        <ImageButton
+            android:id="@+id/btnDeleteSet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            app:tint="@color/muz_on_surface_variant"
+            android:contentDescription="Delete set" />
 
-</LinearLayout>
+        <CheckBox
+            android:id="@+id/cbSetDone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:buttonTint="@color/muz_primary_lime" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
