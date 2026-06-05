@@ -13,6 +13,15 @@ public class OpenFoodFactsNutrimentsDto {
     @SerializedName("energy-kcal")
     private Float energyKcal;
 
+    @SerializedName("energy-kcal_value")
+    private Float energyKcalValue;
+
+    @SerializedName("energy_100g")
+    private Float energy100g;
+
+    @SerializedName("energy-kj_100g")
+    private Float energyKj100g;
+
     @SerializedName("proteins_100g")
     private Float proteins100g;
 
@@ -50,6 +59,18 @@ public class OpenFoodFactsNutrimentsDto {
 
     public Float getEnergyKcal() {
         return energyKcal;
+    }
+
+    public Float getEnergyKcalValue() {
+        return energyKcalValue;
+    }
+
+    public Float getEnergy100g() {
+        return energy100g;
+    }
+
+    public Float getEnergyKj100g() {
+        return energyKj100g;
     }
 
     public Float getProteins100g() {

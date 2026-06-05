@@ -10,9 +10,6 @@ public class UtenteDto {
     @SerializedName("Nome")
     private String name;
 
-    @SerializedName("Password")
-    private String password;
-
     @SerializedName("Peso")
     private float weight;
 
@@ -43,10 +40,6 @@ public class UtenteDto {
 
     public String getName() {
         return name;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     public float getWeight() {

@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface IDietRepository {
 
-    LiveData<Result<List<UserMeal>>> getUserMealsForDay(String username, long dateMillis);
+    LiveData<Result<List<UserMeal>>> getUserMealsForDay(long dateMillis);
 
     LiveData<Result<List<Meal>>> getMealCatalog();
 
@@ -19,9 +19,11 @@ public interface IDietRepository {
 
     LiveData<Result<Void>> deleteMealFromCatalog(Meal meal);
 
-    LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis);
+    LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, long dateMillis);
 
     LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal);
 
-    LiveData<Result<List<Meal>>> searchFoods(String query);
+    LiveData<Result<List<Meal>>> getFoodSearchResults();
+
+    void searchFoods(String query);
 }

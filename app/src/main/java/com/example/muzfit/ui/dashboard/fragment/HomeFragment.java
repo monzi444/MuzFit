@@ -490,66 +490,37 @@ public class HomeFragment extends Fragment {
     private void setupCalendar(GridLayout grid, List<DashboardCalendarDay> data) {
         grid.removeAllViews();
         
-        Calendar today = Calendar.getInstance();
-        int todayDay = today.get(Calendar.DAY_OF_MONTH);
-        int todayMonth = today.get(Calendar.MONTH);
-        int todayYear = today.get(Calendar.YEAR);
-
-        Calendar selected = Calendar.getInstance();
-        selected.setTimeInMillis(selectedDateMillis);
-        int selDay = selected.get(Calendar.DAY_OF_MONTH);
-        int selMonth = selected.get(Calendar.MONTH);
-        int selYear = selected.get(Calendar.YEAR);
-
         float density = getResources().getDisplayMetrics().density;
         int size = (int) (40 * density);
-        int margin = (int) (4 * density);
+        int margin = (int) (2 * density);
 
+        int column = 0;
         for (DashboardCalendarDay day : data) {
             TextView dayView = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = size;
+            params.width = 0;
             params.height = size;
+            params.columnSpec = GridLayout.spec(column, 1f);
             params.setMargins(margin, margin, margin, margin);
             dayView.setLayoutParams(params);
             dayView.setGravity(Gravity.CENTER);
             dayView.setText(String.valueOf(day.getDayNumber()));
             dayView.setTextSize(14);
-
-            boolean isActuallyToday = day.isCurrentMonth() && day.getDayNumber() == todayDay 
-                    && selectedMonth == todayMonth && selectedYear == todayYear;
-            
-            boolean isActuallySelected = day.isCurrentMonth() && day.getDayNumber() == selDay 
-                    && selectedMonth == selMonth && selectedYear == selYear;
+            dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
 
             if (day.isCurrentMonth()) {
-                if (isActuallySelected) {
-                    dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
-                    dayView.setTypeface(null, android.graphics.Typeface.BOLD);
-                } else if (isActuallyToday) {
-                    dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
-                    dayView.setTypeface(null, android.graphics.Typeface.BOLD);
-                } else {
-                    dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
-                }
-
                 dayView.setOnClickListener(v -> {
                     Calendar calendar = Calendar.getInstance();
                     calendar.set(selectedYear, selectedMonth, day.getDayNumber());
                     selectedDateMillis = calendar.getTimeInMillis();
                     updateMacrosForDate(selectedDateMillis);
                     
-                    // Re-render to update highlights
-                    setupCalendar(grid, data);
-
                     Toast.makeText(
                         requireContext(),
                         String.format(Locale.getDefault(), "Data selezionata: %d %s %d", day.getDayNumber(), MONTH_NAMES[selectedMonth], selectedYear),
                         Toast.LENGTH_SHORT
                     ).show();
                 });
-            } else {
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_grey));
             }
 
             switch (day.getLevel()) {
@@ -564,15 +535,15 @@ public class HomeFragment extends Fragment {
                     break;
                 case EMPTY:
                 default:
-                    if (isActuallySelected) {
-                        dayView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_goal));
-                    } else {
-                        dayView.setBackground(null);
-                    }
+                    dayView.setBackground(null);
                     break;
             }
             
             grid.addView(dayView);
+            column++;
+            if (column == 7) {
+                column = 0;
+            }
         }
     }
 }

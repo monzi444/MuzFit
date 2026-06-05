@@ -7,7 +7,6 @@ import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.repository.profile.IProfileRepository;
-import com.example.muzfit.utils.Constants;
 
 import java.util.List;
 
@@ -19,12 +18,8 @@ public class ProfileViewModel extends ViewModel {
         this.repository = repository;
     }
 
-    public LiveData<Result<User>> getUser(String username) {
-        return repository.getUser(username);
-    }
-
-    public LiveData<Result<User>> getDefaultUser() {
-        return repository.getUser(Constants.DEFAULT_USERNAME);
+    public LiveData<Result<User>> getUser() {
+        return repository.getUser();
     }
 
     public LiveData<Result<Void>> updateUser(User user) {
@@ -35,12 +30,8 @@ public class ProfileViewModel extends ViewModel {
         return repository.updateGoals(user);
     }
 
-    public LiveData<Result<List<WeightEntry>>> getWeightHistory(String username) {
-        return repository.getWeightHistory(username);
-    }
-
-    public LiveData<Result<List<WeightEntry>>> getDefaultUserWeightHistory() {
-        return repository.getWeightHistory(Constants.DEFAULT_USERNAME);
+    public LiveData<Result<List<WeightEntry>>> getWeightHistory() {
+        return repository.getWeightHistory();
     }
 
     public LiveData<Result<Void>> addWeightEntry(WeightEntry weightEntry) {

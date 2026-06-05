@@ -8,13 +8,13 @@ import androidx.room.Index;
 
 @Entity(
         tableName = "Workout",
-        primaryKeys = {"id", "username"},
+        primaryKeys = {"id", "uid"},
         foreignKeys = @ForeignKey(
                 entity = User.class,
-                parentColumns = "username",
-                childColumns = "username"
+                parentColumns = "uid",
+                childColumns = "uid"
         ),
-        indices = @Index("username")
+        indices = @Index("uid")
 )
 public class Workout {
 
@@ -22,17 +22,17 @@ public class Workout {
     private long dateMillis;
     private String description = "";
     @NonNull
-    private String username = "";
+    private String uid = "";
 
     public Workout() {
     }
 
     @Ignore
-    public Workout(int id, long dateMillis, String description, String username) {
+    public Workout(int id, long dateMillis, String description, String uid) {
         this.id = id;
         this.dateMillis = dateMillis;
         this.description = description;
-        this.username = username != null ? username : "";
+        this.uid = uid != null ? uid : "";
     }
 
     public int getId() {
@@ -60,11 +60,11 @@ public class Workout {
     }
 
     @NonNull
-    public String getUsername() {
-        return username;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 }

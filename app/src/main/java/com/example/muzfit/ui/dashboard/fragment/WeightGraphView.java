@@ -39,7 +39,7 @@ public class WeightGraphView extends View {
         gridPaint.setColor(ContextCompat.getColor(getContext(), R.color.graph_grid));
         gridPaint.setStrokeWidth(2f);
 
-        textPaint.setColor(Color.GRAY);
+        textPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface_variant));
         textPaint.setTextSize(26f);
         textPaint.setTextAlign(Paint.Align.RIGHT);
     }

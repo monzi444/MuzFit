@@ -39,6 +39,7 @@ android {
 
 dependencies {
     implementation(libs.appcompat)
+    implementation(libs.firebase.firestore)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
@@ -52,6 +53,7 @@ dependencies {
     implementation(libs.glide)
     implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.gms:play-services-auth:21.4.0")
 
     implementation(platform(libs.compose.bom))

@@ -17,13 +17,15 @@ import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
 import com.example.muzfit.service.ExerciseApiService;
 import com.example.muzfit.service.MuzFitApiService;
-import com.example.muzfit.service.OpenFoodFactsApiService;
+import com.example.muzfit.service.SearchALiciousApiService;
 import com.example.muzfit.source.diet.openfoodfacts.OpenFoodFactsApiDataSource;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.source.profile.ProfileApiDataSource;
 import com.example.muzfit.source.training.TrainingApiDataSource;
 import com.example.muzfit.source.training.catalog.ExerciseCatalogApiDataSource;
 import com.example.muzfit.source.training.firebase.TrainingFirebaseDataSource;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.concurrent.Future;
 
@@ -49,14 +51,22 @@ public final class ServiceLocator {
     private ServiceLocator() {
         muzFitApiService = createMuzFitApiService();
         ExerciseApiService exerciseApiService = createExerciseApiService();
-        OpenFoodFactsApiService openFoodFactsApiService = createOpenFoodFactsApiService();
-        dietRepository = new DietRepository(new OpenFoodFactsApiDataSource(openFoodFactsApiService));
+        SearchALiciousApiService searchALiciousApiService = createSearchALiciousApiService();
+        FirestoreSyncDataSource firestoreSyncDataSource =
+                new FirestoreSyncDataSource(FirebaseFirestore.getInstance());
+        dietRepository = new DietRepository(
+                new OpenFoodFactsApiDataSource(searchALiciousApiService),
+                firestoreSyncDataSource
+        );
         trainingRepository = new TrainingRepository(
                 new TrainingApiDataSource(muzFitApiService),
                 new ExerciseCatalogApiDataSource(exerciseApiService),
-                new TrainingFirebaseDataSource()
+                new TrainingFirebaseDataSource(firestoreSyncDataSource)
         );
-        profileRepository = new ProfileRepository(new ProfileApiDataSource(muzFitApiService));
+        profileRepository = new ProfileRepository(
+                new ProfileApiDataSource(muzFitApiService),
+                firestoreSyncDataSource
+        );
         dashboardRepository = new DashboardRepository();
         authRepository = new AuthRepository(new AuthFirebaseDataSource(FirebaseAuth.getInstance()));
     }
@@ -161,7 +171,7 @@ public final class ServiceLocator {
         return retrofit.create(ExerciseApiService.class);
     }
 
-    private static OpenFoodFactsApiService createOpenFoodFactsApiService() {
+    private static SearchALiciousApiService createSearchALiciousApiService() {
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(chain -> {
                     Request request = chain.request().newBuilder()
@@ -172,11 +182,11 @@ public final class ServiceLocator {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(Constants.OPEN_FOOD_FACTS_BASE_URL)
+                .baseUrl(Constants.SEARCH_A_LICIOUS_BASE_URL)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        return retrofit.create(OpenFoodFactsApiService.class);
+        return retrofit.create(SearchALiciousApiService.class);
     }
 }

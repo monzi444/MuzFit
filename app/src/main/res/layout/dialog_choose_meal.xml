@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:background="@drawable/muzfit_dialog_background"
     android:orientation="vertical"
     android:padding="20dp">
@@ -13,16 +13,71 @@
         android:layout_height="wrap_content"
         android:text="@string/choose_meal_title" />
 
-    <ListView
-        android:id="@+id/lvChooseMeal"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="280dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:background="@drawable/muzfit_category_card_bg"
-        android:cacheColorHint="@android:color/transparent"
-        android:divider="@color/muz_glass_border"
-        android:dividerHeight="1dp"
-        android:padding="4dp" />
+        android:hint="@string/choose_meal_search_hint"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/muz_primary_lime"
+        app:hintTextColor="@color/muz_primary_lime">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChooseMealSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColor="@color/muz_on_surface"
+            android:textColorHint="@color/muz_on_surface_variant" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilChooseMealSort"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="@string/choose_meal_sort_hint"
+        app:boxStrokeColor="@color/muz_primary_lime"
+        app:hintTextColor="@color/muz_primary_lime">
+
+        <AutoCompleteTextView
+            android:id="@+id/actvChooseMealSort"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:textColor="@color/muz_on_surface" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/lvChooseMeal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/muzfit_category_card_bg"
+            android:cacheColorHint="@android:color/transparent"
+            android:divider="@color/muz_glass_border"
+            android:dividerHeight="1dp"
+            android:padding="4dp" />
+
+        <TextView
+            android:id="@+id/tvChooseMealEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="24dp"
+            android:text="@string/choose_meal_empty"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="14sp"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAddFoodFromPicker"

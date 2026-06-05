@@ -11,8 +11,9 @@ import com.example.muzfit.model.Result;
 import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.source.common.DataSourceCallback;
 import com.example.muzfit.source.diet.openfoodfacts.BaseOpenFoodFactsDataSource;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.utils.Constants;
-import com.example.muzfit.utils.DateParser;
+import com.example.muzfit.utils.RepositorySupport;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -26,15 +27,20 @@ public class DietRepository implements IDietRepository {
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     private final BaseOpenFoodFactsDataSource openFoodFactsDataSource;
+    private final FirestoreSyncDataSource firestoreSyncDataSource;
     private MuzFitDao localDao;
     private Future<?> seedFuture;
     private final MutableLiveData<Result<List<UserMeal>>> userMealsForDayLiveData = new MutableLiveData<>();
     private final MutableLiveData<Result<List<Meal>>> mealCatalogLiveData = new MutableLiveData<>();
-    private String observedUsername;
+    private final MutableLiveData<Result<List<Meal>>> foodSearchLiveData = new MutableLiveData<>();
+    private String activeSearchQuery = "";
+    private String observedUid;
     private long observedDateMillis;
 
-    public DietRepository(BaseOpenFoodFactsDataSource openFoodFactsDataSource) {
+    public DietRepository(BaseOpenFoodFactsDataSource openFoodFactsDataSource,
+                          FirestoreSyncDataSource firestoreSyncDataSource) {
         this.openFoodFactsDataSource = openFoodFactsDataSource;
+        this.firestoreSyncDataSource = firestoreSyncDataSource;
     }
 
     public void setLocalDatabase(MuzFitDatabase database) {
@@ -48,8 +54,8 @@ public class DietRepository implements IDietRepository {
     }
 
     @Override
-    public LiveData<Result<List<UserMeal>>> getUserMealsForDay(String username, long dateMillis) {
-        observedUsername = username;
+    public LiveData<Result<List<UserMeal>>> getUserMealsForDay(long dateMillis) {
+        observedUid = RepositorySupport.currentUidOrDefault();
         observedDateMillis = dateMillis;
         userMealsForDayLiveData.postValue(new Result.Loading<>());
         EXECUTOR.execute(this::loadObservedUserMealsForDay);
@@ -106,6 +112,10 @@ public class DietRepository implements IDietRepository {
                     liveData.postValue(new Result.Error<>("Local database is not initialized"));
                     return;
                 }
+                if (meal.getId() > 0 && localDao.countUserMealsForMeal(meal.getId()) > 0) {
+                    liveData.postValue(new Result.Error<>(Constants.ERROR_MEAL_IN_USE));
+                    return;
+                }
                 localDao.deleteMeal(meal);
                 liveData.postValue(new Result.Success<>(null));
                 refreshMealCatalog();
@@ -117,7 +127,8 @@ public class DietRepository implements IDietRepository {
     }
 
     @Override
-    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis) {
+    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, long dateMillis) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         EXECUTOR.execute(() -> {
@@ -127,9 +138,11 @@ public class DietRepository implements IDietRepository {
                     liveData.postValue(new Result.Error<>("Local database is not initialized"));
                     return;
                 }
+                RepositorySupport.ensureLocalUser(localDao, currentUid);
                 int mealId = resolveOrInsertMeal(meal).getId();
-                UserMeal userMeal = new UserMeal(mealId, username, dateMillis, category);
+                UserMeal userMeal = new UserMeal(mealId, currentUid, dateMillis, category);
                 localDao.insertUserMeal(userMeal);
+                firestoreSyncDataSource.saveLoggedMeal(userMeal, localDao.getMeal(mealId));
                 liveData.postValue(new Result.Success<>(null));
                 refreshUserMealsForDay();
             } catch (Exception e) {
@@ -140,25 +153,40 @@ public class DietRepository implements IDietRepository {
     }
 
     @Override
-    public LiveData<Result<List<Meal>>> searchFoods(String query) {
-        MutableLiveData<Result<List<Meal>>> liveData = new MutableLiveData<>();
-        liveData.setValue(new Result.Loading<>());
+    public LiveData<Result<List<Meal>>> getFoodSearchResults() {
+        return foodSearchLiveData;
+    }
+
+    @Override
+    public void searchFoods(String query) {
+        String normalizedQuery = query != null ? query.trim() : "";
+        activeSearchQuery = normalizedQuery;
+        if (normalizedQuery.length() < Constants.OFF_FOOD_SEARCH_MIN_QUERY_LENGTH) {
+            foodSearchLiveData.setValue(new Result.Success<>(new ArrayList<>()));
+            return;
+        }
+        foodSearchLiveData.setValue(new Result.Loading<>());
         openFoodFactsDataSource.searchFoods(
-                query,
+                normalizedQuery,
                 Constants.OFF_FOOD_SEARCH_LIMIT,
                 new DataSourceCallback<List<Meal>>() {
                     @Override
                     public void onSuccess(List<Meal> data) {
-                        liveData.postValue(new Result.Success<>(data));
+                        if (!normalizedQuery.equals(activeSearchQuery)) {
+                            return;
+                        }
+                        foodSearchLiveData.postValue(new Result.Success<>(data));
                     }
 
                     @Override
                     public void onError(String message) {
-                        liveData.postValue(new Result.Error<>(message));
+                        if (!normalizedQuery.equals(activeSearchQuery)) {
+                            return;
+                        }
+                        foodSearchLiveData.postValue(new Result.Error<>(message));
                     }
                 }
         );
-        return liveData;
     }
 
     @Override
@@ -173,6 +201,7 @@ public class DietRepository implements IDietRepository {
                     return;
                 }
                 localDao.deleteUserMeal(userMeal);
+                firestoreSyncDataSource.deleteLoggedMeal(userMeal);
                 liveData.postValue(new Result.Success<>(null));
                 refreshUserMealsForDay();
             } catch (Exception e) {
@@ -183,14 +212,14 @@ public class DietRepository implements IDietRepository {
     }
 
     private void refreshUserMealsForDay() {
-        if (observedUsername == null) {
+        if (observedUid == null) {
             return;
         }
         EXECUTOR.execute(this::loadObservedUserMealsForDay);
     }
 
     private void loadObservedUserMealsForDay() {
-        if (observedUsername == null) {
+        if (observedUid == null) {
             userMealsForDayLiveData.postValue(new Result.Error<>("No day is being observed"));
             return;
         }
@@ -203,7 +232,7 @@ public class DietRepository implements IDietRepository {
             long startOfDay = getStartOfDayMillis(observedDateMillis);
             long endOfDay = getEndOfDayMillis(startOfDay);
             List<UserMeal> userMeals = localDao.getUserMealsForDay(
-                    observedUsername,
+                    observedUid,
                     startOfDay,
                     endOfDay
             );
@@ -287,6 +316,13 @@ public class DietRepository implements IDietRepository {
     }
 
     private static String errorMessage(Exception e) {
-        return e.getMessage() != null ? e.getMessage() : Constants.ERROR_DATABASE;
+        String message = e.getMessage();
+        if (message != null
+                && (message.contains("FOREIGN KEY")
+                || message.contains("SQLITE_CONSTRAINT_FOREIGNKEY")
+                || message.contains("787"))) {
+            return Constants.ERROR_MEAL_IN_USE;
+        }
+        return message != null ? message : Constants.ERROR_DATABASE;
     }
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/muzfit_toast_background"
+    android:gravity="center_vertical"
+    android:elevation="10dp"
+    android:minWidth="200dp"
+    android:orientation="horizontal"
+    android:outlineProvider="background"
+    android:paddingStart="16dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="12dp">
+
+    <View
+        android:id="@+id/toastAccent"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="@drawable/muzfit_toast_accent_dot" />
+
+    <TextView
+        android:id="@+id/tvToastMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@color/muz_on_surface"
+        android:textSize="14sp" />
+
+</LinearLayout>

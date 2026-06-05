@@ -10,7 +10,6 @@ import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.repository.diet.IDietRepository;
-import com.example.muzfit.utils.Constants;
 
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +57,7 @@ public class DietViewModel extends ViewModel {
 
     public LiveData<Result<List<UserMeal>>> getUserMealsForSelectedDay() {
         return Transformations.switchMap(selectedDateMillis, date -> 
-            repository.getUserMealsForDay(Constants.DEFAULT_USERNAME, date)
+            repository.getUserMealsForDay(date)
         );
     }
 
@@ -74,20 +73,24 @@ public class DietViewModel extends ViewModel {
         return repository.deleteMealFromCatalog(meal);
     }
 
-    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, String username, long dateMillis) {
-        return repository.logMeal(meal, category, username, dateMillis);
+    public LiveData<Result<Void>> logMeal(Meal meal, MealCategory category, long dateMillis) {
+        return repository.logMeal(meal, category, dateMillis);
     }
 
     public LiveData<Result<Void>> logMealForSelectedDay(Meal meal, MealCategory category) {
         Long date = selectedDateMillis.getValue();
-        return repository.logMeal(meal, category, Constants.DEFAULT_USERNAME, date != null ? date : System.currentTimeMillis());
+        return repository.logMeal(meal, category, date != null ? date : System.currentTimeMillis());
     }
 
     public LiveData<Result<Void>> deleteLoggedMeal(UserMeal userMeal) {
         return repository.deleteLoggedMeal(userMeal);
     }
 
-    public LiveData<Result<List<Meal>>> searchFoods(String query) {
-        return repository.searchFoods(query);
+    public LiveData<Result<List<Meal>>> getFoodSearchResults() {
+        return repository.getFoodSearchResults();
+    }
+
+    public void searchFoods(String query) {
+        repository.searchFoods(query);
     }
 }

@@ -54,7 +54,7 @@ public final class MuzFitDatabaseSeeder {
         dao.insertUser(new User(
                 Constants.DEFAULT_USERNAME,
                 "Bruno Moretti",
-                "bruno2026",
+                "",
                 81.4f,
                 179.0f,
                 1,

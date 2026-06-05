@@ -98,39 +98,52 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<List<WorkoutRoutine>>> getRoutines(String username) {
+    public LiveData<Result<List<WorkoutRoutine>>> getRoutines() {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<List<WorkoutRoutine>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
 
-        // Le routine create devono essere prese esclusivamente dal database locale
         if (localDao != null) {
             EXECUTOR.execute(() -> {
                 awaitSeedIfNeeded();
-                liveData.postValue(new Result.Success<>(buildRoutinesFromDb(username)));
+                liveData.postValue(new Result.Success<>(buildRoutinesFromDb(currentUid)));
             });
         } else {
             liveData.postValue(new Result.Error<>(Constants.ERROR_DATABASE));
         }
+        trainingFirebaseDataSource.fetchRoutines(currentUid, new DataSourceCallback<List<WorkoutRoutine>>() {
+            @Override
+            public void onSuccess(List<WorkoutRoutine> data) {
+                if (data != null && !data.isEmpty()) {
+                    liveData.postValue(new Result.Success<>(data));
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+            }
+        });
 
         return liveData;
     }
 
-    private void loadRoutinesFromDb(String username, MutableLiveData<Result<List<WorkoutRoutine>>> liveData) {
+    private void loadRoutinesFromDb(MutableLiveData<Result<List<WorkoutRoutine>>> liveData) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         if (localDao != null) {
             EXECUTOR.execute(() -> {
                 awaitSeedIfNeeded();
-                liveData.postValue(new Result.Success<>(buildRoutinesFromDb(username)));
+                liveData.postValue(new Result.Success<>(buildRoutinesFromDb(currentUid)));
             });
         } else {
             liveData.postValue(new Result.Error<>(Constants.ERROR_DATABASE));
         }
     }
 
-    private List<WorkoutRoutine> buildRoutinesFromDb(String username) {
+    private List<WorkoutRoutine> buildRoutinesFromDb(String uid) {
         List<WorkoutRoutine> routines = new ArrayList<>();
-        List<Workout> workouts = localDao.getWorkouts(username);
+        List<Workout> workouts = localDao.getWorkouts(uid);
         for (Workout workout : workouts) {
-            List<WorkoutExercise> wes = localDao.getWorkoutExercises(workout.getId(), username);
+            List<WorkoutExercise> wes = localDao.getWorkoutExercises(workout.getId(), uid);
             List<Exercise> exercises = new ArrayList<>();
             for (WorkoutExercise we : wes) {
                 Exercise e = localDao.getExercise(we.getExerciseId());
@@ -144,7 +157,8 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String username) {
+    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         
@@ -152,23 +166,50 @@ public class TrainingRepository implements ITrainingRepository {
             EXECUTOR.execute(() -> {
                 try {
                     awaitSeedIfNeeded();
-                    // Crea un nuovo ID per il workout (usa timestamp come fallback)
-                    int workoutId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+                    RepositorySupport.ensureLocalUser(localDao, currentUid);
                     
-                    // 1. Salva i dettagli degli esercizi scelti per questa routine (presi dall'API ExerciseDB)
-                    // Questi vengono salvati nella tabella Exercise del DB locale
+                    // 1. Check if routine with same name already exists to handle "Edit"
+                    List<Workout> existingWorkouts = localDao.getWorkouts(currentUid);
+                    Workout targetWorkout = null;
+                    for (Workout w : existingWorkouts) {
+                        if (routine.getName().equals(w.getDescription())) {
+                            targetWorkout = w;
+                            break;
+                        }
+                    }
+
+                    int workoutId;
+                    if (targetWorkout != null) {
+                        // Edit mode: reuse existing ID and clear old exercises
+                        workoutId = targetWorkout.getId();
+                        localDao.deleteExerciseSets(workoutId, currentUid);
+                        localDao.deleteWorkoutExercises(workoutId, currentUid);
+                    } else {
+                        // Create mode: new ID
+                        workoutId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+                        Workout workout = new Workout(workoutId, System.currentTimeMillis(), routine.getName(), currentUid);
+                        localDao.insertWorkout(workout);
+                    }
+                    
+                    // 2. Save/Update exercises details
                     localDao.insertExercises(routine.getExercises());
 
-                    // 2. Inserisce il Workout nella tabella Workout del DB locale
-                    Workout workout = new Workout(workoutId, System.currentTimeMillis(), routine.getName(), username);
-                    localDao.insertWorkout(workout);
-                    
-                    // 3. Collega gli esercizi al workout nella tabella WorkoutExercise (WorkoutRoutine nel tuo schema)
+                    // 3. Link exercises to workout
                     List<WorkoutExercise> wes = new ArrayList<>();
                     for (Exercise e : routine.getExercises()) {
-                        wes.add(new WorkoutExercise(0, workoutId, username, e.getId()));
+                        wes.add(new WorkoutExercise(0, workoutId, currentUid, e.getId()));
                     }
                     localDao.insertWorkoutExercises(wes);
+
+                    trainingFirebaseDataSource.saveRoutine(routine, currentUid, new DataSourceCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void data) {
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                        }
+                    });
                     
                     liveData.postValue(new Result.Success<>(null));
                 } catch (Exception e) {
@@ -182,25 +223,51 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<Void>> deleteRoutine(String routineName, String username) {
+    public LiveData<Result<Void>> deleteRoutine(String routineName) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        trainingFirebaseDataSource.deleteRoutine(routineName, username, new DataSourceCallback<Void>() {
-            @Override
-            public void onSuccess(Void data) {
-                liveData.postValue(new Result.Success<>(null));
-            }
 
-            @Override
-            public void onError(String message) {
-                liveData.postValue(new Result.Error<>(message));
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                if (localDao != null) {
+                    List<Workout> workouts = localDao.getWorkouts(currentUid);
+                    for (Workout w : workouts) {
+                        if (routineName.equals(w.getDescription())) {
+                            localDao.deleteExerciseSets(w.getId(), currentUid);
+                            localDao.deleteWorkoutExercises(w.getId(), currentUid);
+                            localDao.deleteWorkout(w);
+                        }
+                    }
+                }
+                
+                // Also call Firebase if needed
+                trainingFirebaseDataSource.deleteRoutine(routineName, currentUid, new DataSourceCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void data) {
+                        liveData.postValue(new Result.Success<>(null));
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        // Even if firebase fails, we consider it a success if local worked, 
+                        // or we can report error. Let's at least post success for now 
+                        // as local is the primary source for the user.
+                        liveData.postValue(new Result.Success<>(null));
+                    }
+                });
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
             }
         });
+
         return liveData;
     }
 
     @Override
-    public LiveData<Result<List<Workout>>> getWorkouts(String username) {
+    public LiveData<Result<List<Workout>>> getWorkouts() {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<List<Workout>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         trainingApiDataSource.fetchWorkouts(new DataSourceCallback<List<Workout>>() {
@@ -208,7 +275,7 @@ public class TrainingRepository implements ITrainingRepository {
             public void onSuccess(List<Workout> data) {
                 List<Workout> filtered = new ArrayList<>();
                 for (Workout workout : data) {
-                    if (username.equals(workout.getUsername())) {
+                    if (currentUid.equals(workout.getUid())) {
                         filtered.add(workout);
                     }
                 }
@@ -220,7 +287,7 @@ public class TrainingRepository implements ITrainingRepository {
                 if (localDao != null) {
                     EXECUTOR.execute(() -> {
                         awaitSeedIfNeeded();
-                        List<Workout> workouts = localDao.getWorkouts(username);
+                        List<Workout> workouts = localDao.getWorkouts(currentUid);
                         liveData.postValue(new Result.Success<>(workouts));
                     });
                 } else {
@@ -232,14 +299,15 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<Workout>> getWorkout(int workoutId, String username) {
+    public LiveData<Result<Workout>> getWorkout(int workoutId) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<Workout>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         trainingApiDataSource.fetchWorkouts(new DataSourceCallback<List<Workout>>() {
             @Override
             public void onSuccess(List<Workout> data) {
                 for (Workout workout : data) {
-                    if (workout.getId() == workoutId && username.equals(workout.getUsername())) {
+                    if (workout.getId() == workoutId && currentUid.equals(workout.getUid())) {
                         liveData.postValue(new Result.Success<>(workout));
                         return;
                     }
@@ -252,7 +320,7 @@ public class TrainingRepository implements ITrainingRepository {
                 if (localDao != null) {
                     EXECUTOR.execute(() -> {
                         awaitSeedIfNeeded();
-                        Workout workout = localDao.getWorkout(workoutId, username);
+                        Workout workout = localDao.getWorkout(workoutId, currentUid);
                         if (workout != null) {
                             liveData.postValue(new Result.Success<>(workout));
                         } else {
@@ -273,7 +341,7 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<Void>> deleteWorkout(int workoutId, String username) {
+    public LiveData<Result<Void>> deleteWorkout(int workoutId) {
         return RepositorySupport.notSupported();
     }
 
@@ -309,7 +377,8 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<List<WorkoutExercise>>> getWorkoutExercises(int workoutId, String username) {
+    public LiveData<Result<List<WorkoutExercise>>> getWorkoutExercises(int workoutId) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<List<WorkoutExercise>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         trainingApiDataSource.fetchWorkoutExercises(new DataSourceCallback<List<WorkoutExercise>>() {
@@ -318,7 +387,7 @@ public class TrainingRepository implements ITrainingRepository {
                 List<WorkoutExercise> filtered = new ArrayList<>();
                 for (WorkoutExercise workoutExercise : data) {
                     if (workoutExercise.getWorkoutId() == workoutId
-                            && username.equals(workoutExercise.getUsername())) {
+                            && currentUid.equals(workoutExercise.getUid())) {
                         filtered.add(workoutExercise);
                     }
                 }
@@ -331,7 +400,7 @@ public class TrainingRepository implements ITrainingRepository {
                     EXECUTOR.execute(() -> {
                         awaitSeedIfNeeded();
                         liveData.postValue(new Result.Success<>(
-                                localDao.getWorkoutExercises(workoutId, username)
+                                localDao.getWorkoutExercises(workoutId, currentUid)
                         ));
                     });
                 } else {
@@ -348,7 +417,8 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<List<ExerciseSet>>> getExerciseSets(int workoutId, String username, int exerciseId) {
+    public LiveData<Result<List<ExerciseSet>>> getExerciseSets(int workoutId, int exerciseId) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<List<ExerciseSet>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
         trainingApiDataSource.fetchExerciseSets(new DataSourceCallback<List<ExerciseSet>>() {
@@ -357,7 +427,7 @@ public class TrainingRepository implements ITrainingRepository {
                 List<ExerciseSet> filtered = new ArrayList<>();
                 for (ExerciseSet exerciseSet : data) {
                     if (exerciseSet.getWorkoutId() == workoutId
-                            && username.equals(exerciseSet.getUsername())
+                            && currentUid.equals(exerciseSet.getUid())
                             && String.valueOf(exerciseId).equals(exerciseSet.getExerciseId())) {
                         filtered.add(exerciseSet);
                     }
@@ -371,7 +441,7 @@ public class TrainingRepository implements ITrainingRepository {
                     EXECUTOR.execute(() -> {
                         awaitSeedIfNeeded();
                         liveData.postValue(new Result.Success<>(
-                                localDao.getExerciseSets(workoutId, username, String.valueOf(exerciseId))
+                                localDao.getExerciseSets(workoutId, currentUid, String.valueOf(exerciseId))
                         ));
                     });
                 } else {
