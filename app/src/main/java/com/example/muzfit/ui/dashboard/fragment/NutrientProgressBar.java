@@ -86,21 +86,11 @@ public class NutrientProgressBar extends View {
         canvas.save();
         canvas.clipPath(clipPath);
 
-        if (progress <= max) {
-            float fillWidth = (progress / max) * width;
-            if (fillWidth > 0) {
-                fillPaint.setColor(baseColor);
-                canvas.drawRect(0, trackTop, fillWidth, trackBottom, fillPaint);
-            }
-        } else {
+        float fillRatio = Math.min(progress / max, 1f);
+        float fillWidth = fillRatio * width;
+        if (fillWidth > 0) {
             fillPaint.setColor(baseColor);
-            canvas.drawRect(0, trackTop, width, trackBottom, fillPaint);
-
-            float overflowWidth = Math.min((progress - max) / max, 1f) * width;
-            if (overflowWidth > 0) {
-                fillPaint.setColor(overflowColor);
-                canvas.drawRect(0, trackTop, overflowWidth, trackBottom, fillPaint);
-            }
+            canvas.drawRect(0, trackTop, fillWidth, trackBottom, fillPaint);
         }
 
         canvas.restore();

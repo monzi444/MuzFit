@@ -47,6 +47,7 @@
     <color name="activity_high">#4CAF50</color>
     <color name="activity_high_bg">#1A4CAF50</color>
     <color name="activity_goal_day_bg">#804CAF50</color>
+    <color name="activity_overflow_day_bg">#80F44336</color>
     <color name="activity_medium">#FF9800</color>
     <color name="activity_medium_bg">#1AFF9800</color>
     <color name="activity_low">#F44336</color>

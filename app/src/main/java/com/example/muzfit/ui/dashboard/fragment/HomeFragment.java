@@ -482,9 +482,7 @@ public class HomeFragment extends Fragment {
             boolean isSelected,
             boolean isToday
     ) {
-        Drawable goalBackground = day.getLevel() == DashboardCalendarDay.ActivityLevel.GOAL
-                ? ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_goal)
-                : null;
+        Drawable goalBackground = getDayLevelBackground(day.getLevel());
         Drawable selectedRing = isSelected
                 ? ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_selected)
                 : null;
@@ -507,5 +505,21 @@ public class HomeFragment extends Fragment {
             dayView.setTextColor(defaultTextColor);
             dayView.setTypeface(null, android.graphics.Typeface.NORMAL);
         }
+    }
+
+    @Nullable
+    private Drawable getDayLevelBackground(DashboardCalendarDay.ActivityLevel level) {
+        int drawableRes;
+        switch (level) {
+            case GOAL:
+                drawableRes = R.drawable.calendar_circle_goal;
+                break;
+            case OVERFLOW:
+                drawableRes = R.drawable.calendar_circle_overflow;
+                break;
+            default:
+                return null;
+        }
+        return ContextCompat.getDrawable(requireContext(), drawableRes);
     }
 }

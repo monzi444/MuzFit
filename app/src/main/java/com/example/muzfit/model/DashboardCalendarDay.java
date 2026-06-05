@@ -28,6 +28,7 @@ public class DashboardCalendarDay {
         NONE,
         PARTIAL,
         GOAL,
+        OVERFLOW,
         EMPTY
     }
 }
