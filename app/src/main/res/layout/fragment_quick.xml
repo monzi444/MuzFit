@@ -1,114 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/quick_overlay_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Quick Actions"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"
-        android:layout_gravity="center_horizontal"/>
-
-    <GridLayout
+    <View
+        android:id="@+id/quick_scrim"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:columnCount="2"
-        android:rowCount="2"
-        android:alignmentMode="alignMargins"
-        android:columnOrderPreserved="false">
+        android:layout_height="match_parent"
+        android:background="#B3000000"
+        android:contentDescription="@string/quick_scrim_description" />
 
-        <!-- Home Page -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_home"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:clickable="true"
-            android:focusable="true">
+    <LinearLayout
+        android:id="@+id/quick_actions_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="110dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Home Page"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_quick_meal"
+            style="@style/MuzFit.Button.Skeuo"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="20dp"
+            android:text="@string/quick_action_meal"
+            android:textStyle="bold" />
 
-        <!-- Add Food -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_add_food"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:clickable="true"
-            android:focusable="true">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_start_workout"
+            style="@style/MuzFit.Button.Skeuo"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="20dp"
+            android:text="@string/quick_action_workout"
+            android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Aggiungi Cibo"
-                android:textSize="18sp"
-                android:gravity="center" />
-        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_log_weight"
+            style="@style/MuzFit.Button.Skeuo"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="20dp"
+            android:text="@string/quick_action_weight"
+            android:textStyle="bold" />
 
-        <!-- Work Page -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_work"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:clickable="true"
-            android:focusable="true">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_update_goal"
+            style="@style/MuzFit.Button.Skeuo"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="@string/quick_action_goal"
+            android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Work Page"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
-        <!-- Profile Page -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_profile"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Profilo"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-
-    </GridLayout>
-
-</LinearLayout>
+</FrameLayout>

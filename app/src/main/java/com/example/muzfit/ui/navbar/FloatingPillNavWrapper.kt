@@ -1,4 +1,4 @@
-package com.example.muzfit.ui.components
+package com.example.muzfit.ui.navbar
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable

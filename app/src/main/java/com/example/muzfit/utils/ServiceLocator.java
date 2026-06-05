@@ -12,6 +12,8 @@ import com.example.muzfit.repository.diet.DietRepository;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.repository.profile.ProfileRepository;
+import com.example.muzfit.repository.quick.IQuickRepository;
+import com.example.muzfit.repository.quick.QuickRepository;
 import com.example.muzfit.source.auth.AuthFirebaseDataSource;
 import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.repository.training.TrainingRepository;
@@ -47,6 +49,7 @@ public final class ServiceLocator {
     private final IProfileRepository profileRepository;
     private final IDashboardRepository dashboardRepository;
     private final IAuthRepository authRepository;
+    private final IQuickRepository quickRepository;
 
     private ServiceLocator() {
         muzFitApiService = createMuzFitApiService();
@@ -69,6 +72,7 @@ public final class ServiceLocator {
         );
         dashboardRepository = new DashboardRepository();
         authRepository = new AuthRepository(new AuthFirebaseDataSource(FirebaseAuth.getInstance()));
+        quickRepository = new QuickRepository();
     }
 
     public static ServiceLocator getInstance() {
@@ -137,6 +141,10 @@ public final class ServiceLocator {
 
     public IAuthRepository getAuthRepository() {
         return authRepository;
+    }
+
+    public IQuickRepository getQuickRepository() {
+        return quickRepository;
     }
 
     private static MuzFitApiService createMuzFitApiService() {

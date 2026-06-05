@@ -1,4 +1,4 @@
-package com.example.muzfit.ui.components
+package com.example.muzfit.ui.navbar
 
 import android.os.Build
 import androidx.compose.foundation.background

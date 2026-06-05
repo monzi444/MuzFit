@@ -31,8 +31,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/quick_overlay_compose"
+    <FrameLayout
+        android:id="@+id/quick_overlay_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

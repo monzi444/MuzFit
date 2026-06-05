@@ -143,4 +143,10 @@
     <string name="day_fri">Fri</string>
     <string name="day_sat">Sat</string>
     <string name="day_sun">Sun</string>
+
+    <string name="quick_scrim_description">Dismiss quick actions</string>
+    <string name="quick_action_meal">Add Quick Meal</string>
+    <string name="quick_action_workout">Start Workout</string>
+    <string name="quick_action_weight">Log Body Weight</string>
+    <string name="quick_action_goal">Update Goal</string>
 </resources>
