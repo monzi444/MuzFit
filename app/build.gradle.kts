@@ -39,6 +39,7 @@ android {
 
 dependencies {
     implementation(libs.appcompat)
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.firebase.firestore)
     implementation(libs.material)
     implementation(libs.activity)
