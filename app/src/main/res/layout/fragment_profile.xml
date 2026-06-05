@@ -32,7 +32,9 @@
                 android:id="@+id/switch_theme"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp" />
+                android:layout_marginHorizontal="8dp"
+                app:thumbTint="@color/muzfit_switch_thumb"
+                app:trackTint="@color/muzfit_switch_track" />
 
             <ImageView
                 android:layout_width="20dp"

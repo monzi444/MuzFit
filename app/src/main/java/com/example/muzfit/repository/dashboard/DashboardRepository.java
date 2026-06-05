@@ -15,9 +15,7 @@ import com.example.muzfit.utils.RepositorySupport;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -244,14 +242,16 @@ public class DashboardRepository implements IDashboardRepository {
             try {
                 awaitSeedIfNeeded();
                 String uid = RepositorySupport.currentUidOrDefault();
-                long startOfMonth = getStartOfMonthMillis(year, month);
-                long endOfMonth = getEndOfMonthMillis(year, month);
-                List<Workout> workouts = localDao.getWorkoutsBetween(
+                User user = RepositorySupport.ensureLocalUser(localDao, uid);
+                float calorieGoal = user != null && user.getCalorieGoal() > 0
+                        ? user.getCalorieGoal()
+                        : 2000f;
+                liveData.postValue(new Result.Success<>(buildCalendarData(
+                        year,
+                        month,
                         uid,
-                        startOfMonth,
-                        endOfMonth
-                );
-                liveData.postValue(new Result.Success<>(buildCalendarData(year, month, workouts)));
+                        calorieGoal
+                )));
             } catch (Exception e) {
                 liveData.postValue(new Result.Error<>(e.getMessage()));
             }
@@ -376,9 +376,13 @@ public class DashboardRepository implements IDashboardRepository {
         return calendar.getTimeInMillis();
     }
 
-    private List<DashboardCalendarDay> buildCalendarData(int year, int month, List<Workout> workouts) {
+    private List<DashboardCalendarDay> buildCalendarData(
+            int year,
+            int month,
+            String uid,
+            float calorieGoal
+    ) {
         List<DashboardCalendarDay> data = new ArrayList<>();
-        Set<Integer> trainedDays = getTrainedDays(workouts);
 
         Calendar firstDay = Calendar.getInstance();
         firstDay.set(year, month, 1);
@@ -389,6 +393,12 @@ public class DashboardRepository implements IDashboardRepository {
         previousMonth.add(Calendar.MONTH, -1);
         int daysInPreviousMonth = previousMonth.getActualMaximum(Calendar.DAY_OF_MONTH);
 
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
         for (int i = firstDayOffset - 1; i >= 0; i--) {
             data.add(new DashboardCalendarDay(
                     daysInPreviousMonth - i,
@@ -398,9 +408,23 @@ public class DashboardRepository implements IDashboardRepository {
         }
 
         for (int day = 1; day <= daysInMonth; day++) {
-            DashboardCalendarDay.ActivityLevel level = trainedDays.contains(day)
-                    ? DashboardCalendarDay.ActivityLevel.GOAL
-                    : DashboardCalendarDay.ActivityLevel.EMPTY;
+            Calendar dayCal = Calendar.getInstance();
+            dayCal.set(year, month, day, 0, 0, 0);
+            dayCal.set(Calendar.MILLISECOND, 0);
+
+            DashboardCalendarDay.ActivityLevel level = DashboardCalendarDay.ActivityLevel.EMPTY;
+            if (!dayCal.after(today)) {
+                long startOfDay = dayCal.getTimeInMillis();
+                long endOfDay = getEndOfDayMillis(startOfDay);
+                float consumed = localDao.getConsumedCalories(uid, startOfDay, endOfDay);
+                if (consumed >= calorieGoal) {
+                    level = DashboardCalendarDay.ActivityLevel.GOAL;
+                } else if (consumed >= calorieGoal * 0.5f) {
+                    level = DashboardCalendarDay.ActivityLevel.PARTIAL;
+                } else if (consumed > 0f) {
+                    level = DashboardCalendarDay.ActivityLevel.NONE;
+                }
+            }
             data.add(new DashboardCalendarDay(day, level, true));
         }
 
@@ -415,20 +439,6 @@ public class DashboardRepository implements IDashboardRepository {
         }
 
         return data;
-    }
-
-    private Set<Integer> getTrainedDays(List<Workout> workouts) {
-        Set<Integer> trainedDays = new HashSet<>();
-        if (workouts == null) {
-            return trainedDays;
-        }
-
-        Calendar calendar = Calendar.getInstance();
-        for (Workout workout : workouts) {
-            calendar.setTimeInMillis(workout.getDateMillis());
-            trainedDays.add(calendar.get(Calendar.DAY_OF_MONTH));
-        }
-        return trainedDays;
     }
 
     private enum Macro {
