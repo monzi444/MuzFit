@@ -2,6 +2,7 @@ package com.example.muzfit.source.firebase;
 
 import com.example.muzfit.model.Exercise;
 import com.example.muzfit.model.Meal;
+import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.model.WeightEntry;
@@ -94,6 +95,26 @@ public class FirestoreSyncDataSource {
                 .set(toLoggedMealMap(userMeal, meal), SetOptions.merge());
     }
 
+    public void fetchLoggedMeals(String uid,
+                                 long startOfDayMillis,
+                                 long endOfDayMillis,
+                                 DataSourceCallback<List<LoggedMeal>> callback) {
+        if (!canSync(uid)) {
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+        userCollection(uid, USER_MEALS)
+                .whereGreaterThanOrEqualTo("dateMillis", startOfDayMillis)
+                .whereLessThan("dateMillis", endOfDayMillis)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<LoggedMeal> loggedMeals = new ArrayList<>();
+                    snapshot.forEach(document -> loggedMeals.add(toLoggedMeal(uid, document.getData())));
+                    callback.onSuccess(loggedMeals);
+                })
+                .addOnFailureListener(e -> callback.onError(errorMessage(e)));
+    }
+
     public void deleteLoggedMeal(UserMeal userMeal) {
         if (userMeal == null || !canSync(userMeal.getUid())) {
             return;
@@ -180,6 +201,28 @@ public class FirestoreSyncDataSource {
         return data;
     }
 
+    private static LoggedMeal toLoggedMeal(String uid, Map<String, Object> data) {
+        if (data == null) {
+            return new LoggedMeal(new UserMeal(0, uid, 0L), new Meal());
+        }
+
+        Meal meal = new Meal(
+                intValue(data.get("mealId")),
+                stringValue(data.get("foodName")),
+                floatValue(data.get("calories")),
+                floatValue(data.get("carbs")),
+                floatValue(data.get("protein")),
+                floatValue(data.get("fat"))
+        );
+        UserMeal userMeal = new UserMeal(
+                meal.getId(),
+                uid,
+                longValue(data.get("dateMillis")),
+                mealCategoryValue(data.get("category"))
+        );
+        return new LoggedMeal(userMeal, meal);
+    }
+
     private static Map<String, Object> toRoutineMap(WorkoutRoutine routine) {
         Map<String, Object> data = new HashMap<>();
         data.put("name", routine.getName());
@@ -248,8 +291,22 @@ public class FirestoreSyncDataSource {
         return value instanceof Number ? ((Number) value).intValue() : 0;
     }
 
+    private static long longValue(Object value) {
+        return value instanceof Number ? ((Number) value).longValue() : 0L;
+    }
+
     private static float floatValue(Object value) {
         return value instanceof Number ? ((Number) value).floatValue() : 0f;
+    }
+
+    private static MealCategory mealCategoryValue(Object value) {
+        if (value instanceof String) {
+            try {
+                return MealCategory.valueOf((String) value);
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        return MealCategory.PRANZO;
     }
 
     private static List<String> stringListValue(Object value) {
@@ -266,5 +323,23 @@ public class FirestoreSyncDataSource {
 
     private static String errorMessage(Exception e) {
         return e.getMessage() != null ? e.getMessage() : Constants.ERROR_FIREBASE_NOT_IMPLEMENTED;
+    }
+
+    public static class LoggedMeal {
+        private final UserMeal userMeal;
+        private final Meal meal;
+
+        public LoggedMeal(UserMeal userMeal, Meal meal) {
+            this.userMeal = userMeal;
+            this.meal = meal;
+        }
+
+        public UserMeal getUserMeal() {
+            return userMeal;
+        }
+
+        public Meal getMeal() {
+            return meal;
+        }
     }
 }
