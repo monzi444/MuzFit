@@ -46,25 +46,36 @@ fun FloatingPillNav(
     )
 
     val glassBgColor = colorResource(id = R.color.muz_glass_bg)
+    val surfaceColor = colorResource(id = R.color.muz_surface_l0)
     val limeColor = colorResource(id = R.color.muz_primary_lime)
     val onSurfaceVariant = colorResource(id = R.color.muz_on_surface_variant)
     val glassBorderColor = colorResource(id = R.color.muz_glass_border)
+    val navBarFillColor = glassBgColor.copy(alpha = 0.94f)
+    val navBarScrimColor = surfaceColor.copy(alpha = 0.82f)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 32.dp),
+            .padding(bottom = 12.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Blur Background Layer (Separate from content to avoid blurring icons/text)
+        // Frosted backdrop — heavier blur + opaque scrim so content behind stays readable
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Box(
                 modifier = Modifier
                     .width(380.dp)
                     .height(72.dp)
-                    .blur(20.dp)
+                    .blur(36.dp)
                     .clip(CircleShape)
-                    .background(glassBgColor.copy(alpha = 0.4f))
+                    .background(navBarScrimColor)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(72.dp)
+                    .clip(CircleShape)
+                    .background(navBarFillColor)
             )
         }
 
@@ -74,7 +85,7 @@ fun FloatingPillNav(
                 .widthIn(max = 380.dp)
                 .height(72.dp)
                 .border(1.dp, glassBorderColor, CircleShape),
-            color = glassBgColor,
+            color = navBarFillColor,
             shape = CircleShape
         ) {
             Row(
