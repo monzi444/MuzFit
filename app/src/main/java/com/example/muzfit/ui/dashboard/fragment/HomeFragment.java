@@ -1,5 +1,7 @@
 package com.example.muzfit.ui.dashboard.fragment;
 
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -9,7 +11,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -51,10 +52,6 @@ public class HomeFragment extends Fragment {
 
     private DashboardViewModel viewModel;
     private GridLayout calendarGrid;
-    private LinearLayout activityGoalSummaryBar;
-    private TextView activityGoalPercent;
-    private TextView activityPartialPercent;
-    private TextView activityMissedPercent;
     private NutrientProgressBar calorieBar;
     private NutrientProgressBar proteinBar;
     private NutrientProgressBar carbsBar;
@@ -100,10 +97,6 @@ public class HomeFragment extends Fragment {
 
     private void setupCalendarControls(View view) {
         calendarGrid = view.findViewById(R.id.calendar_grid);
-        activityGoalSummaryBar = view.findViewById(R.id.activity_goal_summary_bar);
-        activityGoalPercent = view.findViewById(R.id.activity_goal_percent);
-        activityPartialPercent = view.findViewById(R.id.activity_partial_percent);
-        activityMissedPercent = view.findViewById(R.id.activity_missed_percent);
         monthSpinner = view.findViewById(R.id.month_spinner);
         yearSpinner = view.findViewById(R.id.year_spinner);
         ImageView previousMonth = view.findViewById(R.id.prev_month);
@@ -205,7 +198,6 @@ public class HomeFragment extends Fragment {
                 List<DashboardCalendarDay> calendarData =
                         ((Result.Success<List<DashboardCalendarDay>>) result).getData();
                 setupCalendar(calendarGrid, calendarData);
-                setupActivityGoalSummary(calendarData);
             }
         });
     }
@@ -375,69 +367,6 @@ public class HomeFragment extends Fragment {
         calorieBar.setProgress(netCalories, calorieGoal, "kcal");
     }
 
-    private void setupActivityGoalSummary(List<DashboardCalendarDay> calendarData) {
-        if (activityGoalSummaryBar == null || activityGoalPercent == null
-                || activityPartialPercent == null || activityMissedPercent == null) {
-            return;
-        }
-
-        int goalCount = 0;
-        int partialCount = 0;
-        int missedCount = 0;
-
-        for (DashboardCalendarDay day : calendarData) {
-            if (!day.isCurrentMonth()) {
-                continue;
-            }
-
-            switch (day.getLevel()) {
-                case GOAL:
-                    goalCount++;
-                    break;
-                case PARTIAL:
-                    partialCount++;
-                    break;
-                case NONE:
-                    missedCount++;
-                    break;
-                case EMPTY:
-                default:
-                    break;
-            }
-        }
-
-        int total = goalCount + partialCount + missedCount;
-        if (total == 0) {
-            activityGoalSummaryBar.setVisibility(View.GONE);
-            return;
-        }
-
-        activityGoalSummaryBar.setVisibility(View.VISIBLE);
-        int goalPercent = Math.round(goalCount * 100f / total);
-        int partialPercent = Math.round(partialCount * 100f / total);
-        int missedPercent = 100 - goalPercent - partialPercent;
-
-        updateSummarySegment(activityGoalPercent, goalCount, goalPercent, R.color.activity_high);
-        updateSummarySegment(activityPartialPercent, partialCount, partialPercent, R.color.activity_medium);
-        updateSummarySegment(activityMissedPercent, missedCount, missedPercent, R.color.activity_low);
-    }
-
-    private void updateSummarySegment(TextView segment, int count, int percent, int colorResId) {
-        if (count == 0) {
-            segment.setVisibility(View.GONE);
-            return;
-        }
-
-        segment.setVisibility(View.VISIBLE);
-        segment.setText(String.format(Locale.getDefault(), "%d%%", percent));
-        segment.setBackgroundColor(ContextCompat.getColor(requireContext(), colorResId));
-        segment.setLayoutParams(new LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                count
-        ));
-    }
-
     /**
      * Populates the grid with circular day indicators like a calendar.
      */
@@ -479,18 +408,7 @@ public class HomeFragment extends Fragment {
                     && selectedMonth == selMonth && selectedYear == selYear;
 
             if (day.isCurrentMonth()) {
-                if (isActuallySelected) {
-                    dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
-                    dayView.setTypeface(null, android.graphics.Typeface.BOLD);
-                    dayView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_goal));
-                } else if (isActuallyToday) {
-                    dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
-                    dayView.setTypeface(null, android.graphics.Typeface.BOLD);
-                    dayView.setBackground(null);
-                } else {
-                    dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
-                    dayView.setBackground(null);
-                }
+                applyDayCellStyle(dayView, day, isActuallySelected, isActuallyToday);
 
                 dayView.setOnClickListener(v -> {
                     Calendar calendar = Calendar.getInstance();
@@ -510,5 +428,52 @@ public class HomeFragment extends Fragment {
             column++;
             if (column == 7) column = 0;
         }
+    }
+
+    private void applyDayCellStyle(
+            TextView dayView,
+            DashboardCalendarDay day,
+            boolean isSelected,
+            boolean isToday
+    ) {
+        Drawable goalBackground = getDayLevelBackground(day.getLevel());
+        Drawable selectedRing = isSelected
+                ? ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_selected)
+                : null;
+
+        if (goalBackground != null && selectedRing != null) {
+            dayView.setBackground(new LayerDrawable(new Drawable[]{goalBackground, selectedRing}));
+        } else if (selectedRing != null) {
+            dayView.setBackground(selectedRing);
+        } else if (goalBackground != null) {
+            dayView.setBackground(goalBackground);
+        } else {
+            dayView.setBackground(null);
+        }
+
+        int defaultTextColor = ContextCompat.getColor(requireContext(), R.color.muz_on_surface);
+        if (isToday) {
+            dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.activity_high));
+            dayView.setTypeface(null, android.graphics.Typeface.BOLD);
+        } else {
+            dayView.setTextColor(defaultTextColor);
+            dayView.setTypeface(null, android.graphics.Typeface.NORMAL);
+        }
+    }
+
+    @Nullable
+    private Drawable getDayLevelBackground(DashboardCalendarDay.ActivityLevel level) {
+        int drawableRes;
+        switch (level) {
+            case GOAL:
+                drawableRes = R.drawable.calendar_circle_goal;
+                break;
+            case OVERFLOW:
+                drawableRes = R.drawable.calendar_circle_overflow;
+                break;
+            default:
+                return null;
+        }
+        return ContextCompat.getDrawable(requireContext(), drawableRes);
     }
 }
