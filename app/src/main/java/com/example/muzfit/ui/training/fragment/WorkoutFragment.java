@@ -1,42 +1,38 @@
 package com.example.muzfit.ui.training.fragment;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.textfield.TextInputEditText;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.example.muzfit.R;
 import com.example.muzfit.adapter.ExerciseSearchAdapter;
-import androidx.recyclerview.widget.ItemTouchHelper;
-
 import com.example.muzfit.adapter.SelectedExercisesAdapter;
-import com.example.muzfit.adapter.WorkoutAdapter;
+import com.example.muzfit.adapter.WorkoutRecyclerAdapter;
 import com.example.muzfit.model.Exercise;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.WorkoutRoutine;
@@ -44,14 +40,23 @@ import com.example.muzfit.ui.training.WorkoutSessionActivity;
 import com.example.muzfit.ui.training.viewmodel.TrainingViewModel;
 import com.example.muzfit.ui.training.viewmodel.TrainingViewModelFactory;
 import com.example.muzfit.utils.ServiceLocator;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class WorkoutFragment extends Fragment {
 
-    private ListView routineListView;
+    private RecyclerView routineRecyclerView;
     private Button startWorkoutButton;
     private Button btnRoutineOptions;
     private Button createRoutineButton;
-    private WorkoutAdapter adapter;
+    private WorkoutRecyclerAdapter adapter;
+    private LinearLayout scrollbarContainer;
     private TrainingViewModel viewModel;
     private final List<WorkoutRoutine> routineList = new ArrayList<>();
     private int selectedPosition = -1;
@@ -66,24 +71,20 @@ public class WorkoutFragment extends Fragment {
         );
         viewModel = new ViewModelProvider(this, factory).get(TrainingViewModel.class);
 
-        routineListView = view.findViewById(R.id.routineListView);
+        routineRecyclerView = view.findViewById(R.id.routineRecyclerView);
+        scrollbarContainer = view.findViewById(R.id.scrollbar_container);
         startWorkoutButton = view.findViewById(R.id.startWorkoutButton);
         btnRoutineOptions = view.findViewById(R.id.btnRoutineOptions);
         btnRoutineOptions.setText("Edit/Delete");
         createRoutineButton = view.findViewById(R.id.createRoutineButton);
 
-        adapter = new WorkoutAdapter(requireContext(), routineList);
-        routineListView.setAdapter(adapter);
+        adapter = new WorkoutRecyclerAdapter(routineList, position -> {
+            selectedPosition = position;
+        });
+        routineRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        routineRecyclerView.setAdapter(adapter);
 
         loadRoutines();
-
-        routineListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View itemView, int position, long id) {
-                selectedPosition = position;
-                routineListView.setItemChecked(position, true);
-            }
-        });
 
         startWorkoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -147,9 +148,63 @@ public class WorkoutFragment extends Fragment {
             if (data != null) {
                 routineList.clear();
                 routineList.addAll(data);
+                Collections.sort(routineList, (r1, r2) -> r1.getName().compareToIgnoreCase(r2.getName()));
                 adapter.notifyDataSetChanged();
+                setupAlphabetScrollbar();
             }
         });
+    }
+
+    private void setupAlphabetScrollbar() {
+        if (scrollbarContainer == null) return;
+        scrollbarContainer.removeAllViews();
+
+        Set<Character> letters = new TreeSet<>();
+        for (WorkoutRoutine r : routineList) {
+            if (r.getName() != null && !r.getName().isEmpty()) {
+                letters.add(Character.toUpperCase(r.getName().charAt(0)));
+            }
+        }
+
+        for (Character letter : letters) {
+            LinearLayout itemLayout = new LinearLayout(requireContext());
+            itemLayout.setOrientation(LinearLayout.VERTICAL);
+            itemLayout.setGravity(Gravity.CENTER);
+            itemLayout.setPadding(0, 4, 0, 4);
+
+            View dot = new View(requireContext());
+            dot.setLayoutParams(new LinearLayout.LayoutParams(
+                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()),
+                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics())
+            ));
+            dot.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_none)); // Using an existing circle or simple dot
+            dot.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime)));
+
+            TextView tv = new TextView(requireContext());
+            tv.setText(String.valueOf(letter));
+            tv.setGravity(Gravity.CENTER);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
+            tv.setVisibility(View.GONE); // Hidden initially
+            
+            itemLayout.addView(dot);
+            itemLayout.addView(tv);
+
+            itemLayout.setOnClickListener(v -> {
+                // Show letter briefly
+                tv.setVisibility(View.VISIBLE);
+                v.postDelayed(() -> tv.setVisibility(View.GONE), 1000);
+
+                for (int i = 0; i < routineList.size(); i++) {
+                    if (Character.toUpperCase(routineList.get(i).getName().charAt(0)) == letter) {
+                        ((LinearLayoutManager) routineRecyclerView.getLayoutManager())
+                                .scrollToPositionWithOffset(i, 0);
+                        break;
+                    }
+                }
+            });
+            scrollbarContainer.addView(itemLayout);
+        }
     }
 
     private void showDeleteConfirmDialog(int position) {
@@ -164,7 +219,7 @@ public class WorkoutFragment extends Fragment {
                         if (result.isSuccess()) {
                             loadRoutines(); // Refresh full list from DB
                             selectedPosition = -1;
-                            routineListView.clearChoices();
+                            adapter.clearSelection();
                             Toast.makeText(getContext(), R.string.routine_deleted_toast, Toast.LENGTH_SHORT).show();
                         } else {
                             String msg = ((Result.Error<Void>) result).getMessage();
@@ -258,8 +313,9 @@ public class WorkoutFragment extends Fragment {
             }
 
             WorkoutRoutine newRoutine = new WorkoutRoutine(name, finalExercises);
+            String oldName = (routineToEdit != null) ? routineToEdit.getName() : null;
 
-            viewModel.saveRoutine(newRoutine).observe(getViewLifecycleOwner(), result -> {
+            viewModel.saveRoutine(newRoutine, oldName).observe(getViewLifecycleOwner(), result -> {
                 if (!isAdded()) return;
                 if (result.isLoading()) return;
 
