@@ -10,7 +10,8 @@
     </style>
 
     <style name="Theme.MuzFit.Dialog" parent="ThemeOverlay.Material3.Dialog.Alert">
-        <item name="android:background">@drawable/muzfit_dialog_background</item>
+        <item name="android:windowBackground">@drawable/muzfit_dialog_background</item>
+        <item name="android:background">@android:color/transparent</item>
         <item name="colorSurface">@color/muz_container_l2</item>
         <item name="colorOnSurface">@color/muz_on_surface</item>
         <item name="android:textColorPrimary">@color/muz_on_surface</item>
@@ -39,8 +40,8 @@
     <!-- MuzFit v3.0 Components -->
     <style name="MuzFit.Card.Glass" parent="Widget.Material3.CardView.Elevated">
         <item name="cardElevation">0dp</item>
-        <item name="android:background">@drawable/muzfit_glass_card</item>
-        <item name="cardBackgroundColor">@android:color/transparent</item>
+        <item name="cardBackgroundColor">@color/muz_glass_bg</item>
+        <item name="cardCornerRadius">22dp</item>
         <item name="strokeWidth">0dp</item>
     </style>
 
@@ -77,8 +78,7 @@
     <style name="MuzFitDietStatCard" parent="Widget.Material3.CardView.Elevated">
         <item name="cardElevation">0dp</item>
         <item name="cardBackgroundColor">@color/muz_container_l2</item>
-        <item name="strokeColor">@color/muz_glass_border</item>
-        <item name="strokeWidth">1dp</item>
+        <item name="strokeWidth">0dp</item>
         <item name="cardCornerRadius">12dp</item>
     </style>
 
