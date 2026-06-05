@@ -12,6 +12,7 @@ import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.source.common.DataSourceCallback;
 import com.example.muzfit.source.diet.openfoodfacts.BaseOpenFoodFactsDataSource;
 import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource.LoggedMeal;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.RepositorySupport;
 
@@ -59,6 +60,7 @@ public class DietRepository implements IDietRepository {
         observedDateMillis = dateMillis;
         userMealsForDayLiveData.postValue(new Result.Loading<>());
         EXECUTOR.execute(this::loadObservedUserMealsForDay);
+        syncObservedUserMealsForDayFromFirebase();
         return userMealsForDayLiveData;
     }
 
@@ -218,6 +220,71 @@ public class DietRepository implements IDietRepository {
         EXECUTOR.execute(this::loadObservedUserMealsForDay);
     }
 
+    private void syncObservedUserMealsForDayFromFirebase() {
+        if (observedUid == null) {
+            return;
+        }
+        long startOfDay = getStartOfDayMillis(observedDateMillis);
+        long endOfDay = getEndOfDayMillis(startOfDay);
+        firestoreSyncDataSource.fetchLoggedMeals(
+                observedUid,
+                startOfDay,
+                endOfDay,
+                new DataSourceCallback<List<LoggedMeal>>() {
+                    @Override
+                    public void onSuccess(List<LoggedMeal> loggedMeals) {
+                        EXECUTOR.execute(() -> mergeFirebaseMealsIntoLocal(loggedMeals, startOfDay, endOfDay));
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        // Keep the local result visible if the background remote sync fails.
+                    }
+                }
+        );
+    }
+
+    private void mergeFirebaseMealsIntoLocal(List<LoggedMeal> firebaseMeals,
+                                             long startOfDay,
+                                             long endOfDay) {
+        try {
+            awaitSeedIfNeeded();
+            if (localDao == null || observedUid == null || firebaseMeals == null) {
+                return;
+            }
+            RepositorySupport.ensureLocalUser(localDao, observedUid);
+
+            List<UserMeal> localMeals = localDao.getUserMealsForDay(observedUid, startOfDay, endOfDay);
+            List<UserMeal> syncedMeals = new ArrayList<>();
+
+            for (LoggedMeal loggedMeal : firebaseMeals) {
+                Meal localMeal = resolveOrInsertMeal(withoutRemoteMealId(loggedMeal.getMeal()));
+                UserMeal firebaseUserMeal = loggedMeal.getUserMeal();
+                UserMeal localUserMeal = new UserMeal(
+                        localMeal.getId(),
+                        observedUid,
+                        firebaseUserMeal.getDateMillis(),
+                        firebaseUserMeal.getCategory()
+                );
+                localDao.insertUserMeal(localUserMeal);
+                syncedMeals.add(localUserMeal);
+            }
+
+            boolean updated = !sameUserMealSet(localMeals, syncedMeals);
+            for (UserMeal localMeal : localMeals) {
+                if (!containsSameUserMeal(syncedMeals, localMeal)) {
+                    localDao.deleteUserMeal(localMeal);
+                    updated = true;
+                }
+            }
+
+            if (updated) {
+                loadObservedUserMealsForDay();
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     private void loadObservedUserMealsForDay() {
         if (observedUid == null) {
             userMealsForDayLiveData.postValue(new Result.Error<>("No day is being observed"));
@@ -290,6 +357,41 @@ public class DietRepository implements IDietRepository {
                 && left.getCarbs() == right.getCarbs()
                 && left.getProtein() == right.getProtein()
                 && left.getFat() == right.getFat();
+    }
+
+    private static boolean sameUserMealSet(List<UserMeal> left, List<UserMeal> right) {
+        if (left.size() != right.size()) {
+            return false;
+        }
+        for (UserMeal userMeal : left) {
+            if (!containsSameUserMeal(right, userMeal)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean containsSameUserMeal(List<UserMeal> userMeals, UserMeal target) {
+        for (UserMeal userMeal : userMeals) {
+            if (userMeal.getMealId() == target.getMealId()
+                    && userMeal.getUid().equals(target.getUid())
+                    && userMeal.getDateMillis() == target.getDateMillis()
+                    && userMeal.getCategory() == target.getCategory()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Meal withoutRemoteMealId(Meal meal) {
+        return new Meal(
+                0,
+                meal.getFoodName(),
+                meal.getCalories(),
+                meal.getCarbs(),
+                meal.getProtein(),
+                meal.getFat()
+        );
     }
 
     private void awaitSeedIfNeeded() throws Exception {

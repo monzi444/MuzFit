@@ -546,12 +546,6 @@ public class HomeFragment extends Fragment {
                     
                     // Re-render to update highlights
                     setupCalendar(grid, data);
-
-                    Toast.makeText(
-                        requireContext(),
-                        String.format(Locale.getDefault(), "Data selezionata: %d %s %d", day.getDayNumber(), MONTH_NAMES[selectedMonth], selectedYear),
-                        Toast.LENGTH_SHORT
-                    ).show();
                 });
             } else {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_grey));

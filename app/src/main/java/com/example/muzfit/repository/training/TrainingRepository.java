@@ -103,6 +103,7 @@ public class TrainingRepository implements ITrainingRepository {
         MutableLiveData<Result<List<WorkoutRoutine>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
 
+        // First load from local DB to be fast
         if (localDao != null) {
             EXECUTOR.execute(() -> {
                 awaitSeedIfNeeded();
@@ -111,16 +112,89 @@ public class TrainingRepository implements ITrainingRepository {
         } else {
             liveData.postValue(new Result.Error<>(Constants.ERROR_DATABASE));
         }
+
+        // Then sync from Firebase in background
         trainingFirebaseDataSource.fetchRoutines(currentUid, new DataSourceCallback<List<WorkoutRoutine>>() {
             @Override
-            public void onSuccess(List<WorkoutRoutine> data) {
-                if (data != null && !data.isEmpty()) {
-                    liveData.postValue(new Result.Success<>(data));
+            public void onSuccess(List<WorkoutRoutine> firebaseRoutines) {
+                if (firebaseRoutines != null) {
+                    EXECUTOR.execute(() -> {
+                        if (localDao != null) {
+                            List<Workout> localWorkouts = localDao.getWorkouts(currentUid);
+                            boolean updated = false;
+
+                            // 1. Sync routines from Firebase to local DB
+                            for (WorkoutRoutine fr : firebaseRoutines) {
+                                Workout targetLocal = null;
+                                for (Workout lw : localWorkouts) {
+                                    if (fr.getName().equals(lw.getDescription())) {
+                                        targetLocal = lw;
+                                        break;
+                                    }
+                                }
+                                
+                                if (targetLocal == null) {
+                                    // Add new routine from cloud
+                                    int workoutId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+                                    localDao.insertExercises(fr.getExercises());
+                                    Workout workout = new Workout(workoutId, System.currentTimeMillis(), fr.getName(), currentUid);
+                                    localDao.insertWorkout(workout);
+                                    List<WorkoutExercise> wes = new ArrayList<>();
+                                    for (Exercise e : fr.getExercises()) {
+                                        wes.add(new WorkoutExercise(0, workoutId, currentUid, e.getId()));
+                                    }
+                                    localDao.insertWorkoutExercises(wes);
+                                    updated = true;
+                                } else {
+                                    // Check if existing routine has different exercises
+                                    List<WorkoutExercise> localWes = localDao.getWorkoutExercises(targetLocal.getId(), currentUid);
+                                    if (areExercisesDifferent(localWes, fr.getExercises())) {
+                                        // Update local exercises for this routine
+                                        localDao.deleteExerciseSets(targetLocal.getId(), currentUid);
+                                        localDao.deleteWorkoutExercises(targetLocal.getId(), currentUid);
+                                        
+                                        localDao.insertExercises(fr.getExercises());
+                                        List<WorkoutExercise> newWes = new ArrayList<>();
+                                        for (Exercise e : fr.getExercises()) {
+                                            newWes.add(new WorkoutExercise(0, targetLocal.getId(), currentUid, e.getId()));
+                                        }
+                                        localDao.insertWorkoutExercises(newWes);
+                                        updated = true;
+                                    }
+                                }
+                            }
+
+                            // 2. Remove routines from local DB that are NOT in Firebase
+                            for (Workout lw : localWorkouts) {
+                                boolean foundInFirebase = false;
+                                for (WorkoutRoutine fr : firebaseRoutines) {
+                                    if (lw.getDescription() != null && lw.getDescription().equals(fr.getName())) {
+                                        foundInFirebase = true;
+                                        break;
+                                    }
+                                }
+                                
+                                // Only delete if it's not a local-only routine (like those from seeder if applicable)
+                                // or simply follow the "Firebase is the source of truth" rule.
+                                if (!foundInFirebase) {
+                                    localDao.deleteExerciseSets(lw.getId(), currentUid);
+                                    localDao.deleteWorkoutExercises(lw.getId(), currentUid);
+                                    localDao.deleteWorkout(lw);
+                                    updated = true;
+                                }
+                            }
+
+                            if (updated) {
+                                liveData.postValue(new Result.Success<>(buildRoutinesFromDb(currentUid)));
+                            }
+                        }
+                    });
                 }
             }
 
             @Override
             public void onError(String message) {
+                // Ignore background sync error for now
             }
         });
 
@@ -157,7 +231,7 @@ public class TrainingRepository implements ITrainingRepository {
     }
 
     @Override
-    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine) {
+    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String oldName) {
         String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
@@ -168,11 +242,15 @@ public class TrainingRepository implements ITrainingRepository {
                     awaitSeedIfNeeded();
                     RepositorySupport.ensureLocalUser(localDao, currentUid);
                     
-                    // 1. Check if routine with same name already exists to handle "Edit"
+                    // 1. Identify the workout to update
                     List<Workout> existingWorkouts = localDao.getWorkouts(currentUid);
                     Workout targetWorkout = null;
+                    
+                    // Use oldName if provided to find the existing entry
+                    String lookupName = (oldName != null && !oldName.isEmpty()) ? oldName : routine.getName();
+                    
                     for (Workout w : existingWorkouts) {
-                        if (routine.getName().equals(w.getDescription())) {
+                        if (lookupName.equals(w.getDescription())) {
                             targetWorkout = w;
                             break;
                         }
@@ -180,8 +258,15 @@ public class TrainingRepository implements ITrainingRepository {
 
                     int workoutId;
                     if (targetWorkout != null) {
-                        // Edit mode: reuse existing ID and clear old exercises
+                        // Edit mode: reuse existing ID, clear old exercises, and update description (name)
                         workoutId = targetWorkout.getId();
+                        
+                        // Update the name in the Workout table if it changed
+                        if (!routine.getName().equals(targetWorkout.getDescription())) {
+                            targetWorkout.setDescription(routine.getName());
+                            localDao.insertWorkout(targetWorkout); // Update existing record
+                        }
+                        
                         localDao.deleteExerciseSets(workoutId, currentUid);
                         localDao.deleteWorkoutExercises(workoutId, currentUid);
                     } else {
@@ -200,6 +285,15 @@ public class TrainingRepository implements ITrainingRepository {
                         wes.add(new WorkoutExercise(0, workoutId, currentUid, e.getId()));
                     }
                     localDao.insertWorkoutExercises(wes);
+
+                    // Sync with Firebase
+                    if (oldName != null && !oldName.isEmpty() && !oldName.equals(routine.getName())) {
+                        // Name changed: delete old and save new on Firebase
+                        trainingFirebaseDataSource.deleteRoutine(oldName, currentUid, new DataSourceCallback<Void>() {
+                            @Override public void onSuccess(Void data) {}
+                            @Override public void onError(String message) {}
+                        });
+                    }
 
                     trainingFirebaseDataSource.saveRoutine(routine, currentUid, new DataSourceCallback<Void>() {
                         @Override
@@ -455,6 +549,16 @@ public class TrainingRepository implements ITrainingRepository {
     @Override
     public LiveData<Result<Void>> saveExerciseSet(ExerciseSet exerciseSet) {
         return RepositorySupport.notSupported();
+    }
+
+    private boolean areExercisesDifferent(List<WorkoutExercise> localWes, List<Exercise> firebaseExercises) {
+        if (localWes.size() != firebaseExercises.size()) return true;
+        for (int i = 0; i < localWes.size(); i++) {
+            if (!localWes.get(i).getExerciseId().equals(firebaseExercises.get(i).getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<Exercise> sortByRelevance(List<Exercise> exercises, String normalizedQuery) {

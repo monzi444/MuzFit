@@ -17,7 +17,7 @@ public interface ITrainingRepository {
 
     LiveData<Result<List<WorkoutRoutine>>> getRoutines();
 
-    LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine);
+    LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String oldName);
 
     LiveData<Result<Void>> deleteRoutine(String routineName);
 

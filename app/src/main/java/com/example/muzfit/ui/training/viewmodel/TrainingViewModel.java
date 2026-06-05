@@ -29,8 +29,8 @@ public class TrainingViewModel extends ViewModel {
         return repository.getRoutines();
     }
 
-    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine) {
-        return repository.saveRoutine(routine);
+    public LiveData<Result<Void>> saveRoutine(WorkoutRoutine routine, String oldName) {
+        return repository.saveRoutine(routine, oldName);
     }
 
     public LiveData<Result<Void>> deleteRoutine(String routineName) {
