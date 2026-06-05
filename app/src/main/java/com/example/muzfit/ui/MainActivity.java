@@ -43,14 +43,9 @@ import com.example.muzfit.ui.quick.viewmodel.QuickViewModelFactory;
 import com.example.muzfit.ui.training.fragment.WorkoutFragment;
 
 import com.example.muzfit.utils.ServiceLocator;
+import com.example.muzfit.utils.ThemeHelper;
 
 import androidx.compose.ui.platform.ComposeView;
-
-import androidx.appcompat.app.AppCompatDelegate;
-
-import android.content.Context;
-
-import android.content.SharedPreferences;
 
 
 
@@ -69,23 +64,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
 
     protected void onCreate(Bundle savedInstanceState) {
-
-        SharedPreferences sharedPref = getSharedPreferences("muzfit_prefs", Context.MODE_PRIVATE);
-
-        boolean isNightMode = sharedPref.getBoolean("night_mode", false);
-
-        int targetMode = isNightMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
-
-
-
-        if (AppCompatDelegate.getDefaultNightMode() != targetMode) {
-
-            AppCompatDelegate.setDefaultNightMode(targetMode);
-
-        }
-
-
-
+        ThemeHelper.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
         EdgeToEdge.enable(this);

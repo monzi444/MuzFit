@@ -28,6 +28,7 @@ import com.example.muzfit.ui.MainActivity;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
 import com.example.muzfit.utils.ServiceLocator;
+import com.example.muzfit.utils.ThemeHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -61,6 +62,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        ThemeHelper.applySavedTheme(this);
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_profile_setup);

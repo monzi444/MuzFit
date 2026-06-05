@@ -19,7 +19,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -36,11 +35,9 @@ import com.example.muzfit.ui.auth.viewmodel.AuthViewModelFactory;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
 import com.example.muzfit.utils.ServiceLocator;
+import com.example.muzfit.utils.ThemeHelper;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.materialswitch.MaterialSwitch;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
 
 public class ProfileFragment extends Fragment {
 
@@ -139,20 +136,11 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupThemeSwitch(MaterialSwitch switchTheme) {
-        SharedPreferences sharedPref = requireActivity().getSharedPreferences("muzfit_prefs", Context.MODE_PRIVATE);
-        boolean isNightMode = sharedPref.getBoolean("night_mode", 
-                (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
-        
+        boolean isNightMode = ThemeHelper.isNightMode(requireContext());
         switchTheme.setChecked(isNightMode);
 
-        switchTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            sharedPref.edit().putBoolean("night_mode", isChecked).apply();
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            }
-        });
+        switchTheme.setOnCheckedChangeListener((buttonView, isChecked) ->
+                ThemeHelper.setNightMode(requireContext(), isChecked));
     }
 
     private void observeProfileData() {

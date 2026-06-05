@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme (Dark — default). -->
+    <!-- Base application theme (Light). -->
     <style name="Base.Theme.MuzFit" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/muz_surface_l0</item>
         <item name="colorPrimary">@color/muz_primary_lime</item>

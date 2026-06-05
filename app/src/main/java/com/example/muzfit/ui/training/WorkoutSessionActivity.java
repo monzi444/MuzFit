@@ -19,6 +19,7 @@ import com.bumptech.glide.Glide;
 import java.util.Locale;
 
 import com.example.muzfit.R;
+import com.example.muzfit.utils.ThemeHelper;
 import com.example.muzfit.model.WorkoutRoutine;
 import com.example.muzfit.model.Exercise;
 
@@ -37,6 +38,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.applySavedTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_workout_session);
 
