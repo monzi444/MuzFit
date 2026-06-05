@@ -6,7 +6,6 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -153,6 +152,7 @@ public class WorkoutFragment extends Fragment {
     private void setupAlphabetScrollbar() {
         if (scrollbarContainer == null) return;
         scrollbarContainer.removeAllViews();
+        scrollbarContainer.setBackgroundColor(Color.TRANSPARENT);
 
         Set<Character> lettersSet = new TreeSet<>();
         for (WorkoutRoutine r : routineList) {
@@ -165,27 +165,24 @@ public class WorkoutFragment extends Fragment {
         if (letters.isEmpty()) return;
 
         int primaryColor = ContextCompat.getColor(requireContext(), R.color.muz_primary_lime);
-        int variantColor = ContextCompat.getColor(requireContext(), R.color.muz_on_surface_variant);
+        int textColor = ContextCompat.getColor(requireContext(), R.color.muz_on_surface);
 
-        // Calcolo DINAMICO basato sulla proporzione dello spazio
         int numLetters = letters.size();
         
-        // Formule più sensibili per il ridimensionamento
-        float scaleFactor = Math.max(0.4f, Math.min(1.0f, 12f / numLetters));
+        // Formule dinamiche per ridimensionamento
+        float scaleFactor = Math.max(0.4f, Math.min(1.0f, 10f / numLetters));
         
-        int dotSizeDp = (int) (14 * scaleFactor);
-        if (dotSizeDp < 4) dotSizeDp = 4;
+        int dotSizeDp = (int) (16 * scaleFactor);
+        if (dotSizeDp < 6) dotSizeDp = 6;
         
-        int textSizeSp = (int) (12 * scaleFactor);
-        if (textSizeSp < 7) textSizeSp = 7;
+        int textSizeSp = (int) (14 * scaleFactor);
+        if (textSizeSp < 9) textSizeSp = 9;
 
         for (Character letter : letters) {
             LinearLayout itemLayout = new LinearLayout(requireContext());
             itemLayout.setOrientation(LinearLayout.VERTICAL);
             itemLayout.setGravity(Gravity.CENTER);
             
-            // Usiamo il peso (weight) per far sì che gli elementi si distribuiscano uniformemente
-            // e si rimpiccioliscano automaticamente per stare nel contenitore
             LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
             itemLayout.setLayoutParams(itemParams);
@@ -204,7 +201,7 @@ public class WorkoutFragment extends Fragment {
             tv.setText(String.valueOf(letter));
             tv.setGravity(Gravity.CENTER);
             tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp);
-            tv.setTextColor(variantColor);
+            tv.setTextColor(textColor);
             tv.setTypeface(null, Typeface.BOLD);
             
             itemLayout.addView(dot);
@@ -213,7 +210,6 @@ public class WorkoutFragment extends Fragment {
             scrollbarContainer.addView(itemLayout);
         }
 
-        // Supporto per lo scroll al tocco/trascinamento
         scrollbarContainer.setOnTouchListener((v, event) -> {
             if (event.getAction() == android.view.MotionEvent.ACTION_MOVE || 
                 event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
@@ -225,8 +221,7 @@ public class WorkoutFragment extends Fragment {
                 for (int i = 0; i < childCount; i++) {
                     View child = scrollbarContainer.getChildAt(i);
                     if (y >= child.getTop() && y <= child.getBottom()) {
-                        Character letter = letters.get(i);
-                        scrollToLetter(letter);
+                        scrollToLetter(letters.get(i));
                         break;
                     }
                 }
@@ -256,7 +251,7 @@ public class WorkoutFragment extends Fragment {
                         if (!isAdded()) return;
                         if (result.isLoading()) return;
                         if (result.isSuccess()) {
-                            loadRoutines(); // Refresh full list from DB
+                            loadRoutines();
                             selectedPosition = -1;
                             adapter.clearSelection();
                             Toast.makeText(getContext(), R.string.routine_deleted_toast, Toast.LENGTH_SHORT).show();
