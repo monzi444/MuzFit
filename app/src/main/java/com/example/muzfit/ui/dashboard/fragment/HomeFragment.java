@@ -206,9 +206,10 @@ public class HomeFragment extends Fragment {
         calorieBar = view.findViewById(R.id.calorie_progress);
         if (calorieBar != null) {
             calorieBar.setColors(
-                ContextCompat.getColor(requireContext(), R.color.calorie_color),
-                ContextCompat.getColor(requireContext(), R.color.calorie_overflow)
+                ContextCompat.getColor(requireContext(), R.color.muz_primary_lime),
+                ContextCompat.getColor(requireContext(), R.color.protein_overflow)
             );
+            calorieBar.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
             calorieBar.setProgress(0, calorieGoal, "kcal");
         }
 

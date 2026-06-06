@@ -28,7 +28,7 @@ public class CalorieHistogramView extends View {
     }
 
     private void init() {
-        barPaint.setColor(ContextCompat.getColor(getContext(), R.color.calorie_color));
+        barPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_primary_lime));
         textPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface_variant));
         textPaint.setTextSize(24f);
         textPaint.setTextAlign(Paint.Align.CENTER);
