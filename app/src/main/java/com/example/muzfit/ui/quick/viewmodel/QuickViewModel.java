@@ -44,6 +44,7 @@ public class QuickViewModel extends ViewModel {
 
     public void selectAction(String action) {
         selectedAction.setValue(action);
+        selectedAction.setValue(null); // Reset after emission
         hide();
     }
 }
