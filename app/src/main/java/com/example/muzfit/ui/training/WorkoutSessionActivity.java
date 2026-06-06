@@ -1,5 +1,6 @@
 package com.example.muzfit.ui.training;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.InputType;
@@ -386,7 +387,11 @@ public class WorkoutSessionActivity extends AppCompatActivity {
     private int lastRestSeconds = 60;
 
     private void showWeightPickerDialog(int currentWeight, int currentDecimalIndex, String[] decimals, OnWeightSelectedListener listener) {
-        ContextThemeWrapper themedContext = new ContextThemeWrapper(this, R.style.MuzFitNumberPicker);
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_MuzFit_Dialog_Glass)
+                .setTitle("Select Weight")
+                .create();
+
+        android.view.ContextThemeWrapper themedContext = new android.view.ContextThemeWrapper(this, R.style.MuzFitNumberPicker);
         NumberPicker npWeight = new NumberPicker(themedContext);
         npWeight.setMinValue(0);
         npWeight.setMaxValue(300);
@@ -403,7 +408,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.HORIZONTAL);
         container.setGravity(android.view.Gravity.CENTER);
-        container.setPadding(0, 40, 0, 0);
+        container.setPadding(0, 40, 0, 40);
         container.addView(npWeight);
         
         TextView dot = new TextView(this);
@@ -415,16 +420,15 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         
         container.addView(npDecimal);
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Select Weight")
-                .setView(container)
-                .setPositiveButton("Set", (d, which) -> listener.onWeightSelected(npWeight.getValue(), npDecimal.getValue()))
-                .setNegativeButton("Cancel", null)
-                .create();
+        dialog.setView(container);
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Set", (d, which) -> listener.onWeightSelected(npWeight.getValue(), npDecimal.getValue()));
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", (d, which) -> d.dismiss());
 
         dialog.show();
         Button posBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (posBtn != null) posBtn.setTextColor(ContextCompat.getColor(this, R.color.muz_primary_lime));
+        Button negBtn = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        if (negBtn != null) negBtn.setTextColor(ContextCompat.getColor(this, R.color.muz_on_surface_variant));
     }
 
     interface OnWeightSelectedListener {
@@ -432,6 +436,10 @@ public class WorkoutSessionActivity extends AppCompatActivity {
     }
 
     private void showValuePickerDialog(String title, int min, int max, int current, OnValueSelectedListener listener) {
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_MuzFit_Dialog_Glass)
+                .setTitle(title)
+                .create();
+
         NumberPicker np = new NumberPicker(new ContextThemeWrapper(this, R.style.MuzFitNumberPicker));
         np.setMinValue(min);
         np.setMaxValue(max);
@@ -440,20 +448,19 @@ public class WorkoutSessionActivity extends AppCompatActivity {
 
         LinearLayout container = new LinearLayout(this);
         container.setGravity(android.view.Gravity.CENTER);
-        container.setPadding(0, 40, 0, 0);
+        container.setPadding(0, 40, 0, 40);
         container.addView(np);
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setView(container)
-                .setPositiveButton("Set", (d, which) -> listener.onValueSelected(np.getValue()))
-                .setNegativeButton("Cancel", null)
-                .create();
+        dialog.setView(container);
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Set", (d, which) -> listener.onValueSelected(np.getValue()));
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", (d, which) -> d.dismiss());
 
         dialog.show();
         
         Button posBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (posBtn != null) posBtn.setTextColor(ContextCompat.getColor(this, R.color.muz_primary_lime));
+        Button negBtn = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        if (negBtn != null) negBtn.setTextColor(ContextCompat.getColor(this, R.color.muz_on_surface_variant));
     }
 
     private void showStringPickerDialog(String title, String[] values, int currentIndex, OnValueSelectedListener listener) {
@@ -469,7 +476,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         container.setPadding(0, 40, 0, 0);
         container.addView(np);
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.Theme_MuzFit_Dialog_Glass))
                 .setTitle(title)
                 .setView(container)
                 .setPositiveButton("Set", (d, which) -> listener.onValueSelected(np.getValue()))
