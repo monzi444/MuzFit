@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.muzfit.R;
 import com.example.muzfit.adapter.ExerciseSearchAdapter;
 import com.example.muzfit.adapter.SelectedExercisesAdapter;
@@ -145,8 +146,26 @@ public class WorkoutFragment extends Fragment {
                 Collections.sort(routineList, (r1, r2) -> r1.getName().compareToIgnoreCase(r2.getName()));
                 adapter.notifyDataSetChanged();
                 setupAlphabetScrollbar();
+                preloadRoutineGifs(data);
             }
         });
+    }
+
+    private void preloadRoutineGifs(List<WorkoutRoutine> routines) {
+        if (routines == null || !isAdded() || getContext() == null) return;
+        
+        for (WorkoutRoutine routine : routines) {
+            if (routine != null && routine.getExercises() != null) {
+                for (Exercise exercise : routine.getExercises()) {
+                    if (exercise != null && exercise.getGifUrl() != null && !exercise.getGifUrl().trim().isEmpty()) {
+                        Glide.with(this)
+                                .load(exercise.getGifUrl())
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .preload();
+                    }
+                }
+            }
+        }
     }
 
     private void setupAlphabetScrollbar() {

@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
@@ -82,7 +83,21 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         }
 
         initViews();
+        preloadExerciseGifs();
         loadExercise(currentExerciseIndex);
+    }
+
+    private void preloadExerciseGifs() {
+        if (routine == null || routine.getExercises() == null) return;
+        
+        for (Exercise exercise : routine.getExercises()) {
+            if (exercise.getGifUrl() != null && !exercise.getGifUrl().trim().isEmpty()) {
+                Glide.with(this)
+                        .load(exercise.getGifUrl())
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .preload();
+            }
+        }
     }
 
     private void initViews() {
@@ -221,6 +236,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
             Glide.with(this)
                     .load(exercise.getGifUrl())
                     .placeholder(R.drawable.ic_exercise_placeholder)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(ivExerciseGif);
         }
 
