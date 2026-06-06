@@ -74,4 +74,8 @@ public class DashboardViewModel extends ViewModel {
     public LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month) {
         return repository.getCalendarData(year, month);
     }
+
+    public LiveData<Result<Void>> deleteWeightEntry(WeightEntry weightEntry) {
+        return repository.deleteWeightEntry(weightEntry);
+    }
 }

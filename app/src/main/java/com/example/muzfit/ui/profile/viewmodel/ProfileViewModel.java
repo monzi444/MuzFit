@@ -37,4 +37,8 @@ public class ProfileViewModel extends ViewModel {
     public LiveData<Result<Void>> addWeightEntry(WeightEntry weightEntry) {
         return repository.addWeightEntry(weightEntry);
     }
+
+    public LiveData<Result<Void>> deleteWeightEntry(WeightEntry weightEntry) {
+        return repository.deleteWeightEntry(weightEntry);
+    }
 }

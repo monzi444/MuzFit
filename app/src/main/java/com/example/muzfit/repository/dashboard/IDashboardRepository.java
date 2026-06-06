@@ -33,4 +33,6 @@ public interface IDashboardRepository {
     LiveData<Result<Integer>> getCaloriesBurned(long dateMillis);
 
     LiveData<Result<List<DashboardCalendarDay>>> getCalendarData(int year, int month);
+
+    LiveData<Result<Void>> deleteWeightEntry(WeightEntry weightEntry);
 }

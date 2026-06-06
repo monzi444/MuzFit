@@ -191,13 +191,16 @@ public interface MuzFitDao {
     void deleteExerciseSets(String uid);
 
     @Query("SELECT * FROM WeightEntry WHERE uid = :uid ORDER BY dateMillis")
-    List<WeightEntry> getWeightEntries(String uid);
+    androidx.lifecycle.LiveData<List<WeightEntry>> getWeightEntries(String uid);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertWeightEntry(WeightEntry weightEntry);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertWeightEntries(List<WeightEntry> weightEntries);
+
+    @Delete
+    void deleteWeightEntry(WeightEntry weightEntry);
 
     @Query("DELETE FROM WeightEntry WHERE uid = :uid")
     void deleteWeightEntries(String uid);
