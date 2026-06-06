@@ -39,7 +39,7 @@ public class NutrientProgressBar extends View {
         trackPaint.setColor(ContextCompat.getColor(context, R.color.muz_glass_border));
         trackPaint.setStyle(Paint.Style.FILL);
 
-        boxPaint.setColor(ContextCompat.getColor(context, R.color.muz_surface_l0));
+        boxPaint.setColor(ContextCompat.getColor(context, R.color.muz_glass_bg));
         boxPaint.setStyle(Paint.Style.FILL);
 
         textPaint.setColor(ContextCompat.getColor(context, R.color.muz_on_surface));
