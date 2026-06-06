@@ -46,6 +46,11 @@ public class NutrientProgressBar extends View {
         invalidate();
     }
 
+    public void setTextColor(int color) {
+        textPaint.setColor(color);
+        invalidate();
+    }
+
     public void setProgress(float progress, float max) {
         setProgress(progress, max, "");
     }
