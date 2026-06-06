@@ -37,11 +37,12 @@ import com.example.muzfit.ui.profile.fragment.ProfileFragment;
 import com.example.muzfit.ui.quick.fragment.QuickOverlayFragment;
 
 import com.example.muzfit.ui.quick.viewmodel.QuickViewModel;
-
 import com.example.muzfit.ui.quick.viewmodel.QuickViewModelFactory;
-
 import com.example.muzfit.ui.training.fragment.WorkoutFragment;
-
+import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
+import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
+import com.example.muzfit.ui.diet.DietDialogHelper;
+import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.utils.ServiceLocator;
 import com.example.muzfit.utils.ThemeHelper;
 
@@ -90,8 +91,18 @@ public class MainActivity extends AppCompatActivity {
         IQuickRepository quickRepository = ServiceLocator.getInstance().getQuickRepository();
 
         quickViewModel = new ViewModelProvider(this, new QuickViewModelFactory(quickRepository))
-
                 .get(QuickViewModel.class);
+
+        IDietRepository dietRepository = ServiceLocator.getInstance().getDietRepository();
+        DietViewModel dietViewModel = new ViewModelProvider(this, new DietViewModelFactory(dietRepository))
+                .get(DietViewModel.class);
+        DietDialogHelper dietDialogHelper = new DietDialogHelper(this, dietViewModel, this);
+
+        quickViewModel.getSelectedAction().observe(this, action -> {
+            if (QuickViewModel.ACTION_QUICK_MEAL.equals(action)) {
+                dietDialogHelper.showChooseMealDialog();
+            }
+        });
 
 
 
