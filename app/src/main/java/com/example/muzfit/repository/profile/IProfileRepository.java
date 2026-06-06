@@ -19,4 +19,6 @@ public interface IProfileRepository {
     LiveData<Result<List<WeightEntry>>> getWeightHistory();
 
     LiveData<Result<Void>> addWeightEntry(WeightEntry weightEntry);
+
+    LiveData<Result<Void>> deleteWeightEntry(WeightEntry weightEntry);
 }

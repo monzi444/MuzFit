@@ -70,7 +70,7 @@ public final class ServiceLocator {
                 new ProfileApiDataSource(muzFitApiService),
                 firestoreSyncDataSource
         );
-        dashboardRepository = new DashboardRepository();
+        dashboardRepository = new DashboardRepository(firestoreSyncDataSource);
         authRepository = new AuthRepository(new AuthFirebaseDataSource(FirebaseAuth.getInstance()));
         quickRepository = new QuickRepository();
     }

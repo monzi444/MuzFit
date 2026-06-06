@@ -11,6 +11,7 @@ import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.model.Workout;
 import com.example.muzfit.model.WorkoutExercise;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.utils.RepositorySupport;
 
 import java.util.ArrayList;
@@ -26,10 +27,12 @@ public class DashboardRepository implements IDashboardRepository {
     private static final float CALORIE_OVERFLOW_MARGIN = 100f;
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
+    private final FirestoreSyncDataSource firestoreSyncDataSource;
     private MuzFitDao localDao;
     private Future<?> seedFuture;
 
-    public DashboardRepository() {
+    public DashboardRepository(FirestoreSyncDataSource firestoreSyncDataSource) {
+        this.firestoreSyncDataSource = firestoreSyncDataSource;
     }
 
     public void setLocalDatabase(MuzFitDatabase database) {
@@ -110,26 +113,14 @@ public class DashboardRepository implements IDashboardRepository {
 
     @Override
     public LiveData<Result<List<WeightEntry>>> getWeights() {
-        MutableLiveData<Result<List<WeightEntry>>> liveData = new MutableLiveData<>();
-        liveData.setValue(new Result.Loading<>());
         if (localDao == null) {
+            MutableLiveData<Result<List<WeightEntry>>> liveData = new MutableLiveData<>();
             liveData.setValue(new Result.Error<>("Local database is not initialized"));
             return liveData;
         }
 
-        EXECUTOR.execute(() -> {
-            try {
-                awaitSeedIfNeeded();
-                String uid = RepositorySupport.currentUidOrDefault();
-                RepositorySupport.ensureLocalUser(localDao, uid);
-                liveData.postValue(new Result.Success<>(
-                        localDao.getWeightEntries(uid)
-                ));
-            } catch (Exception e) {
-                liveData.postValue(new Result.Error<>(e.getMessage()));
-            }
-        });
-        return liveData;
+        String uid = RepositorySupport.currentUidOrDefault();
+        return androidx.lifecycle.Transformations.map(localDao.getWeightEntries(uid), Result.Success::new);
     }
 
     @Override
@@ -253,6 +244,30 @@ public class DashboardRepository implements IDashboardRepository {
                         uid,
                         calorieGoal
                 )));
+            } catch (Exception e) {
+                liveData.postValue(new Result.Error<>(e.getMessage()));
+            }
+        });
+        return liveData;
+    }
+
+    @Override
+    public LiveData<Result<Void>> deleteWeightEntry(WeightEntry weightEntry) {
+        MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        if (localDao == null) {
+            liveData.setValue(new Result.Error<>("Local database is not initialized"));
+            return liveData;
+        }
+
+        EXECUTOR.execute(() -> {
+            try {
+                awaitSeedIfNeeded();
+                String uid = RepositorySupport.currentUidOrDefault();
+                weightEntry.setUid(uid);
+                localDao.deleteWeightEntry(weightEntry);
+                firestoreSyncDataSource.deleteWeightEntry(weightEntry);
+                liveData.postValue(new Result.Success<>(null));
             } catch (Exception e) {
                 liveData.postValue(new Result.Error<>(e.getMessage()));
             }

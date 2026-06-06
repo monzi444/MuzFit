@@ -86,23 +86,13 @@ public class ProfileRepository implements IProfileRepository {
 
     @Override
     public LiveData<Result<List<WeightEntry>>> getWeightHistory() {
-        String currentUid = RepositorySupport.currentUidOrDefault();
-        MutableLiveData<Result<List<WeightEntry>>> liveData = new MutableLiveData<>();
-        liveData.setValue(new Result.Loading<>());
         if (localDao == null) {
+            MutableLiveData<Result<List<WeightEntry>>> liveData = new MutableLiveData<>();
             liveData.setValue(new Result.Error<>(Constants.ERROR_DATABASE));
             return liveData;
         }
-        EXECUTOR.execute(() -> {
-            try {
-                awaitSeedIfNeeded();
-                RepositorySupport.ensureLocalUser(localDao, currentUid);
-                liveData.postValue(new Result.Success<>(localDao.getWeightEntries(currentUid)));
-            } catch (Exception e) {
-                liveData.postValue(new Result.Error<>(errorMessage(e)));
-            }
-        });
-        return liveData;
+        String currentUid = RepositorySupport.currentUidOrDefault();
+        return androidx.lifecycle.Transformations.map(localDao.getWeightEntries(currentUid), Result.Success::new);
     }
 
     @Override
@@ -118,6 +108,29 @@ public class ProfileRepository implements IProfileRepository {
                     weightEntry.setUid(currentUid);
                     localDao.insertWeightEntry(weightEntry);
                     firestoreSyncDataSource.saveWeightEntry(weightEntry);
+                    liveData.postValue(new Result.Success<>(null));
+                } catch (Exception e) {
+                    liveData.postValue(new Result.Error<>(errorMessage(e)));
+                }
+            });
+        } else {
+            liveData.postValue(new Result.Success<>(null));
+        }
+        return liveData;
+    }
+
+    @Override
+    public LiveData<Result<Void>> deleteWeightEntry(WeightEntry weightEntry) {
+        String currentUid = RepositorySupport.currentUidOrDefault();
+        MutableLiveData<Result<Void>> liveData = new MutableLiveData<>();
+        liveData.setValue(new Result.Loading<>());
+        if (localDao != null) {
+            EXECUTOR.execute(() -> {
+                try {
+                    awaitSeedIfNeeded();
+                    weightEntry.setUid(currentUid);
+                    localDao.deleteWeightEntry(weightEntry);
+                    firestoreSyncDataSource.deleteWeightEntry(weightEntry);
                     liveData.postValue(new Result.Success<>(null));
                 } catch (Exception e) {
                     liveData.postValue(new Result.Error<>(errorMessage(e)));

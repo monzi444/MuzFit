@@ -86,6 +86,15 @@ public class FirestoreSyncDataSource {
                 .set(toWeightEntryMap(entry), SetOptions.merge());
     }
 
+    public void deleteWeightEntry(WeightEntry entry) {
+        if (entry == null || !canSync(entry.getUid())) {
+            return;
+        }
+        userCollection(entry.getUid(), WEIGHT_ENTRIES)
+                .document(String.valueOf(entry.getDateMillis()))
+                .delete();
+    }
+
     public void saveLoggedMeal(UserMeal userMeal, Meal meal) {
         if (userMeal == null || meal == null || !canSync(userMeal.getUid())) {
             return;
