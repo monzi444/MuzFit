@@ -1,105 +1,200 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/muz_surface_l0">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/muz_surface_l0">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
-
-            <TextView
-                style="@style/MuzFit.Text.Display"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Sets"
-                android:textSize="20sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAddSet"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/add_set"
-                android:textColor="@color/muz_primary_lime"
-                app:strokeColor="@color/muz_primary_lime" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/llSetsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="16dp" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cvTimerSection"
-            style="@style/MuzFit.Card.Glass"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
+            android:padding="24dp">
 
             <LinearLayout
-                android:id="@+id/llTimerSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="16dp">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
 
                 <TextView
-                    android:id="@+id/tvTimerDisplay"
-                    android:layout_width="wrap_content"
+                    style="@style/MuzFit.Text.Display"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="00:00"
-                    android:textColor="@color/muz_primary_lime"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
+                    android:layout_weight="1"
+                    android:text="Sets"
+                    android:textSize="20sp" />
 
                 <LinearLayout
+                    android:id="@+id/llTimerPill"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="12dp">
+                    android:background="@drawable/muzfit_input_bg"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginEnd="12dp"
+                    android:clickable="true"
+                    android:focusable="true">
 
-                    <EditText
-                        android:id="@+id/etRestSeconds"
-                        android:layout_width="70dp"
-                        android:layout_height="wrap_content"
-                        android:hint="Sec"
-                        android:inputType="number"
-                        android:text="60"
-                        android:gravity="center"
-                        android:textColor="@color/muz_on_surface"
-                        android:textColorHint="@color/muz_on_surface_variant"
-                        android:backgroundTint="@color/muz_primary_lime"
-                        android:autofillHints="none" />
+                    <ImageView
+                        android:id="@+id/ivTimerIcon"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@android:drawable/ic_menu_recent_history"
+                        app:tint="@color/muz_primary_lime"
+                        android:contentDescription="Timer" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnStartTimer"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                    <TextView
+                        android:id="@+id/tvTimerDisplay"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="@string/start_rest"
-                        android:textColor="@color/muz_on_surface"
-                        app:strokeColor="@color/muz_glass_border" />
+                        android:layout_marginStart="6dp"
+                        android:text="00:00"
+                        android:textColor="@color/muz_primary_lime"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddSet"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/add_set"
+                    android:textColor="@color/muz_primary_lime"
+                    app:strokeColor="@color/muz_primary_lime" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+
+            <!-- Headers Table -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="32dp"
+                    android:layout_height="wrap_content"
+                    android:text="Set"
+                    android:textSize="11sp"
+                    android:textColor="@color/muz_on_surface_variant" />
+                <TextView
+                    android:id="@+id/tvHeaderWeight"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="28dp"
+                    android:text="Weight (kg)"
+                    android:textSize="11sp"
+                    android:gravity="center"
+                    android:textColor="@color/muz_on_surface_variant" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:text="Reps"
+                    android:textSize="11sp"
+                    android:gravity="center"
+                    android:textColor="@color/muz_on_surface_variant" />
+                <View
+                    android:layout_width="36dp"
+                    android:layout_height="1dp" />
+                <TextView
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:text="Done"
+                    android:textSize="11sp"
+                    android:gravity="center"
+                    android:textColor="@color/muz_on_surface_variant" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/llSetsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Timer Overlay -->
+    <LinearLayout
+        android:id="@+id/llTimerOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F20F0E0F"
+        android:visibility="gone"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true">
+
+        <RelativeLayout
+            android:layout_width="320dp"
+            android:layout_height="320dp">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/cpTimerProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                app:indicatorSize="280dp"
+                app:trackThickness="12dp"
+                app:indicatorColor="@color/muz_primary_lime"
+                app:trackColor="@android:color/transparent"
+                app:trackCornerRadius="8dp"
+                android:max="100"
+                android:progress="100" />
+
+            <TextView
+                android:id="@+id/tvTimerOverlayDisplay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="00:00"
+                android:textColor="@color/muz_on_surface"
+                android:textSize="54sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:text="Resting..."
+            android:textColor="@color/muz_primary_lime"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Tap background to skip"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPauseResumeTimer"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Pause"
+            android:textColor="@color/muz_primary_lime"
+            app:strokeColor="@color/muz_primary_lime" />
 
     </LinearLayout>
-</ScrollView>
+
+</FrameLayout>
