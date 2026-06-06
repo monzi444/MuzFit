@@ -57,7 +57,11 @@
             android:layout_marginStart="8dp"
             android:buttonTint="@color/muz_primary_lime"
             android:background="@null"
-            android:gravity="center" />
+            android:gravity="center"
+            android:button="@null"
+            android:drawableStart="?android:attr/listChoiceIndicatorMultiple"
+            android:drawableTint="@color/muz_primary_lime"
+            android:paddingStart="12dp" />
 
         <ImageButton
             android:id="@+id/btnDeleteSet"

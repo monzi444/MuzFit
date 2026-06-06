@@ -160,15 +160,15 @@ public class WorkoutSessionActivity extends AppCompatActivity {
             }
         });
 
-        // Setup ViewPager2 adapter
-        viewPager.setAdapter(new WorkoutSessionPagerAdapter(pageInstructions, pageSets));
+        // Setup ViewPager2 adapter (Swapped order: Sets is first, Instructions is second)
+        viewPager.setAdapter(new WorkoutSessionPagerAdapter(pageSets, pageInstructions));
 
         // Connect TabLayout with ViewPager2
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             if (position == 0) {
-                tab.setText("Instructions");
-            } else {
                 tab.setText("Sets");
+            } else {
+                tab.setText("Instructions");
             }
         }).attach();
     }
@@ -180,7 +180,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
             return;
         }
 
-        // Reset ViewPager to first tab
+        // Reset ViewPager to first tab (Sets)
         if (viewPager != null) {
             viewPager.setCurrentItem(0, false);
         }
@@ -572,12 +572,12 @@ public class WorkoutSessionActivity extends AppCompatActivity {
     // A simple pager adapter to display static page views in ViewPager2
     private static class WorkoutSessionPagerAdapter
             extends RecyclerView.Adapter<WorkoutSessionPagerAdapter.PageViewHolder> {
-        private final View pageInstructions;
         private final View pageSets;
+        private final View pageInstructions;
 
-        public WorkoutSessionPagerAdapter(View pageInstructions, View pageSets) {
-            this.pageInstructions = pageInstructions;
+        public WorkoutSessionPagerAdapter(View pageSets, View pageInstructions) {
             this.pageSets = pageSets;
+            this.pageInstructions = pageInstructions;
         }
 
         @Override
@@ -588,7 +588,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         @NonNull
         @Override
         public PageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = (viewType == 0) ? pageInstructions : pageSets;
+            View view = (viewType == 0) ? pageSets : pageInstructions;
             view.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
