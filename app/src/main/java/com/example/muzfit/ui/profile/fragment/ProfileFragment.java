@@ -32,6 +32,7 @@ import com.example.muzfit.repository.auth.IAuthRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.ui.auth.viewmodel.AuthViewModel;
 import com.example.muzfit.ui.auth.viewmodel.AuthViewModelFactory;
+import com.example.muzfit.ui.profile.ProfileDialogHelper;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
 import com.example.muzfit.utils.ServiceLocator;
@@ -43,6 +44,7 @@ public class ProfileFragment extends Fragment {
 
     private ProfileViewModel profileViewModel;
     private AuthViewModel authViewModel;
+    private ProfileDialogHelper dialogHelper;
 
     private ShapeableImageView ivAvatar;
     private TextView tvNomeUtente;
@@ -84,6 +86,7 @@ public class ProfileFragment extends Fragment {
                 .get(ProfileViewModel.class);
         authViewModel = new ViewModelProvider(this, new AuthViewModelFactory(authRepository))
                 .get(AuthViewModel.class);
+        dialogHelper = new ProfileDialogHelper(requireActivity(), profileViewModel, getViewLifecycleOwner());
 
         bindViews(view);
         setupClickListeners(view);
@@ -129,7 +132,7 @@ public class ProfileFragment extends Fragment {
         MaterialSwitch switchTheme = view.findViewById(R.id.switch_theme);
 
         btnModificaProfilo.setOnClickListener(v -> showEditDialog());
-        btnObiettivi.setOnClickListener(v -> showObiettiviDialog());
+        btnObiettivi.setOnClickListener(v -> dialogHelper.showObiettiviDialog(currentUser));
         btnLogout.setOnClickListener(v -> logout());
 
         setupThemeSwitch(switchTheme);
@@ -258,73 +261,8 @@ public class ProfileFragment extends Fragment {
         builder.show();
     }
 
-    private void showObiettiviDialog() {
-        if (currentUser == null) {
-            return;
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle(R.string.profile_goals_title);
-
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(60, 40, 60, 20);
-
-        EditText etKcal = createStyledEditText(getString(R.string.profile_kcal_hint), InputType.TYPE_CLASS_NUMBER);
-        etKcal.setText(String.valueOf(currentUser.getCalorieGoal()));
-        layout.addView(etKcal);
-
-        EditText etCarbo = createStyledEditText(getString(R.string.profile_carbs_hint), InputType.TYPE_CLASS_NUMBER);
-        etCarbo.setText(String.valueOf((int) currentUser.getCarbGoal()));
-        layout.addView(etCarbo);
-
-        EditText etProteine = createStyledEditText(getString(R.string.profile_protein_hint), InputType.TYPE_CLASS_NUMBER);
-        etProteine.setText(String.valueOf((int) currentUser.getProteinGoal()));
-        layout.addView(etProteine);
-
-        EditText etGrassi = createStyledEditText(getString(R.string.profile_fat_hint), InputType.TYPE_CLASS_NUMBER);
-        etGrassi.setText(String.valueOf((int) currentUser.getFatGoal()));
-        layout.addView(etGrassi);
-
-        builder.setView(layout);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> {
-            User updated = copyUser(currentUser);
-            if (hasContent(etKcal)) {
-                updated.setCalorieGoal(parseInt(etKcal.getText().toString(), currentUser.getCalorieGoal()));
-            }
-            if (hasContent(etCarbo)) {
-                updated.setCarbGoal(parseFloat(etCarbo.getText().toString(), currentUser.getCarbGoal()));
-            }
-            if (hasContent(etProteine)) {
-                updated.setProteinGoal(parseFloat(etProteine.getText().toString(), currentUser.getProteinGoal()));
-            }
-            if (hasContent(etGrassi)) {
-                updated.setFatGoal(parseFloat(etGrassi.getText().toString(), currentUser.getFatGoal()));
-            }
-            saveGoals(updated, R.string.profile_goals_update_success);
-        });
-        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
-        builder.show();
-    }
-
     private void saveProfile(User updated, int successMessageRes) {
         profileViewModel.updateUser(updated).observe(getViewLifecycleOwner(), result -> {
-            if (result.isLoading()) {
-                return;
-            }
-            if (result.isError()) {
-                Toast.makeText(requireContext(),
-                        ((Result.Error<Void>) result).getMessage(), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            currentUser = updated;
-            bindUser(currentUser);
-            Toast.makeText(requireContext(), successMessageRes, Toast.LENGTH_SHORT).show();
-        });
-    }
-
-    private void saveGoals(User updated, int successMessageRes) {
-        profileViewModel.updateGoals(updated).observe(getViewLifecycleOwner(), result -> {
             if (result.isLoading()) {
                 return;
             }
@@ -373,14 +311,6 @@ public class ProfileFragment extends Fragment {
     private static float parseFloat(String value, float fallback) {
         try {
             return Float.parseFloat(value.trim());
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
-    }
-
-    private static int parseInt(String value, int fallback) {
-        try {
-            return Integer.parseInt(value.trim());
         } catch (NumberFormatException e) {
             return fallback;
         }
