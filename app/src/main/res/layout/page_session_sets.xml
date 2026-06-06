@@ -31,6 +31,16 @@
                     android:text="Sets"
                     android:textSize="20sp" />
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAutoRestToggle"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AutoRest: ON"
+                    android:textColor="@color/muz_primary_lime"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="8dp" />
+
                 <LinearLayout
                     android:id="@+id/llTimerPill"
                     android:layout_width="wrap_content"
@@ -40,7 +50,7 @@
                     android:background="@drawable/muzfit_input_bg"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="6dp"
-                    android:layout_marginEnd="12dp"
+                    android:layout_marginStart="8dp"
                     android:clickable="true"
                     android:focusable="true">
 
@@ -62,15 +72,6 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAddSet"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/add_set"
-                    android:textColor="@color/muz_primary_lime"
-                    app:strokeColor="@color/muz_primary_lime" />
             </LinearLayout>
 
             <!-- Headers Table -->
@@ -92,7 +93,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="28dp"
+                    android:layout_marginStart="24dp"
                     android:text="Weight (kg)"
                     android:textSize="11sp"
                     android:gravity="center"
@@ -106,16 +107,17 @@
                     android:textSize="11sp"
                     android:gravity="center"
                     android:textColor="@color/muz_on_surface_variant" />
-                <View
-                    android:layout_width="36dp"
-                    android:layout_height="1dp" />
                 <TextView
                     android:layout_width="48dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:text="Done"
                     android:textSize="11sp"
                     android:gravity="center"
                     android:textColor="@color/muz_on_surface_variant" />
+                <View
+                    android:layout_width="32dp"
+                    android:layout_height="1dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -125,76 +127,207 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="16dp" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddSet"
+                style="@style/MuzFit.Button.Skeuo"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="24dp"
+                android:text="@string/add_set" />
+
         </LinearLayout>
     </ScrollView>
 
     <!-- Timer Overlay -->
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/llTimerOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F20F0E0F"
+        android:background="#99000000"
         android:visibility="gone"
-        android:gravity="center"
-        android:orientation="vertical"
         android:clickable="true"
         android:focusable="true">
 
-        <RelativeLayout
-            android:layout_width="320dp"
-            android:layout_height="320dp">
+        <com.google.android.material.card.MaterialCardView
+            style="@style/MuzFit.Card.Glass"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="20dp"
+            app:cardBackgroundColor="#E6101010"
+            app:strokeWidth="1dp"
+            app:strokeColor="#22FFFFFF"
+            app:cardCornerRadius="24dp">
 
-            <com.google.android.material.progressindicator.CircularProgressIndicator
-                android:id="@+id/cpTimerProgress"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                app:indicatorSize="280dp"
-                app:trackThickness="12dp"
-                app:indicatorColor="@color/muz_primary_lime"
-                app:trackColor="@android:color/transparent"
-                app:trackCornerRadius="8dp"
-                android:max="100"
-                android:progress="100" />
+                android:orientation="vertical"
+                android:padding="12dp">
 
-            <TextView
-                android:id="@+id/tvTimerOverlayDisplay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="00:00"
-                android:textColor="@color/muz_on_surface"
-                android:textSize="54sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
+                <!-- Header -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Rest Timer"
+                        android:textColor="@color/muz_on_surface"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                    <ImageButton
+                        android:id="@+id/btnOverlayClose"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_alignParentEnd="true"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        app:tint="@color/muz_on_surface_variant"
+                        android:contentDescription="Close" />
+                </RelativeLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:text="Resting..."
-            android:textColor="@color/muz_primary_lime"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+                <!-- Content Area -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Tap background to skip"
-            android:textColor="@color/muz_on_surface_variant"
-            android:textSize="14sp" />
+                    <!-- Picker View (Initial) -->
+                    <LinearLayout
+                        android:id="@+id/llPickerContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:visibility="visible">
+                        <NumberPicker
+                            android:id="@+id/npMinutes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:theme="@style/MuzFitNumberPicker" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=":"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:layout_marginHorizontal="12dp"
+                            android:textColor="@color/muz_primary_lime" />
+                        <NumberPicker
+                            android:id="@+id/npSeconds"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:theme="@style/MuzFitNumberPicker" />
+                    </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPauseResumeTimer"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="Pause"
-            android:textColor="@color/muz_primary_lime"
-            app:strokeColor="@color/muz_primary_lime" />
+                    <!-- Circle View (When running) -->
+                    <RelativeLayout
+                        android:id="@+id/rlCircleContainer"
+                        android:layout_width="140dp"
+                        android:layout_height="140dp"
+                        android:layout_gravity="center"
+                        android:visibility="gone">
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:id="@+id/cpTimerProgress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            app:indicatorSize="120dp"
+                            app:trackThickness="6dp"
+                            app:indicatorColor="@color/muz_primary_lime"
+                            app:trackColor="#26FFFFFF"
+                            app:trackCornerRadius="3dp" />
+                        <TextView
+                            android:id="@+id/tvTimerOverlayDisplay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:text="00:00"
+                            android:textColor="@color/muz_on_surface"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+                </FrameLayout>
 
-    </LinearLayout>
+                <!-- Presets and Custom Button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="16dp">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPreset30s"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="30s"
+                        android:textSize="11sp"
+                        app:cornerRadius="16dp"
+                        android:layout_marginEnd="6dp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPreset1m"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1:00"
+                        android:textSize="11sp"
+                        app:cornerRadius="16dp"
+                        android:layout_marginEnd="6dp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPreset1_30m"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1:30"
+                        android:textSize="11sp"
+                        app:cornerRadius="16dp"
+                        android:layout_marginEnd="6dp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCustomTime"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="*"
+                        android:textSize="11sp"
+                        app:cornerRadius="16dp" />
+                </LinearLayout>
+
+                <!-- Actions -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="16dp">
+
+                    <ImageButton
+                        android:id="@+id/btnResetTimer"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@android:drawable/ic_menu_revert"
+                        android:background="@drawable/muzfit_category_card_bg"
+                        android:backgroundTint="#33FFFFFF"
+                        app:tint="@color/muz_on_surface"
+                        android:layout_marginEnd="20dp"
+                        android:contentDescription="Reset" />
+
+                    <ImageButton
+                        android:id="@+id/btnPauseResumeTimer"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@android:drawable/ic_media_play"
+                        android:background="@drawable/muzfit_category_card_bg"
+                        android:backgroundTint="@color/muz_primary_lime"
+                        app:tint="@color/muz_surface_l0"
+                        android:contentDescription="Start/Pause" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
 
 </FrameLayout>

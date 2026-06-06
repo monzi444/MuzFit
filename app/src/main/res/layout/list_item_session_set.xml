@@ -50,22 +50,23 @@
             android:clickable="true"
             android:focusable="true" />
 
+        <CheckBox
+            android:id="@+id/cbSetDone"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:buttonTint="@color/muz_primary_lime"
+            android:background="@null"
+            android:gravity="center" />
+
         <ImageButton
             android:id="@+id/btnDeleteSet"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginStart="4dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:src="@android:drawable/ic_menu_delete"
             android:background="?attr/selectableItemBackgroundBorderless"
             app:tint="@color/muz_on_surface_variant"
             android:contentDescription="Delete set" />
-
-        <CheckBox
-            android:id="@+id/cbSetDone"
-            android:layout_width="48dp"
-            android:layout_height="wrap_content"
-            android:buttonTint="@color/muz_primary_lime"
-            android:gravity="center" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

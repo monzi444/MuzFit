@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
@@ -26,6 +27,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -47,10 +49,16 @@ public class WorkoutSessionActivity extends AppCompatActivity {
     private ImageView ivExerciseGif;
     private LinearLayout llSetsContainer;
     private View llTimerPill, llTimerOverlay;
+    private View llPickerContainer, rlCircleContainer;
+    private NumberPicker npTimerMinutes, npTimerSeconds;
     private CircularProgressIndicator cpTimerProgress;
     private Button btnAddSet, btnSkipExercise;
-    private MaterialButton btnPauseResumeTimer;
+    private MaterialButton btnAutoRestToggle;
+    private ImageButton btnPauseResumeTimer;
+    private ImageButton btnResetTimer, btnOverlayClose;
+    private Button btnPreset30s, btnPreset1m, btnPreset1_30m, btnCustomTime;
     private boolean isTimerPaused = false;
+    private boolean isAutoRestEnabled = true;
     private long timerMillisRemaining = 0;
     private int originalRestSeconds = 0;
     private Button btnToggleExecution;
@@ -96,26 +104,59 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         llSetsContainer = pageSets.findViewById(R.id.llSetsContainer);
         llTimerPill = pageSets.findViewById(R.id.llTimerPill);
         llTimerOverlay = pageSets.findViewById(R.id.llTimerOverlay);
+        llPickerContainer = pageSets.findViewById(R.id.llPickerContainer);
+        rlCircleContainer = pageSets.findViewById(R.id.rlCircleContainer);
+        npTimerMinutes = pageSets.findViewById(R.id.npMinutes);
+        npTimerSeconds = pageSets.findViewById(R.id.npSeconds);
         cpTimerProgress = pageSets.findViewById(R.id.cpTimerProgress);
         tvTimerOverlayDisplay = pageSets.findViewById(R.id.tvTimerOverlayDisplay);
         btnAddSet = pageSets.findViewById(R.id.btnAddSet);
         tvTimerDisplay = pageSets.findViewById(R.id.tvTimerDisplay);
         tvHeaderWeight = pageSets.findViewById(R.id.tvHeaderWeight);
+        btnAutoRestToggle = pageSets.findViewById(R.id.btnAutoRestToggle);
         btnPauseResumeTimer = pageSets.findViewById(R.id.btnPauseResumeTimer);
+        btnResetTimer = pageSets.findViewById(R.id.btnResetTimer);
+        btnOverlayClose = pageSets.findViewById(R.id.btnOverlayClose);
+        btnPreset30s = pageSets.findViewById(R.id.btnPreset30s);
+        btnPreset1m = pageSets.findViewById(R.id.btnPreset1m);
+        btnPreset1_30m = pageSets.findViewById(R.id.btnPreset1_30m);
+        btnCustomTime = pageSets.findViewById(R.id.btnCustomTime);
+
+        // Setup Timer Pickers
+        npTimerMinutes.setMinValue(0);
+        npTimerMinutes.setMaxValue(60);
+        npTimerSeconds.setMinValue(0);
+        npTimerSeconds.setMaxValue(59);
+        npTimerMinutes.setWrapSelectorWheel(true);
+        npTimerSeconds.setWrapSelectorWheel(true);
 
         // Listeners
         btnAddSet.setOnClickListener(v -> addSetView());
+        btnAutoRestToggle.setOnClickListener(v -> toggleAutoRest());
         llTimerPill.setOnClickListener(v -> handleTimerClick());
         llTimerOverlay.setOnClickListener(v -> cancelTimer());
-        btnPauseResumeTimer.setOnClickListener(v -> toggleTimerPause());
+        btnOverlayClose.setOnClickListener(v -> cancelTimer());
+        btnResetTimer.setOnClickListener(v -> resetTimerToOriginal());
+        btnPauseResumeTimer.setOnClickListener(v -> {
+            if (restTimer == null || (llPickerContainer.getVisibility() == View.VISIBLE && !isTimerPaused)) {
+                startTimerFromPickers();
+            } else {
+                toggleTimerPause();
+            }
+        });
         btnSkipExercise.setOnClickListener(v -> moveToNextExercise());
+
+        btnPreset30s.setOnClickListener(v -> startRestTimer(30));
+        btnPreset1m.setOnClickListener(v -> startRestTimer(60));
+        btnPreset1_30m.setOnClickListener(v -> startRestTimer(90));
+        btnCustomTime.setOnClickListener(v -> showPickersInOverlay());
         btnToggleExecution.setOnClickListener(v -> {
             if (cvSessionExerciseGif.getVisibility() == View.VISIBLE) {
                 cvSessionExerciseGif.setVisibility(View.GONE);
-                btnToggleExecution.setText(R.string.see_execution);
+                btnToggleExecution.setText("See Execution");
             } else {
                 cvSessionExerciseGif.setVisibility(View.VISIBLE);
-                btnToggleExecution.setText(R.string.hide_execution);
+                btnToggleExecution.setText("Hide Execution");
             }
         });
 
@@ -166,7 +207,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         if (btnToggleExecution != null) {
             if (hasGif) {
                 btnToggleExecution.setVisibility(View.VISIBLE);
-                btnToggleExecution.setText(R.string.see_execution);
+                btnToggleExecution.setText("See Execution");
             } else {
                 btnToggleExecution.setVisibility(View.GONE);
             }
@@ -239,6 +280,10 @@ public class WorkoutSessionActivity extends AppCompatActivity {
 
         cbSetDone.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
+                // Auto-start rest timer (1 minute = 60 seconds) if enabled
+                if (isAutoRestEnabled) {
+                    startRestTimer(60);
+                }
                 checkAllSetsCompleted();
             }
         });
@@ -270,6 +315,17 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         }
     }
 
+    private void toggleAutoRest() {
+        isAutoRestEnabled = !isAutoRestEnabled;
+        if (isAutoRestEnabled) {
+            btnAutoRestToggle.setText("AutoRest: ON");
+            btnAutoRestToggle.setTextColor(ContextCompat.getColor(this, R.color.muz_primary_lime));
+        } else {
+            btnAutoRestToggle.setText("AutoRest: OFF");
+            btnAutoRestToggle.setTextColor(ContextCompat.getColor(this, R.color.muz_on_surface_variant));
+        }
+    }
+
     private void moveToNextExercise() {
         cancelTimer();
         currentExerciseIndex++;
@@ -277,10 +333,42 @@ public class WorkoutSessionActivity extends AppCompatActivity {
     }
 
     private void handleTimerClick() {
-        if (restTimer != null) {
-            cancelTimer();
+        if (llTimerOverlay != null) {
+            llTimerOverlay.setVisibility(View.VISIBLE);
+            if (restTimer == null) {
+                showPickersInOverlay();
+            } else {
+                showCircleInOverlay();
+            }
+        }
+    }
+
+    private void showPickersInOverlay() {
+        llPickerContainer.setVisibility(View.VISIBLE);
+        rlCircleContainer.setVisibility(View.GONE);
+        btnPauseResumeTimer.setImageResource(android.R.drawable.ic_media_play);
+        
+        int mins = lastRestSeconds / 60;
+        int secs = lastRestSeconds % 60;
+        npTimerMinutes.setValue(mins);
+        npTimerSeconds.setValue(secs);
+    }
+
+    private void showCircleInOverlay() {
+        llPickerContainer.setVisibility(View.GONE);
+        rlCircleContainer.setVisibility(View.VISIBLE);
+        if (isTimerPaused) {
+            btnPauseResumeTimer.setImageResource(android.R.drawable.ic_media_play);
         } else {
-            showTimerInputDialog();
+            btnPauseResumeTimer.setImageResource(android.R.drawable.ic_media_pause);
+        }
+    }
+
+    private void startTimerFromPickers() {
+        int totalSeconds = (npTimerMinutes.getValue() * 60) + npTimerSeconds.getValue();
+        if (totalSeconds > 0) {
+            lastRestSeconds = totalSeconds;
+            startRestTimer(lastRestSeconds);
         }
     }
 
@@ -296,51 +384,6 @@ public class WorkoutSessionActivity extends AppCompatActivity {
     }
 
     private int lastRestSeconds = 60;
-
-    private void showTimerInputDialog() {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_rest_time_picker, null);
-        NumberPicker npMinutes = dialogView.findViewById(R.id.npMinutes);
-        NumberPicker npSeconds = dialogView.findViewById(R.id.npSeconds);
-
-        npMinutes.setMinValue(0);
-        npMinutes.setMaxValue(60);
-        npSeconds.setMinValue(0);
-        npSeconds.setMaxValue(59);
-        npMinutes.setWrapSelectorWheel(true);
-        npSeconds.setWrapSelectorWheel(true);
-
-        // Pre-imposta i valori basandosi sull'ultimo recupero usato
-        int mins = lastRestSeconds / 60;
-        int secs = lastRestSeconds % 60;
-        npMinutes.setValue(mins);
-        npSeconds.setValue(secs);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .setPositiveButton("Start", (d, which) -> {
-                    int totalSeconds = (npMinutes.getValue() * 60) + npSeconds.getValue();
-                    if (totalSeconds > 0) {
-                        lastRestSeconds = totalSeconds;
-                        startRestTimer(lastRestSeconds);
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .create();
-
-        dialog.show();
-
-        // Style buttons to match app theme
-        Button posBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        Button negBtn = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-        if (posBtn != null) {
-            posBtn.setTextColor(ContextCompat.getColor(this, R.color.muz_primary_lime));
-            posBtn.setAllCaps(true);
-        }
-        if (negBtn != null) {
-            negBtn.setTextColor(ContextCompat.getColor(this, R.color.muz_on_surface_variant));
-            negBtn.setAllCaps(true);
-        }
-    }
 
     private void showWeightPickerDialog(int currentWeight, int currentDecimalIndex, String[] decimals, OnWeightSelectedListener listener) {
         ContextThemeWrapper themedContext = new ContextThemeWrapper(this, R.style.MuzFitNumberPicker);
@@ -449,13 +492,19 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         if (isTimerPaused) {
             // Resume
             isTimerPaused = false;
-            btnPauseResumeTimer.setText("Pause");
+            btnPauseResumeTimer.setImageResource(android.R.drawable.ic_media_pause);
             startCountdown(timerMillisRemaining);
         } else {
             // Pause
             isTimerPaused = true;
             restTimer.cancel();
-            btnPauseResumeTimer.setText("Resume");
+            btnPauseResumeTimer.setImageResource(android.R.drawable.ic_media_play);
+        }
+    }
+
+    private void resetTimerToOriginal() {
+        if (originalRestSeconds > 0) {
+            startRestTimer(originalRestSeconds);
         }
     }
 
@@ -465,8 +514,9 @@ public class WorkoutSessionActivity extends AppCompatActivity {
         }
 
         originalRestSeconds = seconds;
+        lastRestSeconds = seconds; // Update last used
         isTimerPaused = false;
-        btnPauseResumeTimer.setText("Pause");
+        showCircleInOverlay();
 
         if (llTimerOverlay != null) {
             llTimerOverlay.setVisibility(View.VISIBLE);
