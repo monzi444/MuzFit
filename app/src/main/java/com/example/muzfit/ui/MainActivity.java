@@ -1,13 +1,8 @@
 package com.example.muzfit.ui;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.InputType;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +15,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.muzfit.R;
-import com.example.muzfit.model.WeightEntry;
+import com.example.muzfit.model.User;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.repository.quick.IQuickRepository;
@@ -30,6 +25,7 @@ import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
 import com.example.muzfit.ui.navbar.FloatingPillNavBridge;
 import com.example.muzfit.ui.dashboard.fragment.HomeFragment;
 import com.example.muzfit.ui.diet.fragment.DietFragment;
+import com.example.muzfit.ui.profile.ProfileDialogHelper;
 import com.example.muzfit.ui.profile.fragment.ProfileFragment;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
@@ -37,7 +33,6 @@ import com.example.muzfit.ui.quick.fragment.QuickOverlayFragment;
 import com.example.muzfit.ui.quick.viewmodel.QuickViewModel;
 import com.example.muzfit.ui.quick.viewmodel.QuickViewModelFactory;
 import com.example.muzfit.ui.training.fragment.WorkoutFragment;
-import com.example.muzfit.utils.MuzFitToast;
 import com.example.muzfit.utils.ServiceLocator;
 import com.example.muzfit.utils.ThemeHelper;
 
@@ -45,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String QUICK_OVERLAY_TAG = "quick_overlay";
     private QuickViewModel quickViewModel;
+    private User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,13 +68,22 @@ public class MainActivity extends AppCompatActivity {
         IProfileRepository profileRepository = ServiceLocator.getInstance().getProfileRepository();
         ProfileViewModel profileViewModel = new ViewModelProvider(this, new ProfileViewModelFactory(profileRepository))
                 .get(ProfileViewModel.class);
+        ProfileDialogHelper profileDialogHelper = new ProfileDialogHelper(this, profileViewModel, this);
+
+        profileViewModel.getUser().observe(this, result -> {
+            if (result.isSuccess()) {
+                currentUser = ((com.example.muzfit.model.Result.Success<User>) result).getData();
+            }
+        });
 
         quickViewModel.getSelectedAction().observe(this, action -> {
             if (action == null) return;
             if (QuickViewModel.ACTION_QUICK_MEAL.equals(action)) {
                 dietDialogHelper.showChooseMealDialog();
-            } else if (QuickViewModel.ACTION_UPDATE_GOAL.equals(action) || QuickViewModel.ACTION_LOG_WEIGHT.equals(action)) {
-                showWeightEntryDialog(profileViewModel);
+            } else if (QuickViewModel.ACTION_UPDATE_GOAL.equals(action)) {
+                profileDialogHelper.showObiettiviDialog(currentUser);
+            } else if (QuickViewModel.ACTION_LOG_WEIGHT.equals(action)) {
+                profileDialogHelper.showWeightEntryDialog();
             }
         });
 
@@ -130,45 +135,5 @@ public class MainActivity extends AppCompatActivity {
                     .replace(R.id.fragment_container, new HomeFragment())
                     .commit();
         }
-    }
-
-    private void showWeightEntryDialog(ProfileViewModel viewModel) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.Theme_MuzFit_Dialog);
-        builder.setTitle(R.string.quick_action_weight);
-
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(60, 40, 60, 20);
-
-        final EditText etWeight = new EditText(this);
-        etWeight.setHint(R.string.weight_hint);
-        etWeight.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        etWeight.setLayoutParams(lp);
-        layout.addView(etWeight);
-
-        builder.setView(layout);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> {
-            String weightStr = etWeight.getText().toString().trim();
-            if (weightStr.isEmpty()) return;
-
-            try {
-                float weight = Float.parseFloat(weightStr);
-                WeightEntry entry = new WeightEntry();
-                entry.setWeight(weight);
-                entry.setDateMillis(System.currentTimeMillis());
-
-                viewModel.addWeightEntry(entry).observe(this, result -> {
-                    if (result.isSuccess()) {
-                        MuzFitToast.show(this, R.string.profile_update_success);
-                    } else if (result.isError()) {
-                        MuzFitToast.showError(this, ((com.example.muzfit.model.Result.Error<?>) result).getMessage());
-                    }
-                });
-            } catch (NumberFormatException ignored) {}
-        });
-        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
-        builder.show();
     }
 }
