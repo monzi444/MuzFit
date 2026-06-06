@@ -121,4 +121,9 @@
         <item name="android:textColor">@color/fat_color</item>
     </style>
 
+    <style name="MuzFitNumberPicker">
+        <item name="android:textColorPrimary">@color/muz_on_surface</item>
+        <item name="android:editTextColor">@color/muz_on_surface</item>
+    </style>
+
 </resources>
