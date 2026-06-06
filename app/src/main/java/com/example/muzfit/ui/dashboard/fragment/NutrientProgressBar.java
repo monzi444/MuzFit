@@ -31,7 +31,9 @@ public class NutrientProgressBar extends View {
 
     public NutrientProgressBar(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        trackPaint.setColor(ContextCompat.getColor(context, R.color.muz_container_l2));
+        // Usiamo muz_glass_border per la parte vuota: 
+        // fornisce un contrasto migliore sia in modalità giorno che notte.
+        trackPaint.setColor(ContextCompat.getColor(context, R.color.muz_glass_border));
         trackPaint.setStyle(Paint.Style.FILL);
 
         textPaint.setColor(ContextCompat.getColor(context, R.color.muz_on_surface));
