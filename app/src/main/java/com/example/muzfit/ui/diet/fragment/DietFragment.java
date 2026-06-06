@@ -6,6 +6,7 @@ import android.util.DisplayMetrics;
 import android.view.Window;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -271,29 +272,39 @@ public class DietFragment extends Fragment {
         ));
         calendarGrid.removeAllViews();
         float density = getResources().getDisplayMetrics().density;
-        int size = (int) (40 * density), margin = (int) (2 * density);
+        int size = (int) (38 * density), margin = (int) (2 * density);
         Calendar tempCalendar = (Calendar) currentWeekStart.clone();
         for (int i = 0; i < 7; i++) {
             final long timeMillis = tempCalendar.getTimeInMillis();
             final int dayNum = tempCalendar.get(Calendar.DAY_OF_MONTH), monthNum = tempCalendar.get(Calendar.MONTH), yearNum = tempCalendar.get(Calendar.YEAR), dayOfYear = tempCalendar.get(Calendar.DAY_OF_YEAR);
             TextView dayView = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = 0; params.height = size; params.columnSpec = GridLayout.spec(i, 1f); params.setMargins(margin, margin, margin, margin);
-            dayView.setLayoutParams(params); dayView.setGravity(Gravity.CENTER); dayView.setText(String.valueOf(dayNum)); dayView.setTextSize(14);
+            params.width = size;
+            params.height = size;
+            params.columnSpec = GridLayout.spec(i, GridLayout.CENTER, 1f);
+            params.setMargins(margin, margin, margin, margin);
+            dayView.setLayoutParams(params);
+            dayView.setGravity(Gravity.CENTER);
+            dayView.setText(String.valueOf(dayNum));
+            dayView.setTextSize(14);
             
             if (yearNum == selectedYear && dayOfYear == selectedDayOfYear) {
-                dayView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_selection_stroke));
-                int textColor = (yearNum == todayYear && dayOfYear == todayDayOfYear) 
-                        ? R.color.muz_primary_lime 
+                dayView.setBackground(new InsetDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_selection_stroke), (int)(1*density)));
+                int textColor = (yearNum == todayYear && dayOfYear == todayDayOfYear)
+                        ? R.color.muz_primary_lime
                         : R.color.muz_on_surface;
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), textColor));
                 dayView.setTypeface(null, Typeface.BOLD);
             } else if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
-                dayView.setTypeface(null, Typeface.BOLD);
+                dayView.setTypeface(null, Typeface.NORMAL);
             } else {
                 dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
                 if (tempCalendar.after(today)) dayView.setAlpha(0.5f);
+            }
+
+            if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
+                dayView.setTextSize(14);
             }
             dayView.setOnClickListener(v -> {
                 viewModel.setSelectedDate(timeMillis);

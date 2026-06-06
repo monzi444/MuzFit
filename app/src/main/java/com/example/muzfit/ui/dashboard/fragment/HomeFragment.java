@@ -1,6 +1,7 @@
 package com.example.muzfit.ui.dashboard.fragment;
 
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -394,16 +395,16 @@ public class HomeFragment extends Fragment {
         int selYear = selected.get(Calendar.YEAR);
 
         float density = getResources().getDisplayMetrics().density;
-        int size = (int) (40 * density);
+        int size = (int) (38 * density);
         int margin = (int) (2 * density);
 
         int column = 0;
         for (DashboardCalendarDay day : data) {
             TextView dayView = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = 0;
+            params.width = size;
             params.height = size;
-            params.columnSpec = GridLayout.spec(column, 1f);
+            params.columnSpec = GridLayout.spec(column, GridLayout.CENTER, 1f);
             params.setMargins(margin, margin, margin, margin);
             dayView.setLayoutParams(params);
             dayView.setGravity(Gravity.CENTER);
@@ -445,10 +446,35 @@ public class HomeFragment extends Fragment {
             boolean isSelected,
             boolean isToday
     ) {
+        float density = getResources().getDisplayMetrics().density;
+        int backgroundInset = (int) (3 * density);
+        int ringInset = (int) (1 * density);
+
         Drawable goalBackground = getDayLevelBackground(day.getLevel());
-        Drawable selectedRing = isSelected
-                ? ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_selected)
-                : null;
+        if (goalBackground != null) {
+            goalBackground = new InsetDrawable(goalBackground, backgroundInset);
+        }
+
+        Drawable selectedRing = null;
+        if (isSelected) {
+            int ringRes;
+            switch (day.getLevel()) {
+                case GOAL:
+                    ringRes = R.drawable.calendar_circle_selected_green;
+                    break;
+                case OVERFLOW:
+                    ringRes = R.drawable.calendar_circle_selected_orange;
+                    break;
+                case NONE:
+                default:
+                    ringRes = R.drawable.calendar_circle_selected_white;
+                    break;
+            }
+            selectedRing = ContextCompat.getDrawable(requireContext(), ringRes);
+            if (selectedRing != null) {
+                selectedRing = new InsetDrawable(selectedRing, ringInset);
+            }
+        }
 
         if (goalBackground != null && selectedRing != null) {
             dayView.setBackground(new LayerDrawable(new Drawable[]{goalBackground, selectedRing}));
@@ -462,11 +488,13 @@ public class HomeFragment extends Fragment {
 
         int defaultTextColor = ContextCompat.getColor(requireContext(), R.color.muz_on_surface);
         if (isToday) {
-            dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.activity_high));
-            dayView.setTypeface(null, android.graphics.Typeface.BOLD);
+            dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
+            dayView.setTypeface(null, android.graphics.Typeface.NORMAL);
+            dayView.setTextSize(14);
         } else {
             dayView.setTextColor(defaultTextColor);
             dayView.setTypeface(null, android.graphics.Typeface.NORMAL);
+            dayView.setTextSize(14);
         }
     }
 
@@ -480,6 +508,10 @@ public class HomeFragment extends Fragment {
             case OVERFLOW:
                 drawableRes = R.drawable.calendar_circle_overflow;
                 break;
+            case PARTIAL:
+                drawableRes = R.drawable.calendar_circle_partial;
+                break;
+            case NONE:
             default:
                 return null;
         }

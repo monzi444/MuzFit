@@ -43,14 +43,24 @@
     <color name="graph_dot">@color/muz_primary_lime</color>
     <color name="graph_grid">#333333</color>
 
-    <!-- Activity Status Colors (Calendar Style) -->
-    <color name="activity_high">#4CAF50</color>
-    <color name="activity_high_bg">#1A4CAF50</color>
-    <color name="activity_goal_day_bg">#804CAF50</color>
-    <color name="activity_overflow_day_bg">#80F44336</color>
+    <!-- Activity Status Colors (Calendar Style) - Coherent with MuzFit Palette -->
+    <color name="activity_high">@color/muz_primary_lime</color>
+    <color name="activity_high_bg">#33c5f701</color> <!-- 20% Lime -->
+    <color name="activity_goal_day_bg">#66c5f701</color> <!-- 40% Lime -->
+
+    <color name="activity_low">#FF4B4B</color> <!-- Coherent Red -->
+    <color name="activity_low_bg">#33FF4B4B</color> <!-- 20% Red -->
+    <color name="activity_overflow_day_bg">#66FF9800</color> <!-- 40% Orange -->
+
     <color name="activity_medium">#FF9800</color>
-    <color name="activity_medium_bg">#1AFF9800</color>
-    <color name="activity_low">#F44336</color>
-    <color name="activity_low_bg">#1AF44336</color>
+    <color name="activity_medium_bg">#33FF9800</color>
+
+    <!-- Selection Strokes -->
+    <color name="activity_selection_lime">@color/muz_primary_lime</color>
+    <color name="activity_selection_green">#8EB301</color> <!-- Darker Lime/Green -->
+    <color name="activity_selection_orange">#E65100</color> <!-- Darker Orange -->
+    <color name="activity_selection_white">#FFFFFF</color>
+    <color name="activity_selection_red">#FF4B4B</color>
+
     <color name="text_grey">#9E9E9E</color>
 </resources>
