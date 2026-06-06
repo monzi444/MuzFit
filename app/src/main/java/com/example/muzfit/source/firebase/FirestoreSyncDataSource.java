@@ -199,6 +199,7 @@ public class FirestoreSyncDataSource {
 
     private static Map<String, Object> toLoggedMealMap(UserMeal userMeal, Meal meal) {
         Map<String, Object> data = new HashMap<>();
+        data.put("id", userMeal.getId());
         data.put("mealId", userMeal.getMealId());
         data.put("dateMillis", userMeal.getDateMillis());
         data.put("category", userMeal.getCategory().name());
@@ -229,6 +230,7 @@ public class FirestoreSyncDataSource {
                 longValue(data.get("dateMillis")),
                 mealCategoryValue(data.get("category"))
         );
+        userMeal.setId(intValue(data.get("id")));
         return new LoggedMeal(userMeal, meal);
     }
 
@@ -285,7 +287,7 @@ public class FirestoreSyncDataSource {
     }
 
     private static String userMealDocumentId(UserMeal userMeal) {
-        return userMeal.getMealId() + "_" + userMeal.getDateMillis();
+        return userMeal.getId() > 0 ? String.valueOf(userMeal.getId()) : userMeal.getMealId() + "_" + userMeal.getDateMillis();
     }
 
     private static String documentId(String value) {
