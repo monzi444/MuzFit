@@ -65,7 +65,7 @@ public class ProfileFragment extends Fragment {
                     persistReadPermission(uri);
                     loadAvatar(uri.toString());
                     if (currentUser != null) {
-                        User updated = copyUser(currentUser);
+                        User updated = ProfileDialogHelper.copyUser(currentUser);
                         updated.setProfileImageUri(uri.toString());
                         saveProfile(updated, R.string.profile_update_success);
                     }
@@ -131,7 +131,7 @@ public class ProfileFragment extends Fragment {
         Button btnLogout = view.findViewById(R.id.btn_logout);
         MaterialSwitch switchTheme = view.findViewById(R.id.switch_theme);
 
-        btnModificaProfilo.setOnClickListener(v -> showEditDialog());
+        btnModificaProfilo.setOnClickListener(v -> dialogHelper.showEditDialog(currentUser, updated -> saveProfile(updated, R.string.profile_update_success)));
         btnObiettivi.setOnClickListener(v -> dialogHelper.showObiettiviDialog(currentUser));
         btnLogout.setOnClickListener(v -> logout());
 
@@ -215,52 +215,6 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    private void showEditDialog() {
-        if (currentUser == null) {
-            return;
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle(R.string.profile_edit_title);
-
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(60, 40, 60, 20);
-
-        EditText etNome = createStyledEditText(getString(R.string.profile_name_hint),
-                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-        etNome.setText(currentUser.getName());
-        layout.addView(etNome);
-
-        EditText etPeso = createStyledEditText(getString(R.string.profile_weight_hint),
-                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        etPeso.setText(String.valueOf(currentUser.getWeight()));
-        layout.addView(etPeso);
-
-        EditText etAltezza = createStyledEditText(getString(R.string.profile_height_hint),
-                InputType.TYPE_CLASS_NUMBER);
-        etAltezza.setText(String.valueOf((int) currentUser.getHeight()));
-        layout.addView(etAltezza);
-
-        builder.setView(layout);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> {
-            if (!hasContent(etNome)) {
-                return;
-            }
-            User updated = copyUser(currentUser);
-            updated.setName(etNome.getText().toString().trim());
-            if (hasContent(etPeso)) {
-                updated.setWeight(parseFloat(etPeso.getText().toString(), currentUser.getWeight()));
-            }
-            if (hasContent(etAltezza)) {
-                updated.setHeight(parseFloat(etAltezza.getText().toString(), currentUser.getHeight()));
-            }
-            saveProfile(updated, R.string.profile_update_success);
-        });
-        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
-        builder.show();
-    }
-
     private void saveProfile(User updated, int successMessageRes) {
         profileViewModel.updateUser(updated).observe(getViewLifecycleOwner(), result -> {
             if (result.isLoading()) {
@@ -275,45 +229,6 @@ public class ProfileFragment extends Fragment {
             bindUser(currentUser);
             Toast.makeText(requireContext(), successMessageRes, Toast.LENGTH_SHORT).show();
         });
-    }
-
-    private static User copyUser(User source) {
-        User copy = new User();
-        copy.setUid(source.getUid());
-        copy.setName(source.getName());
-        copy.setProfileImageUri(source.getProfileImageUri());
-        copy.setWeight(source.getWeight());
-        copy.setHeight(source.getHeight());
-        copy.setGenderCode(source.getGenderCode());
-        copy.setCalorieBurnGoal(source.getCalorieBurnGoal());
-        copy.setCalorieGoal(source.getCalorieGoal());
-        copy.setCarbGoal(source.getCarbGoal());
-        copy.setProteinGoal(source.getProteinGoal());
-        copy.setFatGoal(source.getFatGoal());
-        return copy;
-    }
-
-    private EditText createStyledEditText(String hint, int inputType) {
-        EditText editText = new EditText(requireContext());
-        editText.setHint(hint);
-        editText.setInputType(inputType);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(0, 10, 0, 10);
-        editText.setLayoutParams(lp);
-        return editText;
-    }
-
-    private boolean hasContent(EditText editText) {
-        return editText.getText() != null && editText.getText().toString().trim().length() > 0;
-    }
-
-    private static float parseFloat(String value, float fallback) {
-        try {
-            return Float.parseFloat(value.trim());
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
     }
 
     private String formatUidHandle(String uid) {

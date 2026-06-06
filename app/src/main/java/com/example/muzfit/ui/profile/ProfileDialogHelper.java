@@ -1,12 +1,14 @@
 package com.example.muzfit.ui.profile;
 
 import android.app.AlertDialog;
+import android.graphics.drawable.ColorDrawable;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.fragment.app.FragmentActivity;
@@ -18,6 +20,8 @@ import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.utils.MuzFitToast;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 public class ProfileDialogHelper {
 
@@ -36,64 +40,119 @@ public class ProfileDialogHelper {
             return;
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.Theme_MuzFit_Dialog);
-        builder.setTitle(R.string.profile_goals_title);
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_profile_generic, null);
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
+        
+        tvTitle.setText(R.string.profile_goals_title);
 
-        LinearLayout layout = new LinearLayout(activity);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(60, 40, 60, 20);
+        final TextInputEditText etKcal = createStyledInput(container, activity.getString(R.string.profile_kcal_hint), 
+                InputType.TYPE_CLASS_NUMBER, String.valueOf(currentUser.getCalorieGoal()));
+        
+        final TextInputEditText etCarbo = createStyledInput(container, activity.getString(R.string.profile_carbs_hint), 
+                InputType.TYPE_CLASS_NUMBER, String.valueOf((int) currentUser.getCarbGoal()));
+        
+        final TextInputEditText etProteine = createStyledInput(container, activity.getString(R.string.profile_protein_hint), 
+                InputType.TYPE_CLASS_NUMBER, String.valueOf((int) currentUser.getProteinGoal()));
+        
+        final TextInputEditText etGrassi = createStyledInput(container, activity.getString(R.string.profile_fat_hint), 
+                InputType.TYPE_CLASS_NUMBER, String.valueOf((int) currentUser.getFatGoal()));
 
-        EditText etKcal = createStyledEditText(activity.getString(R.string.profile_kcal_hint), InputType.TYPE_CLASS_NUMBER);
-        etKcal.setText(String.valueOf(currentUser.getCalorieGoal()));
-        layout.addView(etKcal);
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(dialogView)
+                .create();
 
-        EditText etCarbo = createStyledEditText(activity.getString(R.string.profile_carbs_hint), InputType.TYPE_CLASS_NUMBER);
-        etCarbo.setText(String.valueOf((int) currentUser.getCarbGoal()));
-        layout.addView(etCarbo);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
 
-        EditText etProteine = createStyledEditText(activity.getString(R.string.profile_protein_hint), InputType.TYPE_CLASS_NUMBER);
-        etProteine.setText(String.valueOf((int) currentUser.getProteinGoal()));
-        layout.addView(etProteine);
-
-        EditText etGrassi = createStyledEditText(activity.getString(R.string.profile_fat_hint), InputType.TYPE_CLASS_NUMBER);
-        etGrassi.setText(String.valueOf((int) currentUser.getFatGoal()));
-        layout.addView(etGrassi);
-
-        builder.setView(layout);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> {
+        dialogView.findViewById(R.id.btnSave).setOnClickListener(v -> {
             User updated = copyUser(currentUser);
-            if (hasContent(etKcal)) {
+            if (etKcal.getText() != null)
                 updated.setCalorieGoal(parseInt(etKcal.getText().toString(), currentUser.getCalorieGoal()));
-            }
-            if (hasContent(etCarbo)) {
+            if (etCarbo.getText() != null)
                 updated.setCarbGoal(parseFloat(etCarbo.getText().toString(), currentUser.getCarbGoal()));
-            }
-            if (hasContent(etProteine)) {
+            if (etProteine.getText() != null)
                 updated.setProteinGoal(parseFloat(etProteine.getText().toString(), currentUser.getProteinGoal()));
-            }
-            if (hasContent(etGrassi)) {
+            if (etGrassi.getText() != null)
                 updated.setFatGoal(parseFloat(etGrassi.getText().toString(), currentUser.getFatGoal()));
-            }
+            
             saveGoals(updated);
+            dialog.dismiss();
         });
-        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
-        builder.show();
+
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
+    }
+
+    public void showEditDialog(User currentUser, ProfileUpdateListener listener) {
+        if (currentUser == null) {
+            return;
+        }
+
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_profile_generic, null);
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
+
+        tvTitle.setText(R.string.profile_edit_title);
+
+        final TextInputEditText etNome = createStyledInput(container, activity.getString(R.string.profile_name_hint),
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS, currentUser.getName());
+
+        final TextInputEditText etPeso = createStyledInput(container, activity.getString(R.string.profile_weight_hint),
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL, String.valueOf(currentUser.getWeight()));
+
+        final TextInputEditText etAltezza = createStyledInput(container, activity.getString(R.string.profile_height_hint),
+                InputType.TYPE_CLASS_NUMBER, String.valueOf((int) currentUser.getHeight()));
+
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(R.id.btnSave).setOnClickListener(v -> {
+            String nome = etNome.getText() != null ? etNome.getText().toString().trim() : "";
+            if (nome.isEmpty()) return;
+
+            User updated = copyUser(currentUser);
+            updated.setName(nome);
+            if (etPeso.getText() != null)
+                updated.setWeight(parseFloat(etPeso.getText().toString(), currentUser.getWeight()));
+            if (etAltezza.getText() != null)
+                updated.setHeight(parseFloat(etAltezza.getText().toString(), currentUser.getHeight()));
+            
+            listener.onProfileUpdated(updated);
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
     }
 
     public void showWeightEntryDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.Theme_MuzFit_Dialog);
-        builder.setTitle(R.string.quick_action_weight);
+        View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_profile_generic, null);
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
 
-        LinearLayout layout = new LinearLayout(activity);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(60, 40, 60, 20);
+        tvTitle.setText(R.string.quick_action_weight);
 
-        final EditText etWeight = createStyledEditText(activity.getString(R.string.weight_hint), 
-                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        layout.addView(etWeight);
+        final TextInputEditText etWeight = createStyledInput(container, activity.getString(R.string.weight_hint),
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL, "");
 
-        builder.setView(layout);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> {
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(R.id.btnSave).setOnClickListener(v -> {
             String weightStr = etWeight.getText().toString().trim();
             if (weightStr.isEmpty()) return;
 
@@ -110,10 +169,30 @@ public class ProfileDialogHelper {
                         MuzFitToast.showError(activity, ((Result.Error<?>) result).getMessage());
                     }
                 });
+                dialog.dismiss();
             } catch (NumberFormatException ignored) {}
         });
-        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
-        builder.show();
+
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
+    }
+
+    public interface ProfileUpdateListener {
+        void onProfileUpdated(User updatedUser);
+    }
+
+    private TextInputEditText createStyledInput(LinearLayout container, String hint, int inputType, String initialValue) {
+        View inputView = LayoutInflater.from(activity).inflate(R.layout.item_dialog_input, container, false);
+        TextInputLayout til = inputView.findViewById(R.id.textInputLayout);
+        TextInputEditText tiet = inputView.findViewById(R.id.textInputEditText);
+        
+        til.setHint(hint);
+        tiet.setInputType(inputType);
+        tiet.setText(initialValue);
+        
+        container.addView(inputView);
+        return tiet;
     }
 
     private void saveGoals(User updated) {
@@ -127,21 +206,6 @@ public class ProfileDialogHelper {
             }
             MuzFitToast.show(activity, R.string.profile_goals_update_success);
         });
-    }
-
-    private EditText createStyledEditText(String hint, int inputType) {
-        EditText editText = new EditText(activity);
-        editText.setHint(hint);
-        editText.setInputType(inputType);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(0, 10, 0, 10);
-        editText.setLayoutParams(lp);
-        return editText;
-    }
-
-    private boolean hasContent(EditText editText) {
-        return editText.getText() != null && editText.getText().toString().trim().length() > 0;
     }
 
     private static float parseFloat(String value, float fallback) {
@@ -160,7 +224,7 @@ public class ProfileDialogHelper {
         }
     }
 
-    private static User copyUser(User source) {
+    public static User copyUser(User source) {
         User copy = new User();
         copy.setUid(source.getUid());
         copy.setName(source.getName());
