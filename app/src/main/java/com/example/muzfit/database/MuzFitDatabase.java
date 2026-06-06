@@ -27,7 +27,7 @@ import com.example.muzfit.model.WorkoutExercise;
                 UserMeal.class,
                 WeightEntry.class
         },
-        version = 4,
+        version = 5,
         exportSchema = false
 )
 @TypeConverters(StringListConverter.class)

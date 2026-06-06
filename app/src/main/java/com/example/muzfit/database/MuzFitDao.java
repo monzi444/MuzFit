@@ -105,7 +105,7 @@ public interface MuzFitDao {
     float getConsumedFats(String uid, long startOfDayMillis, long endOfDayMillis);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertUserMeal(UserMeal userMeal);
+    long insertUserMeal(UserMeal userMeal);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertUserMeals(List<UserMeal> userMeals);

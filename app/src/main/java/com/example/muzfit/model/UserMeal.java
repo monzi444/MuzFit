@@ -8,7 +8,6 @@ import androidx.room.Index;
 
 @Entity(
         tableName = "UserMeal",
-        primaryKeys = {"mealId", "uid", "dateMillis"},
         foreignKeys = {
                 @ForeignKey(
                         entity = Meal.class,
@@ -25,6 +24,8 @@ import androidx.room.Index;
 )
 public class UserMeal {
 
+    @androidx.room.PrimaryKey(autoGenerate = true)
+    private int id;
     private int mealId;
     @NonNull
     private String uid = "";
@@ -32,6 +33,14 @@ public class UserMeal {
     private MealCategory category = MealCategory.PRANZO;
 
     public UserMeal() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     @Ignore

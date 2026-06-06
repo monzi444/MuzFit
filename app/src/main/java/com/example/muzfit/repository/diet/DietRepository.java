@@ -143,7 +143,8 @@ public class DietRepository implements IDietRepository {
                 RepositorySupport.ensureLocalUser(localDao, currentUid);
                 int mealId = resolveOrInsertMeal(meal).getId();
                 UserMeal userMeal = new UserMeal(mealId, currentUid, dateMillis, category);
-                localDao.insertUserMeal(userMeal);
+                long id = localDao.insertUserMeal(userMeal);
+                userMeal.setId((int) id);
                 firestoreSyncDataSource.saveLoggedMeal(userMeal, localDao.getMeal(mealId));
                 liveData.postValue(new Result.Success<>(null));
                 refreshUserMealsForDay();
@@ -257,22 +258,50 @@ public class DietRepository implements IDietRepository {
             List<UserMeal> localMeals = localDao.getUserMealsForDay(observedUid, startOfDay, endOfDay);
             List<UserMeal> syncedMeals = new ArrayList<>();
 
+            boolean updated = false;
             for (LoggedMeal loggedMeal : firebaseMeals) {
-                Meal localMeal = resolveOrInsertMeal(withoutRemoteMealId(loggedMeal.getMeal()));
                 UserMeal firebaseUserMeal = loggedMeal.getUserMeal();
-                UserMeal localUserMeal = new UserMeal(
-                        localMeal.getId(),
-                        observedUid,
-                        firebaseUserMeal.getDateMillis(),
-                        firebaseUserMeal.getCategory()
-                );
-                localDao.insertUserMeal(localUserMeal);
-                syncedMeals.add(localUserMeal);
+                if (firebaseUserMeal.getId() <= 0) continue;
+
+                boolean existsLocally = false;
+                for (UserMeal local : localMeals) {
+                    if (local.getId() == firebaseUserMeal.getId()) {
+                        existsLocally = true;
+                        break;
+                    }
+                }
+
+                if (!existsLocally) {
+                    Meal localMeal = resolveOrInsertMeal(withoutRemoteMealId(loggedMeal.getMeal()));
+                    UserMeal newLocalUserMeal = new UserMeal(
+                            localMeal.getId(),
+                            observedUid,
+                            firebaseUserMeal.getDateMillis(),
+                            firebaseUserMeal.getCategory()
+                    );
+                    newLocalUserMeal.setId(firebaseUserMeal.getId());
+                    localDao.insertUserMeal(newLocalUserMeal);
+                    syncedMeals.add(newLocalUserMeal);
+                    updated = true;
+                } else {
+                    for (UserMeal local : localMeals) {
+                        if (local.getId() == firebaseUserMeal.getId()) {
+                            syncedMeals.add(local);
+                            break;
+                        }
+                    }
+                }
             }
 
-            boolean updated = !sameUserMealSet(localMeals, syncedMeals);
             for (UserMeal localMeal : localMeals) {
-                if (!containsSameUserMeal(syncedMeals, localMeal)) {
+                boolean foundInFirebase = false;
+                for (UserMeal synced : syncedMeals) {
+                    if (synced.getId() == localMeal.getId()) {
+                        foundInFirebase = true;
+                        break;
+                    }
+                }
+                if (!foundInFirebase) {
                     localDao.deleteUserMeal(localMeal);
                     updated = true;
                 }
@@ -357,30 +386,6 @@ public class DietRepository implements IDietRepository {
                 && left.getCarbs() == right.getCarbs()
                 && left.getProtein() == right.getProtein()
                 && left.getFat() == right.getFat();
-    }
-
-    private static boolean sameUserMealSet(List<UserMeal> left, List<UserMeal> right) {
-        if (left.size() != right.size()) {
-            return false;
-        }
-        for (UserMeal userMeal : left) {
-            if (!containsSameUserMeal(right, userMeal)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean containsSameUserMeal(List<UserMeal> userMeals, UserMeal target) {
-        for (UserMeal userMeal : userMeals) {
-            if (userMeal.getMealId() == target.getMealId()
-                    && userMeal.getUid().equals(target.getUid())
-                    && userMeal.getDateMillis() == target.getDateMillis()
-                    && userMeal.getCategory() == target.getCategory()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static Meal withoutRemoteMealId(Meal meal) {
