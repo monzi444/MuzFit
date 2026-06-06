@@ -214,7 +214,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.muz_primary_lime),
                 ContextCompat.getColor(requireContext(), R.color.protein_overflow)
             );
-            calorieBar.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+            calorieBar.setShowTextBox(true);
             calorieBar.setProgress(0, calorieGoal, "kcal");
         }
 

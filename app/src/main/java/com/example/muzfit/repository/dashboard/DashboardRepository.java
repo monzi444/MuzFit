@@ -24,7 +24,7 @@ import java.util.concurrent.Future;
 public class DashboardRepository implements IDashboardRepository {
 
     private static final int WEEK_DAYS = 7;
-    private static final float CALORIE_OVERFLOW_MARGIN = 100f;
+    private static final float CALORIE_GOAL_MARGIN = 200f;
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     private final FirestoreSyncDataSource firestoreSyncDataSource;
@@ -433,10 +433,10 @@ public class DashboardRepository implements IDashboardRepository {
                 long startOfDay = dayCal.getTimeInMillis();
                 long endOfDay = getEndOfDayMillis(startOfDay);
                 float consumed = localDao.getConsumedCalories(uid, startOfDay, endOfDay);
-                if (consumed >= calorieGoal + CALORIE_OVERFLOW_MARGIN) {
-                    level = DashboardCalendarDay.ActivityLevel.OVERFLOW;
-                } else if (consumed >= calorieGoal) {
+                if (consumed >= calorieGoal - CALORIE_GOAL_MARGIN && consumed <= calorieGoal + CALORIE_GOAL_MARGIN) {
                     level = DashboardCalendarDay.ActivityLevel.GOAL;
+                } else if (consumed > calorieGoal + CALORIE_GOAL_MARGIN) {
+                    level = DashboardCalendarDay.ActivityLevel.OVERFLOW;
                 } else if (consumed >= calorieGoal * 0.5f) {
                     level = DashboardCalendarDay.ActivityLevel.PARTIAL;
                 } else if (consumed > 0f) {

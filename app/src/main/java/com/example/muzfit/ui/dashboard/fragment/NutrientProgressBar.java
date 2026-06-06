@@ -21,18 +21,24 @@ public class NutrientProgressBar extends View {
     private float max = 100;
     private int baseColor = 0xFF4CAF50;
     private int overflowColor = 0xFF1B5E20;
+    private boolean showTextBox = false;
     private String unit = "";
 
     private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint boxPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF trackRect = new RectF();
+    private final RectF boxRect = new RectF();
     private final Path clipPath = new Path();
 
     public NutrientProgressBar(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         trackPaint.setColor(ContextCompat.getColor(context, R.color.muz_container_l2));
         trackPaint.setStyle(Paint.Style.FILL);
+
+        boxPaint.setColor(ContextCompat.getColor(context, R.color.muz_surface_l0));
+        boxPaint.setStyle(Paint.Style.FILL);
 
         textPaint.setColor(ContextCompat.getColor(context, R.color.muz_on_surface));
         textPaint.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
@@ -48,6 +54,11 @@ public class NutrientProgressBar extends View {
 
     public void setTextColor(int color) {
         textPaint.setColor(color);
+        invalidate();
+    }
+
+    public void setShowTextBox(boolean showTextBox) {
+        this.showTextBox = showTextBox;
         invalidate();
     }
 
@@ -106,6 +117,20 @@ public class NutrientProgressBar extends View {
                     : String.format(Locale.getDefault(), "%.0f/%.0f %s", progress, max, unit);
 
             textPaint.setTextSize(Math.min(trackHeight * 0.55f, density * 12));
+
+            if (showTextBox) {
+                float textWidth = textPaint.measureText(label);
+                float padding = 8 * density;
+                float boxWidth = textWidth + padding;
+                float boxHeight = trackHeight * 0.7f; // Reduced height
+                float boxLeft = (width - boxWidth) / 2f;
+                float boxTop = trackTop + (trackHeight - boxHeight) / 2f;
+                boxRect.set(boxLeft, boxTop, boxLeft + boxWidth, boxTop + boxHeight);
+
+                float cornerRadius = boxHeight / 2f; // Semicircular ends
+                canvas.drawRoundRect(boxRect, cornerRadius, cornerRadius, boxPaint);
+            }
+
             float textY = trackTop + (trackHeight / 2f) - ((textPaint.descent() + textPaint.ascent()) / 2f);
             canvas.drawText(label, width / 2f, textY, textPaint);
         }
