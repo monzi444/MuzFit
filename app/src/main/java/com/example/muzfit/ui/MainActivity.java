@@ -1,13 +1,9 @@
 package com.example.muzfit.ui;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.compose.ui.platform.ComposeView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -19,22 +15,28 @@ import com.example.muzfit.model.User;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.repository.quick.IQuickRepository;
-import com.example.muzfit.ui.diet.DietDialogHelper;
-import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
-import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
+import com.example.muzfit.repository.training.ITrainingRepository;
 import com.example.muzfit.ui.navbar.FloatingPillNavBridge;
 import com.example.muzfit.ui.dashboard.fragment.HomeFragment;
 import com.example.muzfit.ui.diet.fragment.DietFragment;
-import com.example.muzfit.ui.profile.ProfileDialogHelper;
+import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
+import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
+import com.example.muzfit.ui.diet.DietDialogHelper;
 import com.example.muzfit.ui.profile.fragment.ProfileFragment;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModelFactory;
+import com.example.muzfit.ui.profile.ProfileDialogHelper;
 import com.example.muzfit.ui.quick.fragment.QuickOverlayFragment;
 import com.example.muzfit.ui.quick.viewmodel.QuickViewModel;
 import com.example.muzfit.ui.quick.viewmodel.QuickViewModelFactory;
 import com.example.muzfit.ui.training.fragment.WorkoutFragment;
+import com.example.muzfit.ui.training.viewmodel.TrainingViewModel;
+import com.example.muzfit.ui.training.viewmodel.TrainingViewModelFactory;
+import com.example.muzfit.ui.training.TrainingDialogHelper;
 import com.example.muzfit.utils.ServiceLocator;
 import com.example.muzfit.utils.ThemeHelper;
+
+import androidx.compose.ui.platform.ComposeView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,6 +72,11 @@ public class MainActivity extends AppCompatActivity {
                 .get(ProfileViewModel.class);
         ProfileDialogHelper profileDialogHelper = new ProfileDialogHelper(this, profileViewModel, this);
 
+        ITrainingRepository trainingRepository = ServiceLocator.getInstance().getTrainingRepository();
+        TrainingViewModel trainingViewModel = new ViewModelProvider(this, new TrainingViewModelFactory(trainingRepository))
+                .get(TrainingViewModel.class);
+        TrainingDialogHelper trainingDialogHelper = new TrainingDialogHelper(this, trainingViewModel, this);
+
         profileViewModel.getUser().observe(this, result -> {
             if (result.isSuccess()) {
                 currentUser = ((com.example.muzfit.model.Result.Success<User>) result).getData();
@@ -78,12 +85,19 @@ public class MainActivity extends AppCompatActivity {
 
         quickViewModel.getSelectedAction().observe(this, action -> {
             if (action == null) return;
-            if (QuickViewModel.ACTION_QUICK_MEAL.equals(action)) {
-                dietDialogHelper.showChooseMealDialog();
-            } else if (QuickViewModel.ACTION_UPDATE_GOAL.equals(action)) {
-                profileDialogHelper.showObiettiviDialog(currentUser);
-            } else if (QuickViewModel.ACTION_LOG_WEIGHT.equals(action)) {
-                profileDialogHelper.showWeightEntryDialog();
+            switch (action) {
+                case QuickViewModel.ACTION_QUICK_MEAL:
+                    dietDialogHelper.showChooseMealDialog();
+                    break;
+                case QuickViewModel.ACTION_UPDATE_GOAL:
+                    profileDialogHelper.showObiettiviDialog(currentUser);
+                    break;
+                case QuickViewModel.ACTION_LOG_WEIGHT:
+                    profileDialogHelper.showWeightEntryDialog();
+                    break;
+                case QuickViewModel.ACTION_START_WORKOUT:
+                    trainingDialogHelper.showStartWorkoutDialog();
+                    break;
             }
         });
 
