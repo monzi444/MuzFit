@@ -382,20 +382,28 @@ public class TrainingRepository implements ITrainingRepository {
                     EXECUTOR.execute(() -> {
                         if (localDao != null) {
                             for (FirestoreSyncDataSource.WorkoutWithDetails fw : firebaseWorkouts) {
-                                // Simple sync: insert/update local records
+                                // 1. Update Workout record
                                 localDao.insertWorkout(fw.workout);
                                 
-                                // Exercises and sets
+                                // 2. Clean old relations
+                                localDao.deleteExerciseSets(fw.workout.getId(), currentUid);
+                                localDao.deleteWorkoutExercises(fw.workout.getId(), currentUid);
+
+                                // 3. Collect and insert new relations in correct order
                                 List<WorkoutExercise> wes = new ArrayList<>();
+                                List<ExerciseSet> allSets = new ArrayList<>();
+                                
                                 for (FirestoreSyncDataSource.ExerciseWithSets ews : fw.exercises) {
                                     localDao.insertExercise(ews.exercise);
                                     wes.add(new WorkoutExercise(0, fw.workout.getId(), currentUid, ews.exercise.getId()));
-                                    
-                                    localDao.deleteExerciseSets(fw.workout.getId(), currentUid, ews.exercise.getId());
-                                    localDao.insertExerciseSets(ews.sets);
+                                    allSets.addAll(ews.sets);
                                 }
-                                localDao.deleteWorkoutExercises(fw.workout.getId(), currentUid);
+                                
+                                // 4. Insert WorkoutExercises FIRST to satisfy Foreign Key for ExerciseSets
                                 localDao.insertWorkoutExercises(wes);
+                                
+                                // 5. Insert ExerciseSets SECOND
+                                localDao.insertExerciseSets(allSets);
                             }
                             liveData.postValue(new Result.Success<>(localDao.getWorkouts(currentUid)));
                         }

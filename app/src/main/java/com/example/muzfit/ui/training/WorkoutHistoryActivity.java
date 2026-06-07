@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,6 +30,7 @@ import java.util.Locale;
 
 public class WorkoutHistoryActivity extends AppCompatActivity {
 
+    private com.example.muzfit.ui.training.viewmodel.TrainingViewModel viewModel;
     private HistoryAdapter adapter;
     private final List<Object> historyItems = new ArrayList<>();
 
@@ -37,6 +39,11 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
         ThemeHelper.applySavedTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_workout_history);
+
+        com.example.muzfit.ui.training.viewmodel.TrainingViewModelFactory factory = new com.example.muzfit.ui.training.viewmodel.TrainingViewModelFactory(
+                com.example.muzfit.utils.ServiceLocator.getInstance().getTrainingRepository()
+        );
+        viewModel = new ViewModelProvider(this, factory).get(com.example.muzfit.ui.training.viewmodel.TrainingViewModel.class);
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         RecyclerView rvWorkoutHistory = findViewById(R.id.rvWorkoutHistory);
@@ -54,40 +61,47 @@ public class WorkoutHistoryActivity extends AppCompatActivity {
     }
 
     private void loadHistory() {
-        new Thread(() -> {
-            String uid = RepositorySupport.currentUidOrDefault();
-            MuzFitDao dao = MuzFitDatabase.getInstance(this).muzFitDao();
-            List<Workout> workouts = dao.getWorkouts(uid);
-            
-            List<Object> items = new ArrayList<>();
-            SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
-            String lastMonth = "";
+        viewModel.getWorkouts().observe(this, result -> {
+            if (result.isLoading()) return;
+            if (result.isError()) return;
 
-            for (Workout w : workouts) {
-                String currentMonth = monthFormat.format(new Date(w.getDateMillis()));
-                if (!currentMonth.equals(lastMonth)) {
-                    items.add(currentMonth);
-                    lastMonth = currentMonth;
-                }
+            List<Workout> workouts = ((com.example.muzfit.model.Result.Success<List<Workout>>) result).getData();
+            if (workouts == null) return;
 
-                List<WorkoutExercise> wes = dao.getWorkoutExercises(w.getId(), uid);
-                StringBuilder exercisesStr = new StringBuilder();
-                for (int i = 0; i < wes.size(); i++) {
-                    com.example.muzfit.model.Exercise e = dao.getExercise(wes.get(i).getExerciseId());
-                    if (e != null) {
-                        exercisesStr.append(e.getName());
-                        if (i < wes.size() - 1) exercisesStr.append(", ");
+            new Thread(() -> {
+                String uid = RepositorySupport.currentUidOrDefault();
+                MuzFitDao dao = MuzFitDatabase.getInstance(this).muzFitDao();
+                
+                List<Object> items = new ArrayList<>();
+                SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+                String lastMonth = "";
+
+                for (Workout w : workouts) {
+                    String currentMonth = monthFormat.format(new Date(w.getDateMillis()));
+                    if (!currentMonth.equals(lastMonth)) {
+                        items.add(currentMonth);
+                        lastMonth = currentMonth;
                     }
-                }
-                items.add(new HistoryItem(w, exercisesStr.toString()));
-            }
 
-            runOnUiThread(() -> {
-                historyItems.clear();
-                historyItems.addAll(items);
-                adapter.notifyDataSetChanged();
-            });
-        }).start();
+                    List<WorkoutExercise> wes = dao.getWorkoutExercises(w.getId(), uid);
+                    StringBuilder exercisesStr = new StringBuilder();
+                    for (int i = 0; i < wes.size(); i++) {
+                        com.example.muzfit.model.Exercise e = dao.getExercise(wes.get(i).getExerciseId());
+                        if (e != null) {
+                            exercisesStr.append(e.getName());
+                            if (i < wes.size() - 1) exercisesStr.append(", ");
+                        }
+                    }
+                    items.add(new HistoryItem(w, exercisesStr.toString()));
+                }
+
+                runOnUiThread(() -> {
+                    historyItems.clear();
+                    historyItems.addAll(items);
+                    adapter.notifyDataSetChanged();
+                });
+            }).start();
+        });
     }
 
     private static class HistoryItem {
