@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.activity.compose)
 
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("androidx.room:room-testing:2.8.4")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
