@@ -3,6 +3,6 @@
     android:shape="oval">
     <stroke
         android:width="2dp"
-        android:color="@color/activity_selection_white" />
+        android:color="@color/muz_on_surface" />
     <solid android:color="@android:color/transparent" />
 </shape>

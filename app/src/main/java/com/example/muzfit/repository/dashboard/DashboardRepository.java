@@ -435,12 +435,6 @@ public class DashboardRepository implements IDashboardRepository {
                 float consumed = localDao.getConsumedCalories(uid, startOfDay, endOfDay);
                 if (consumed >= calorieGoal - CALORIE_GOAL_MARGIN && consumed <= calorieGoal + CALORIE_GOAL_MARGIN) {
                     level = DashboardCalendarDay.ActivityLevel.GOAL;
-                } else if (consumed > calorieGoal + CALORIE_GOAL_MARGIN) {
-                    level = DashboardCalendarDay.ActivityLevel.OVERFLOW;
-                } else if (consumed >= calorieGoal * 0.5f) {
-                    level = DashboardCalendarDay.ActivityLevel.PARTIAL;
-                } else if (consumed > 0f) {
-                    level = DashboardCalendarDay.ActivityLevel.NONE;
                 }
             }
             data.add(new DashboardCalendarDay(day, level, true));

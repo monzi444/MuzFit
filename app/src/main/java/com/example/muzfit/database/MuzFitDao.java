@@ -27,6 +27,9 @@ public interface MuzFitDao {
     @Query("SELECT * FROM User WHERE uid = :uid LIMIT 1")
     User getUser(String uid);
 
+    @Query("SELECT * FROM User WHERE uid = :uid LIMIT 1")
+    androidx.lifecycle.LiveData<User> getUserLiveData(String uid);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertUser(User user);
 

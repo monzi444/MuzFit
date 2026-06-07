@@ -46,12 +46,21 @@ public class ProfileRepository implements IProfileRepository {
 
     @Override
     public LiveData<Result<User>> getUser() {
+        if (localDao == null) {
+            MutableLiveData<Result<User>> liveData = new MutableLiveData<>();
+            liveData.setValue(new Result.Error<>(Constants.ERROR_DATABASE));
+            return liveData;
+        }
+
         String currentUid = RepositorySupport.currentUidOrDefault();
-        MutableLiveData<Result<User>> liveData = new MutableLiveData<>();
-        liveData.setValue(new Result.Loading<>());
-        loadLocalUser(currentUid, Constants.ERROR_USER_NOT_FOUND, liveData);
-        fetchRemoteUser(currentUid, liveData);
-        return liveData;
+        fetchRemoteUser(currentUid, new MutableLiveData<>()); // Silently sync in background
+
+        return androidx.lifecycle.Transformations.map(localDao.getUserLiveData(currentUid), user -> {
+            if (user == null) {
+                return new Result.Loading<>();
+            }
+            return new Result.Success<>(user);
+        });
     }
 
     @Override
@@ -150,22 +159,6 @@ public class ProfileRepository implements IProfileRepository {
 
     private static String errorMessage(Exception e) {
         return e.getMessage() != null ? e.getMessage() : Constants.ERROR_DATABASE;
-    }
-
-    private void loadLocalUser(String uid, String fallbackMessage, MutableLiveData<Result<User>> liveData) {
-        if (localDao == null) {
-            liveData.postValue(new Result.Error<>(fallbackMessage));
-            return;
-        }
-        EXECUTOR.execute(() -> {
-            try {
-                awaitSeedIfNeeded();
-                User user = RepositorySupport.ensureLocalUser(localDao, uid);
-                liveData.postValue(new Result.Success<>(user));
-            } catch (Exception e) {
-                liveData.postValue(new Result.Error<>(errorMessage(e)));
-            }
-        });
     }
 
     private void fetchRemoteUser(String uid, MutableLiveData<Result<User>> liveData) {
