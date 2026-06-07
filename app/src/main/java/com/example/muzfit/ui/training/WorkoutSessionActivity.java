@@ -428,6 +428,11 @@ public class WorkoutSessionActivity extends AppCompatActivity {
                 }
             }
 
+            // Sync with Firebase
+            com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+            com.example.muzfit.source.firebase.FirestoreSyncDataSource firebaseSource = new com.example.muzfit.source.firebase.FirestoreSyncDataSource(firestore);
+            firebaseSource.saveWorkoutHistory(uid, workout, routine.getExercises(), workoutResults);
+
             runOnUiThread(() -> {
                 Toast.makeText(this, "Workout saved to history!", Toast.LENGTH_LONG).show();
                 finish();

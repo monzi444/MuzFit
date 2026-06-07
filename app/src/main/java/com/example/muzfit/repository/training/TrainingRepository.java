@@ -15,6 +15,7 @@ import com.example.muzfit.source.common.DataSourceCallback;
 import com.example.muzfit.source.training.BaseTrainingDataSource;
 import com.example.muzfit.source.training.catalog.BaseExerciseCatalogDataSource;
 import com.example.muzfit.source.training.firebase.BaseTrainingFirebaseDataSource;
+import com.example.muzfit.source.firebase.FirestoreSyncDataSource;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.RepositorySupport;
 
@@ -364,31 +365,49 @@ public class TrainingRepository implements ITrainingRepository {
         String currentUid = RepositorySupport.currentUidOrDefault();
         MutableLiveData<Result<List<Workout>>> liveData = new MutableLiveData<>();
         liveData.setValue(new Result.Loading<>());
-        trainingApiDataSource.fetchWorkouts(new DataSourceCallback<List<Workout>>() {
+
+        // First load from local DB
+        if (localDao != null) {
+            EXECUTOR.execute(() -> {
+                awaitSeedIfNeeded();
+                liveData.postValue(new Result.Success<>(localDao.getWorkouts(currentUid)));
+            });
+        }
+
+        // Sync from Firebase
+        trainingFirebaseDataSource.fetchWorkouts(currentUid, new DataSourceCallback<List<FirestoreSyncDataSource.WorkoutWithDetails>>() {
             @Override
-            public void onSuccess(List<Workout> data) {
-                List<Workout> filtered = new ArrayList<>();
-                for (Workout workout : data) {
-                    if (currentUid.equals(workout.getUid())) {
-                        filtered.add(workout);
-                    }
+            public void onSuccess(List<FirestoreSyncDataSource.WorkoutWithDetails> firebaseWorkouts) {
+                if (firebaseWorkouts != null) {
+                    EXECUTOR.execute(() -> {
+                        if (localDao != null) {
+                            for (FirestoreSyncDataSource.WorkoutWithDetails fw : firebaseWorkouts) {
+                                // Simple sync: insert/update local records
+                                localDao.insertWorkout(fw.workout);
+                                
+                                // Exercises and sets
+                                List<WorkoutExercise> wes = new ArrayList<>();
+                                for (FirestoreSyncDataSource.ExerciseWithSets ews : fw.exercises) {
+                                    localDao.insertExercise(ews.exercise);
+                                    wes.add(new WorkoutExercise(0, fw.workout.getId(), currentUid, ews.exercise.getId()));
+                                    
+                                    localDao.deleteExerciseSets(fw.workout.getId(), currentUid, ews.exercise.getId());
+                                    localDao.insertExerciseSets(ews.sets);
+                                }
+                                localDao.deleteWorkoutExercises(fw.workout.getId(), currentUid);
+                                localDao.insertWorkoutExercises(wes);
+                            }
+                            liveData.postValue(new Result.Success<>(localDao.getWorkouts(currentUid)));
+                        }
+                    });
                 }
-                liveData.postValue(new Result.Success<>(filtered));
             }
 
             @Override
             public void onError(String message) {
-                if (localDao != null) {
-                    EXECUTOR.execute(() -> {
-                        awaitSeedIfNeeded();
-                        List<Workout> workouts = localDao.getWorkouts(currentUid);
-                        liveData.postValue(new Result.Success<>(workouts));
-                    });
-                } else {
-                    liveData.postValue(new Result.Error<>(message));
-                }
             }
         });
+
         return liveData;
     }
 
