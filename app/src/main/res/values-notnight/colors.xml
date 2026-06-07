@@ -6,6 +6,7 @@
     <color name="muz_on_surface_variant">#666666</color>
     <color name="muz_surface_l0">#FFFFFF</color>
     <color name="muz_container_l2">#F5F5F5</color>
+    <color name="muz_overlay_dim">#22000000</color>
 
     <!-- Glassmorphism Surface -->
     <color name="muz_glass_bg">#CCF0F0F0</color>
