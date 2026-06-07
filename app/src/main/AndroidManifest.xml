@@ -31,6 +31,8 @@
         </activity>
 
         <activity android:name=".ui.training.WorkoutSessionActivity" />
+        <activity android:name=".ui.training.WorkoutHistoryActivity" />
+        <activity android:name=".ui.training.WorkoutHistoryDetailsActivity" />
 
     </application>
 

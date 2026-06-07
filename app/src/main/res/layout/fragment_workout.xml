@@ -17,6 +17,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageButton
+        android:id="@+id/btnWorkoutHistory"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="16dp"
+        android:src="@android:drawable/ic_menu_recent_history"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:tint="@color/muz_primary_lime"
+        android:contentDescription="History"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/tv_subtitle"
         style="@style/MuzFit.Text.Label"

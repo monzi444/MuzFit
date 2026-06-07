@@ -84,6 +84,10 @@ public class WorkoutFragment extends Fragment {
         routineRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         routineRecyclerView.setAdapter(adapter);
 
+        view.findViewById(R.id.btnWorkoutHistory).setOnClickListener(v -> {
+            startActivity(new Intent(getContext(), com.example.muzfit.ui.training.WorkoutHistoryActivity.class));
+        });
+
         loadRoutines();
 
         startWorkoutButton.setOnClickListener(new View.OnClickListener() {

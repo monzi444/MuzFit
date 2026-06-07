@@ -37,7 +37,7 @@ public class ExerciseSet {
 
     private int id;
     private int repetitions;
-    private int weight;
+    private double weight;
     private int workoutId;
     @NonNull
     private String uid = "";
@@ -48,13 +48,13 @@ public class ExerciseSet {
     }
 
     @Ignore
-    public ExerciseSet(int id, int repetitions, int weight,
+    public ExerciseSet(int id, int repetitions, double weight,
                        int workoutId, String uid, int exerciseId) {
         this(id, repetitions, weight, workoutId, uid, String.valueOf(exerciseId));
     }
 
     @Ignore
-    public ExerciseSet(int id, int repetitions, int weight,
+    public ExerciseSet(int id, int repetitions, double weight,
                        int workoutId, String uid, String exerciseId) {
         this.id = id;
         this.repetitions = repetitions;
@@ -80,11 +80,11 @@ public class ExerciseSet {
         this.repetitions = repetitions;
     }
 
-    public int getWeight() {
+    public double getWeight() {
         return weight;
     }
 
-    public void setWeight(int weight) {
+    public void setWeight(double weight) {
         this.weight = weight;
     }
 

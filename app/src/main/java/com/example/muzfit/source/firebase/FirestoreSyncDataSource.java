@@ -310,6 +310,10 @@ public class FirestoreSyncDataSource {
         return value instanceof Number ? ((Number) value).floatValue() : 0f;
     }
 
+    private static double doubleValue(Object value) {
+        return value instanceof Number ? ((Number) value).doubleValue() : 0.0;
+    }
+
     private static MealCategory mealCategoryValue(Object value) {
         if (value instanceof String) {
             try {

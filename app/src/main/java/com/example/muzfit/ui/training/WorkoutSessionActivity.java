@@ -34,7 +34,11 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.ArrayList;
 
 import com.example.muzfit.R;
 import com.example.muzfit.utils.ThemeHelper;
@@ -68,6 +72,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
 
+    private final Map<String, List<com.example.muzfit.model.ExerciseSet>> workoutResults = new HashMap<>();
     private CountDownTimer restTimer;
 
     @Override
@@ -245,7 +250,7 @@ public class WorkoutSessionActivity extends AppCompatActivity {
             addSetView();
         }
 
-        btnSkipExercise.setText(index == routine.getExercises().size() - 1 ? getString(R.string.finish_workout)
+        btnSkipExercise.setText(index == routine.getExercises().size() - 1 ? "Finish Workout"
                 : getString(R.string.skip_exercise));
     }
 
@@ -345,8 +350,89 @@ public class WorkoutSessionActivity extends AppCompatActivity {
 
     private void moveToNextExercise() {
         cancelTimer();
-        currentExerciseIndex++;
-        loadExercise(currentExerciseIndex);
+        captureCurrentExerciseResults();
+        if (currentExerciseIndex == routine.getExercises().size() - 1) {
+            saveWorkoutToHistory();
+        } else {
+            currentExerciseIndex++;
+            loadExercise(currentExerciseIndex);
+        }
+    }
+
+    private void captureCurrentExerciseResults() {
+        Exercise exercise = routine.getExercises().get(currentExerciseIndex);
+        List<com.example.muzfit.model.ExerciseSet> sets = new ArrayList<>();
+        String uid = com.example.muzfit.utils.RepositorySupport.currentUidOrDefault();
+
+        for (int i = 0; i < llSetsContainer.getChildCount(); i++) {
+            View setView = llSetsContainer.getChildAt(i);
+            TextView tvWeight = setView.findViewById(R.id.tvWeightSelector);
+            TextView tvReps = setView.findViewById(R.id.tvRepsSelector);
+            CheckBox cbDone = setView.findViewById(R.id.cbSetDone);
+
+            // Only save if marked as done
+            if (cbDone.isChecked()) {
+                int[] wTag = (int[]) tvWeight.getTag();
+                int reps = (int) tvReps.getTag();
+                
+                String[] decimals = {".0", ".25", ".5", ".75"};
+                double weight = wTag[0] + Double.parseDouble(decimals[wTag[1]]);
+                
+                sets.add(new com.example.muzfit.model.ExerciseSet(
+                        i + 1, reps, weight, 0, uid, exercise.getId()
+                ));
+            }
+        }
+        workoutResults.put(exercise.getId(), sets);
+    }
+
+    private void saveWorkoutToHistory() {
+        // Check if any sets were actually completed
+        boolean anySetDone = false;
+        for (List<com.example.muzfit.model.ExerciseSet> sets : workoutResults.values()) {
+            if (sets != null && !sets.isEmpty()) {
+                anySetDone = true;
+                break;
+            }
+        }
+
+        if (!anySetDone) {
+            Toast.makeText(this, "Empty workout - not saved to history", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        int workoutId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+        long now = System.currentTimeMillis();
+        String uid = com.example.muzfit.utils.RepositorySupport.currentUidOrDefault();
+
+        com.example.muzfit.model.Workout workout = new com.example.muzfit.model.Workout(
+                workoutId, now, routine.getName(), uid
+        );
+
+        new Thread(() -> {
+            com.example.muzfit.database.MuzFitDao dao = com.example.muzfit.database.MuzFitDatabase.getInstance(this).muzFitDao();
+            dao.insertWorkout(workout);
+
+            for (Exercise exercise : routine.getExercises()) {
+                dao.insertWorkoutExercise(new com.example.muzfit.model.WorkoutExercise(
+                        0, workoutId, uid, exercise.getId()
+                ));
+                
+                List<com.example.muzfit.model.ExerciseSet> sets = workoutResults.get(exercise.getId());
+                if (sets != null) {
+                    for (com.example.muzfit.model.ExerciseSet s : sets) {
+                        s.setWorkoutId(workoutId);
+                        dao.insertExerciseSet(s);
+                    }
+                }
+            }
+
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Workout saved to history!", Toast.LENGTH_LONG).show();
+                finish();
+            });
+        }).start();
     }
 
     private void handleTimerClick() {
