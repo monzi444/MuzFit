@@ -41,4 +41,9 @@ public class TrainingFirebaseDataSource extends BaseTrainingFirebaseDataSource {
         firestoreSyncDataSource.deleteRoutine(uid, routineName);
         callback.onSuccess(null);
     }
+
+    @Override
+    public void fetchWorkouts(String uid, DataSourceCallback<List<FirestoreSyncDataSource.WorkoutWithDetails>> callback) {
+        firestoreSyncDataSource.fetchWorkouts(uid, callback);
+    }
 }

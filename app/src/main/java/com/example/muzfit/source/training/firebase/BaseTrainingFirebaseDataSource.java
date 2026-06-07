@@ -12,4 +12,6 @@ public abstract class BaseTrainingFirebaseDataSource {
     public abstract void saveRoutine(WorkoutRoutine routine, String uid, DataSourceCallback<Void> callback);
 
     public abstract void deleteRoutine(String routineName, String uid, DataSourceCallback<Void> callback);
+
+    public abstract void fetchWorkouts(String uid, DataSourceCallback<List<com.example.muzfit.source.firebase.FirestoreSyncDataSource.WorkoutWithDetails>> callback);
 }

@@ -24,6 +24,7 @@ public class FirestoreSyncDataSource {
     private static final String ROUTINES = "workoutRoutines";
     private static final String WEIGHT_ENTRIES = "weightEntries";
     private static final String USER_MEALS = "userMeals";
+    private static final String WORKOUTS = "workouts";
 
     private final FirebaseFirestore db;
 
@@ -133,6 +134,50 @@ public class FirestoreSyncDataSource {
                 .delete();
     }
 
+    public void saveWorkoutHistory(String uid, com.example.muzfit.model.Workout workout, List<com.example.muzfit.model.Exercise> exercises, Map<String, List<com.example.muzfit.model.ExerciseSet>> results) {
+        if (!canSync(uid) || workout == null) return;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", workout.getId());
+        data.put("dateMillis", workout.getDateMillis());
+        data.put("description", workout.getDescription());
+
+        List<Map<String, Object>> exercisesData = new ArrayList<>();
+        for (com.example.muzfit.model.Exercise e : exercises) {
+            Map<String, Object> eMap = new HashMap<>();
+            eDataMap(e, eMap);
+            
+            List<com.example.muzfit.model.ExerciseSet> sets = results.get(e.getId());
+            if (sets != null) {
+                List<Map<String, Object>> setsData = new ArrayList<>();
+                for (com.example.muzfit.model.ExerciseSet s : sets) {
+                    Map<String, Object> sMap = new HashMap<>();
+                    sMap.put("id", s.getId());
+                    sMap.put("reps", s.getRepetitions());
+                    sMap.put("weight", s.getWeight());
+                    setsData.add(sMap);
+                }
+                eMap.put("sets", setsData);
+            }
+            exercisesData.add(eMap);
+        }
+        data.put("exercises", exercisesData);
+
+        userCollection(uid, WORKOUTS)
+                .document(String.valueOf(workout.getId()))
+                .set(data, SetOptions.merge());
+    }
+
+    private void eDataMap(com.example.muzfit.model.Exercise exercise, Map<String, Object> exerciseData) {
+        exerciseData.put("id", exercise.getId());
+        exerciseData.put("name", exercise.getName());
+        exerciseData.put("bodyParts", exercise.getBodyParts());
+        exerciseData.put("equipments", exercise.getEquipments());
+        exerciseData.put("gifUrl", exercise.getGifUrl());
+        exerciseData.put("targetMuscles", exercise.getTargetMuscles());
+        exerciseData.put("instructions", exercise.getInstructions());
+    }
+
     public void saveRoutine(String uid, WorkoutRoutine routine) {
         if (!canSync(uid) || routine == null || routine.getName() == null || routine.getName().trim().isEmpty()) {
             return;
@@ -149,6 +194,61 @@ public class FirestoreSyncDataSource {
         userCollection(uid, ROUTINES)
                 .document(documentId(routineName))
                 .delete();
+    }
+
+    public void fetchWorkouts(String uid, DataSourceCallback<List<WorkoutWithDetails>> callback) {
+        if (!canSync(uid)) {
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+        userCollection(uid, WORKOUTS)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<WorkoutWithDetails> items = new ArrayList<>();
+                    snapshot.forEach(doc -> items.add(toWorkoutWithDetails(uid, doc.getData())));
+                    callback.onSuccess(items);
+                })
+                .addOnFailureListener(e -> callback.onError(errorMessage(e)));
+    }
+
+    private WorkoutWithDetails toWorkoutWithDetails(String uid, Map<String, Object> data) {
+        com.example.muzfit.model.Workout workout = new com.example.muzfit.model.Workout(
+                intValue(data.get("id")),
+                longValue(data.get("dateMillis")),
+                stringValue(data.get("description")),
+                uid
+        );
+
+        List<ExerciseWithSets> exercises = new ArrayList<>();
+        Object rawExercises = data.get("exercises");
+        if (rawExercises instanceof List<?>) {
+            for (Object obj : (List<?>) rawExercises) {
+                if (obj instanceof Map<?, ?>) {
+                    Map<?, ?> eMap = (Map<?, ?>) obj;
+                    com.example.muzfit.model.Exercise e = toExercise(eMap);
+                    
+                    List<com.example.muzfit.model.ExerciseSet> sets = new ArrayList<>();
+                    Object rawSets = eMap.get("sets");
+                    if (rawSets instanceof List<?>) {
+                        for (Object sObj : (List<?>) rawSets) {
+                            if (sObj instanceof Map<?, ?>) {
+                                Map<?, ?> sMap = (Map<?, ?>) sObj;
+                                sets.add(new com.example.muzfit.model.ExerciseSet(
+                                        intValue(sMap.get("id")),
+                                        intValue(sMap.get("reps")),
+                                        doubleValue(sMap.get("weight")),
+                                        workout.getId(),
+                                        uid,
+                                        e.getId()
+                                ));
+                            }
+                        }
+                    }
+                    exercises.add(new ExerciseWithSets(e, sets));
+                }
+            }
+        }
+        return new WorkoutWithDetails(workout, exercises);
     }
 
     private CollectionReference userCollection(String uid, String collectionName) {
@@ -355,6 +455,24 @@ public class FirestoreSyncDataSource {
 
         public Meal getMeal() {
             return meal;
+        }
+    }
+
+    public static class WorkoutWithDetails {
+        public final com.example.muzfit.model.Workout workout;
+        public final List<ExerciseWithSets> exercises;
+        public WorkoutWithDetails(com.example.muzfit.model.Workout workout, List<ExerciseWithSets> exercises) {
+            this.workout = workout;
+            this.exercises = exercises;
+        }
+    }
+
+    public static class ExerciseWithSets {
+        public final com.example.muzfit.model.Exercise exercise;
+        public final List<com.example.muzfit.model.ExerciseSet> sets;
+        public ExerciseWithSets(com.example.muzfit.model.Exercise exercise, List<com.example.muzfit.model.ExerciseSet> sets) {
+            this.exercise = exercise;
+            this.sets = sets;
         }
     }
 }
