@@ -24,9 +24,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import kotlin.Unit;
 
 import com.example.muzfit.R;
 import com.example.muzfit.adapter.WeightHistoryAdapter;
@@ -43,6 +46,8 @@ import com.example.muzfit.utils.ServiceLocator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import static com.example.muzfit.ui.dashboard.fragment.MonthlyCalendarViewKt.setupMonthlyCalendar;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -52,30 +57,21 @@ import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
-    private static final String[] MONTH_NAMES = {
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-    };
-    private static final int YEAR_WINDOW_RADIUS = 50;
     private static final float DEFAULT_CALORIE_GOAL = 2000f;
     private static final float DEFAULT_PROTEIN_GOAL = 150f;
     private static final float DEFAULT_CARBS_GOAL = 250f;
     private static final float DEFAULT_FAT_GOAL = 70f;
 
     private DashboardViewModel viewModel;
-    private GridLayout calendarGrid;
+    private ComposeView monthlyCalendarCompose;
     private NutrientProgressBar calorieBar;
     private NutrientProgressBar proteinBar;
     private NutrientProgressBar carbsBar;
     private NutrientProgressBar fatBar;
     private CalorieHistogramView histogram;
     private WeightGraphView weightGraph;
-    private Spinner monthSpinner;
-    private Spinner yearSpinner;
     private int selectedMonth;
     private int selectedYear;
-    private int firstSelectableYear;
-    private int lastSelectableYear;
     private float consumedCalories;
     private float consumedProteins;
     private float consumedCarbs;
@@ -85,7 +81,6 @@ public class HomeFragment extends Fragment {
     private float carbsGoal = DEFAULT_CARBS_GOAL;
     private float fatGoal = DEFAULT_FAT_GOAL;
     private int todayCaloriesBurned;
-    private boolean isUpdatingCalendarSelection;
     private long selectedDateMillis = System.currentTimeMillis();
 
     @Nullable
@@ -108,77 +103,13 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupCalendarControls(View view) {
-        calendarGrid = view.findViewById(R.id.calendar_grid);
-        monthSpinner = view.findViewById(R.id.month_spinner);
-        yearSpinner = view.findViewById(R.id.year_spinner);
-        ImageView previousMonth = view.findViewById(R.id.prev_month);
-        ImageView nextMonth = view.findViewById(R.id.next_month);
+        monthlyCalendarCompose = view.findViewById(R.id.monthlyCalendarCompose);
 
         Calendar today = Calendar.getInstance();
         selectedMonth = today.get(Calendar.MONTH);
         selectedYear = today.get(Calendar.YEAR);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                MONTH_NAMES
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        monthSpinner.setAdapter(adapter);
-        setupYearSpinner(selectedYear);
-
-        monthSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View selectedView, int position, long id) {
-                if (isUpdatingCalendarSelection) {
-                    return;
-                }
-                selectedMonth = position;
-                renderSelectedMonth();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Keep the current month visible.
-            }
-        });
-        yearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View selectedView, int position, long id) {
-                if (isUpdatingCalendarSelection) {
-                    return;
-                }
-                selectedYear = firstSelectableYear + position;
-                renderSelectedMonth();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Keep the current year visible.
-            }
-        });
-
-        previousMonth.setOnClickListener(v -> moveMonth(-1));
-        nextMonth.setOnClickListener(v -> moveMonth(1));
-
         renderSelectedMonth();
-    }
-
-    private void setupYearSpinner(int centerYear) {
-        firstSelectableYear = centerYear - YEAR_WINDOW_RADIUS;
-        lastSelectableYear = centerYear + YEAR_WINDOW_RADIUS;
-        String[] years = new String[lastSelectableYear - firstSelectableYear + 1];
-        for (int i = 0; i < years.length; i++) {
-            years[i] = String.valueOf(firstSelectableYear + i);
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                years
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        yearSpinner.setAdapter(adapter);
     }
 
     private void moveMonth(int offset) {
@@ -194,22 +125,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void renderSelectedMonth() {
-        if (monthSpinner == null || yearSpinner == null || calendarGrid == null) {
-            return;
-        }
-
-        isUpdatingCalendarSelection = true;
-        monthSpinner.setSelection(selectedMonth);
-        if (selectedYear < firstSelectableYear || selectedYear > lastSelectableYear) {
-            setupYearSpinner(selectedYear);
-        }
-        yearSpinner.setSelection(selectedYear - firstSelectableYear);
-        isUpdatingCalendarSelection = false;
         viewModel.getCalendarData(selectedYear, selectedMonth).observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success) {
                 List<DashboardCalendarDay> calendarData =
                         ((Result.Success<List<DashboardCalendarDay>>) result).getData();
-                setupCalendar(calendarGrid, calendarData);
+                updateMonthlyCalendar(calendarData);
             }
         });
     }
@@ -383,12 +303,9 @@ public class HomeFragment extends Fragment {
         calorieBar.setProgress(netCalories, calorieGoal, "kcal");
     }
 
-    /**
-     * Populates the grid with circular day indicators like a calendar.
-     */
-    private void setupCalendar(GridLayout grid, List<DashboardCalendarDay> data) {
-        grid.removeAllViews();
-        
+    private void updateMonthlyCalendar(List<DashboardCalendarDay> data) {
+        if (data == null) return;
+
         Calendar today = Calendar.getInstance();
         int todayDay = today.get(Calendar.DAY_OF_MONTH);
         int todayMonth = today.get(Calendar.MONTH);
@@ -400,128 +317,30 @@ public class HomeFragment extends Fragment {
         int selMonth = selected.get(Calendar.MONTH);
         int selYear = selected.get(Calendar.YEAR);
 
-        float density = getResources().getDisplayMetrics().density;
-        int size = (int) (38 * density);
-        int margin = (int) (2 * density);
-
-        int column = 0;
-        for (DashboardCalendarDay day : data) {
-            TextView dayView = new TextView(getContext());
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = size;
-            params.height = size;
-            params.columnSpec = GridLayout.spec(column, GridLayout.CENTER, 1f);
-            params.setMargins(margin, margin, margin, margin);
-            dayView.setLayoutParams(params);
-            dayView.setGravity(Gravity.CENTER);
-            dayView.setText(String.valueOf(day.getDayNumber()));
-            dayView.setTextSize(14);
-
-            boolean isActuallyToday = day.isCurrentMonth() && day.getDayNumber() == todayDay 
-                    && selectedMonth == todayMonth && selectedYear == todayYear;
-            
-            boolean isActuallySelected = day.isCurrentMonth() && day.getDayNumber() == selDay 
-                    && selectedMonth == selMonth && selectedYear == selYear;
-
-            if (day.isCurrentMonth()) {
-                applyDayCellStyle(dayView, day, isActuallySelected, isActuallyToday);
-
-                dayView.setOnClickListener(v -> {
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.set(selectedYear, selectedMonth, day.getDayNumber());
-                    selectedDateMillis = calendar.getTimeInMillis();
-                    updateMacrosForDate(selectedDateMillis);
-                    
-                    // Re-render to update highlights
-                    setupCalendar(grid, data);
-                });
-            } else {
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_grey));
-                dayView.setBackground(null);
+        setupMonthlyCalendar(
+            monthlyCalendarCompose,
+            data,
+            todayDay, todayMonth, todayYear,
+            selDay, selMonth, selYear,
+            selectedMonth, selectedYear,
+            dayNum -> {
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(selectedYear, selectedMonth, dayNum);
+                selectedDateMillis = calendar.getTimeInMillis();
+                updateMacrosForDate(selectedDateMillis);
+                // Re-render with same data to reflect new selection
+                updateMonthlyCalendar(data);
+                return kotlin.Unit.INSTANCE;
+            },
+            () -> {
+                moveMonth(-1);
+                return kotlin.Unit.INSTANCE;
+            },
+            () -> {
+                moveMonth(1);
+                return kotlin.Unit.INSTANCE;
             }
-            
-            grid.addView(dayView);
-            column++;
-            if (column == 7) column = 0;
-        }
-    }
-
-    private void applyDayCellStyle(
-            TextView dayView,
-            DashboardCalendarDay day,
-            boolean isSelected,
-            boolean isToday
-    ) {
-        float density = getResources().getDisplayMetrics().density;
-        int backgroundInset = (int) (3 * density);
-        int ringInset = (int) (1 * density);
-
-        Drawable goalBackground = getDayLevelBackground(day.getLevel());
-        if (goalBackground != null) {
-            goalBackground = new InsetDrawable(goalBackground, backgroundInset);
-        }
-
-        Drawable selectedRing = null;
-        if (isSelected) {
-            int ringRes;
-            switch (day.getLevel()) {
-                case GOAL:
-                    ringRes = R.drawable.calendar_circle_selected_green;
-                    break;
-                case OVERFLOW:
-                    ringRes = R.drawable.calendar_circle_selected_orange;
-                    break;
-                case NONE:
-                default:
-                    ringRes = R.drawable.calendar_circle_selected_white;
-                    break;
-            }
-            selectedRing = ContextCompat.getDrawable(requireContext(), ringRes);
-            if (selectedRing != null) {
-                selectedRing = new InsetDrawable(selectedRing, ringInset);
-            }
-        }
-
-        if (goalBackground != null && selectedRing != null) {
-            dayView.setBackground(new LayerDrawable(new Drawable[]{goalBackground, selectedRing}));
-        } else if (selectedRing != null) {
-            dayView.setBackground(selectedRing);
-        } else if (goalBackground != null) {
-            dayView.setBackground(goalBackground);
-        } else {
-            dayView.setBackground(null);
-        }
-
-        int defaultTextColor = ContextCompat.getColor(requireContext(), R.color.muz_on_surface);
-        if (isToday) {
-            dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
-            dayView.setTypeface(null, android.graphics.Typeface.NORMAL);
-            dayView.setTextSize(14);
-        } else {
-            dayView.setTextColor(defaultTextColor);
-            dayView.setTypeface(null, android.graphics.Typeface.NORMAL);
-            dayView.setTextSize(14);
-        }
-    }
-
-    @Nullable
-    private Drawable getDayLevelBackground(DashboardCalendarDay.ActivityLevel level) {
-        int drawableRes;
-        switch (level) {
-            case GOAL:
-                drawableRes = R.drawable.calendar_circle_goal;
-                break;
-            case OVERFLOW:
-                drawableRes = R.drawable.calendar_circle_overflow;
-                break;
-            case PARTIAL:
-                drawableRes = R.drawable.calendar_circle_partial;
-                break;
-            case NONE:
-            default:
-                return null;
-        }
-        return ContextCompat.getDrawable(requireContext(), drawableRes);
+        );
     }
 
     private void showWeightHistoryDialog() {

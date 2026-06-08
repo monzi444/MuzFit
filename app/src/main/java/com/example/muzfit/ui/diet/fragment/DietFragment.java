@@ -30,6 +30,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
@@ -55,10 +56,13 @@ import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.MuzFitToast;
 import com.example.muzfit.utils.ServiceLocator;
 
+import static com.example.muzfit.ui.diet.fragment.DietWeekCalendarKt.setupDietWeekCalendar;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -67,14 +71,16 @@ public class DietFragment extends Fragment {
 
     private DietViewModel viewModel;
     private ProfileViewModel profileViewModel;
-    private TextView tvMonthYear, tvCaloriesRemaining;
-    private GridLayout calendarGrid;
+    private TextView tvCaloriesRemaining;
+    private ComposeView weekCalendarCompose;
     private TextView tvTotalCalories, tvTotalCarbs, tvTotalProtein, tvTotalFat;
     private LinearLayout containerColazione, containerPranzo, containerCena;
     private Calendar currentWeekStart;
     private int calorieGoal = 0;
     private float caloriesAssumed = 0;
     private List<UserMeal> lastUserMeals = new ArrayList<>();
+    // Tracks which days (start-of-day millis) have logged meals — updated as data loads
+    private final Map<Long, Boolean> daysWithMealsMap = new HashMap<>();
     
     private com.example.muzfit.ui.diet.DietDialogHelper dialogHelper;
 
@@ -84,16 +90,13 @@ public class DietFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_diet, container, false);
 
         TextView tvGreeting = view.findViewById(R.id.tvGreeting);
-        tvMonthYear = view.findViewById(R.id.tvMonthYear);
-        calendarGrid = view.findViewById(R.id.calendarGrid);
+        weekCalendarCompose = view.findViewById(R.id.weekCalendarCompose);
         
         containerColazione = view.findViewById(R.id.containerColazione);
         containerPranzo = view.findViewById(R.id.containerPranzo);
         containerCena = view.findViewById(R.id.containerCena);
         
         MaterialButton chooseMealButton = view.findViewById(R.id.chooseMealButton);
-        ImageView btnPrevWeek = view.findViewById(R.id.btnPrevWeek);
-        ImageView btnNextWeek = view.findViewById(R.id.btnNextWeek);
 
         tvTotalCalories = view.findViewById(R.id.tvTotalCalories);
         tvTotalCarbs = view.findViewById(R.id.tvTotalCarbs);
@@ -115,6 +118,28 @@ public class DietFragment extends Fragment {
         int offsetToMonday = (dayOfWeek == Calendar.SUNDAY) ? -6 : (Calendar.MONDAY - dayOfWeek);
         currentWeekStart.add(Calendar.DAY_OF_YEAR, offsetToMonday);
 
+        // Set up Compose calendar after currentWeekStart is initialized
+        setupDietWeekCalendar(
+            weekCalendarCompose,
+            currentWeekStart.getTimeInMillis(),
+            viewModel.getSelectedDateMillis().getValue(),
+            daysWithMealsMap,
+            millis -> {
+                viewModel.setSelectedDate(millis);
+                return kotlin.Unit.INSTANCE;
+            },
+            () -> {
+                currentWeekStart.add(Calendar.WEEK_OF_YEAR, -1);
+                setupCalendar();
+                return kotlin.Unit.INSTANCE;
+            },
+            () -> {
+                currentWeekStart.add(Calendar.WEEK_OF_YEAR, 1);
+                setupCalendar();
+                return kotlin.Unit.INSTANCE;
+            }
+        );
+
         setupCalendar();
 
         profileViewModel.getUser().observe(getViewLifecycleOwner(), result -> {
@@ -124,16 +149,6 @@ public class DietFragment extends Fragment {
                 tvGreeting.setText(getString(R.string.greeting_prefix, user.getName()));
                 updateRemainingCalories();
             }
-        });
-
-        btnPrevWeek.setOnClickListener(v -> {
-            currentWeekStart.add(Calendar.WEEK_OF_YEAR, -1);
-            setupCalendar();
-        });
-
-        btnNextWeek.setOnClickListener(v -> {
-            currentWeekStart.add(Calendar.WEEK_OF_YEAR, 1);
-            setupCalendar();
         });
 
         viewModel.getMealCatalog().observe(getViewLifecycleOwner(), result -> {
@@ -147,6 +162,18 @@ public class DietFragment extends Fragment {
             if (result.isSuccess()) {
                 List<UserMeal> userMeals = ((com.example.muzfit.model.Result.Success<List<UserMeal>>) result).getData();
                 lastUserMeals = userMeals != null ? userMeals : new ArrayList<>();
+                // Track which day has meals — store start-of-day millis as key
+                Long selDate = viewModel.getSelectedDateMillis().getValue();
+                if (selDate != null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTimeInMillis(selDate);
+                    cal.set(Calendar.HOUR_OF_DAY, 0);
+                    cal.set(Calendar.MINUTE, 0);
+                    cal.set(Calendar.SECOND, 0);
+                    cal.set(Calendar.MILLISECOND, 0);
+                    long dayStart = cal.getTimeInMillis();
+                    daysWithMealsMap.put(dayStart, lastUserMeals != null && !lastUserMeals.isEmpty());
+                }
                 refreshDietUi();
             }
         });
@@ -253,64 +280,27 @@ public class DietFragment extends Fragment {
     }
 
     private void setupCalendar() {
-        Calendar today = Calendar.getInstance();
-        int todayDayOfYear = today.get(Calendar.DAY_OF_YEAR), todayYear = today.get(Calendar.YEAR);
-        
-        Long selectedDateMillis = viewModel.getSelectedDateMillis().getValue();
-        Calendar selectedDate = Calendar.getInstance();
-        if (selectedDateMillis != null) {
-            selectedDate.setTimeInMillis(selectedDateMillis);
-        }
-        int selectedDayOfYear = selectedDate.get(Calendar.DAY_OF_YEAR);
-        int selectedYear = selectedDate.get(Calendar.YEAR);
-
-        tvMonthYear.setText(String.format(
-                Locale.ENGLISH,
-                "%s %d",
-                currentWeekStart.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH),
-                currentWeekStart.get(Calendar.YEAR)
-        ));
-        calendarGrid.removeAllViews();
-        float density = getResources().getDisplayMetrics().density;
-        int size = (int) (38 * density), margin = (int) (2 * density);
-        Calendar tempCalendar = (Calendar) currentWeekStart.clone();
-        for (int i = 0; i < 7; i++) {
-            final long timeMillis = tempCalendar.getTimeInMillis();
-            final int dayNum = tempCalendar.get(Calendar.DAY_OF_MONTH), monthNum = tempCalendar.get(Calendar.MONTH), yearNum = tempCalendar.get(Calendar.YEAR), dayOfYear = tempCalendar.get(Calendar.DAY_OF_YEAR);
-            TextView dayView = new TextView(getContext());
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = size;
-            params.height = size;
-            params.columnSpec = GridLayout.spec(i, GridLayout.CENTER, 1f);
-            params.setMargins(margin, margin, margin, margin);
-            dayView.setLayoutParams(params);
-            dayView.setGravity(Gravity.CENTER);
-            dayView.setText(String.valueOf(dayNum));
-            dayView.setTextSize(14);
-            
-            if (yearNum == selectedYear && dayOfYear == selectedDayOfYear) {
-                dayView.setBackground(new InsetDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.calendar_circle_selection_stroke), (int)(1*density)));
-                int textColor = (yearNum == todayYear && dayOfYear == todayDayOfYear)
-                        ? R.color.muz_primary_lime
-                        : R.color.muz_on_surface;
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), textColor));
-                dayView.setTypeface(null, Typeface.BOLD);
-            } else if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_primary_lime));
-                dayView.setTypeface(null, Typeface.NORMAL);
-            } else {
-                dayView.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface));
-                if (tempCalendar.after(today)) dayView.setAlpha(0.5f);
+        // Update the ComposeView content with the latest week data
+        setupDietWeekCalendar(
+            weekCalendarCompose,
+            currentWeekStart.getTimeInMillis(),
+            viewModel.getSelectedDateMillis().getValue(),
+            daysWithMealsMap,
+            millis -> {
+                viewModel.setSelectedDate(millis);
+                return kotlin.Unit.INSTANCE;
+            },
+            () -> {
+                currentWeekStart.add(Calendar.WEEK_OF_YEAR, -1);
+                setupCalendar();
+                return kotlin.Unit.INSTANCE;
+            },
+            () -> {
+                currentWeekStart.add(Calendar.WEEK_OF_YEAR, 1);
+                setupCalendar();
+                return kotlin.Unit.INSTANCE;
             }
-
-            if (yearNum == todayYear && dayOfYear == todayDayOfYear) {
-                dayView.setTextSize(14);
-            }
-            dayView.setOnClickListener(v -> {
-                viewModel.setSelectedDate(timeMillis);
-            });
-            calendarGrid.addView(dayView); tempCalendar.add(Calendar.DAY_OF_YEAR, 1);
-        }
+        );
     }
 
     private String formatMealEntry(Meal meal) {
