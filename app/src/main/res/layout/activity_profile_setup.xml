@@ -251,7 +251,7 @@
                         android:id="@+id/profile_setup_save"
                         style="@style/MuzFit.Button.Skeuo"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
+                        android:layout_height="50dp"
                         android:layout_marginTop="20dp"
                         android:text="@string/profile_setup_save" />
                 </LinearLayout>

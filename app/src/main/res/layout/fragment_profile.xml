@@ -152,7 +152,7 @@
             android:id="@+id/btn_modifica_profilo"
             style="@style/MuzFit.Button.Skeuo"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
+            android:layout_height="58dp"
             android:layout_marginTop="48dp"
             android:text="Modifica Profilo"
             app:layout_constraintTop_toBottomOf="@+id/card_physique" />
@@ -161,7 +161,7 @@
             android:id="@+id/btn_obiettivi"
             style="@style/MuzFit.Button.Skeuo"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
+            android:layout_height="58dp"
             android:layout_marginTop="16dp"
             android:text="Imposta Obiettivi"
             app:layout_constraintTop_toBottomOf="@+id/btn_modifica_profilo" />
@@ -229,7 +229,7 @@
             android:id="@+id/btn_logout"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="50dp"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="24dp"
             android:text="@string/logout_button"

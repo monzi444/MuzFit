@@ -29,7 +29,7 @@
             android:id="@+id/btn_quick_meal"
             style="@style/MuzFit.Button.Skeuo"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="54dp"
             android:layout_marginBottom="20dp"
             android:text="@string/quick_action_meal"
             android:textStyle="bold" />
@@ -38,7 +38,7 @@
             android:id="@+id/btn_start_workout"
             style="@style/MuzFit.Button.Skeuo"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="54dp"
             android:layout_marginBottom="20dp"
             android:text="@string/quick_action_workout"
             android:textStyle="bold" />
@@ -47,7 +47,7 @@
             android:id="@+id/btn_log_weight"
             style="@style/MuzFit.Button.Skeuo"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="54dp"
             android:layout_marginBottom="20dp"
             android:text="@string/quick_action_weight"
             android:textStyle="bold" />
@@ -56,7 +56,7 @@
             android:id="@+id/btn_update_goal"
             style="@style/MuzFit.Button.Skeuo"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="54dp"
             android:text="@string/quick_action_goal"
             android:textStyle="bold" />
 

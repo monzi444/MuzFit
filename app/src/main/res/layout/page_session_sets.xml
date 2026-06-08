@@ -131,7 +131,7 @@
                 android:id="@+id/btnAddSet"
                 style="@style/MuzFit.Button.Skeuo"
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
+                android:layout_height="58dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="24dp"
                 android:text="@string/add_set" />

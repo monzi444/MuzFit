@@ -1,9 +1,11 @@
 package com.example.muzfit.ui.dashboard.fragment;
 
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +14,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -31,11 +34,14 @@ import com.example.muzfit.model.DashboardCalendarDay;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
 import com.example.muzfit.model.WeightEntry;
+import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.ui.dashboard.viewmodel.DashboardViewModel;
 import com.example.muzfit.ui.dashboard.viewmodel.DashboardViewModelFactory;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.MuzFitToast;
 import com.example.muzfit.utils.ServiceLocator;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -519,46 +525,59 @@ public class HomeFragment extends Fragment {
     }
 
     private void showWeightHistoryDialog() {
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_choose_meal, null);
-        ListView listView = dialogView.findViewById(R.id.lvChooseMeal);
-        TextView titleView = dialogView.findViewById(R.id.choose_meal_title);
-        TextView emptyView = dialogView.findViewById(R.id.tvChooseMealEmpty);
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_profile_generic, null);
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
 
-        titleView.setText(R.string.quick_action_weight);
-        dialogView.findViewById(R.id.tilChooseMealSort).setVisibility(View.GONE);
-        dialogView.findViewById(R.id.btnAddFoodFromPicker).setVisibility(View.GONE);
+        tvTitle.setText(R.string.quick_action_weight);
 
-        List<WeightEntry> weightEntries = new ArrayList<>();
-        WeightHistoryAdapter adapter = new WeightHistoryAdapter(requireContext(), weightEntries, entry -> {
-            viewModel.deleteWeightEntry(entry).observe(getViewLifecycleOwner(), result -> {
-                if (result.isSuccess()) {
-                    MuzFitToast.show(requireContext(), R.string.routine_deleted_toast); // Use a generic deleted string
-                }
-            });
-        });
-        listView.setAdapter(adapter);
+        View inputView = LayoutInflater.from(requireContext()).inflate(R.layout.item_dialog_input, container, false);
+        TextInputLayout til = inputView.findViewById(R.id.textInputLayout);
+        TextInputEditText tiet = inputView.findViewById(R.id.textInputEditText);
+        til.setHint(getString(R.string.weight_hint));
+        tiet.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        tiet.setText("");
+        container.addView(inputView);
 
         AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
                 .setView(dialogView)
                 .create();
 
-        viewModel.getWeights().observe(getViewLifecycleOwner(), result -> {
-            if (result.isSuccess()) {
-                List<WeightEntry> data = ((Result.Success<List<WeightEntry>>) result).getData();
-                weightEntries.clear();
-                if (data != null && !data.isEmpty()) {
-                    weightEntries.addAll(data);
-                    Collections.sort(weightEntries, (e1, e2) -> Long.compare(e2.getDateMillis(), e1.getDateMillis())); // Newest first
-                    emptyView.setVisibility(View.GONE);
-                } else {
-                    emptyView.setText("Nessun peso registrato");
-                    emptyView.setVisibility(View.VISIBLE);
-                }
-                adapter.notifyDataSetChanged();
-            }
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(R.id.btnSave).setOnClickListener(v -> {
+            String weightStr = tiet.getText().toString().trim();
+            if (weightStr.isEmpty()) return;
+
+            try {
+                float weight = Float.parseFloat(weightStr);
+                WeightEntry entry = new WeightEntry();
+                entry.setWeight(weight);
+                entry.setDateMillis(System.currentTimeMillis());
+
+                IProfileRepository profileRepository = ServiceLocator.getInstance().getProfileRepository();
+                profileRepository.addWeightEntry(entry).observe(getViewLifecycleOwner(), result -> {
+                    if (result.isSuccess()) {
+                        MuzFitToast.show(requireContext(), R.string.profile_update_success);
+                        // Refresh the weight graph data
+                        viewModel.getWeights().observe(getViewLifecycleOwner(), weightResult -> {
+                            if (weightResult.isSuccess() && weightGraph != null) {
+                                List<WeightEntry> weights = ((Result.Success<List<WeightEntry>>) weightResult).getData();
+                                weightGraph.setData(toWeightData(weights));
+                            }
+                        });
+                    } else if (result.isError()) {
+                        MuzFitToast.showError(requireContext(), ((Result.Error<?>) result).getMessage());
+                    }
+                });
+                dialog.dismiss();
+            } catch (NumberFormatException ignored) {}
         });
 
-        dialogView.findViewById(R.id.btnCancelChooseMeal).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+
         dialog.show();
     }
 }
