@@ -155,6 +155,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.protein_color),
                 ContextCompat.getColor(requireContext(), R.color.protein_overflow)
             );
+            proteinBar.setShowTextBox(true);
             proteinBar.setProgress(0, proteinGoal, "g");
         }
 
@@ -164,6 +165,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.carbs_color),
                 ContextCompat.getColor(requireContext(), R.color.carbs_overflow)
             );
+            carbsBar.setShowTextBox(true);
             carbsBar.setProgress(0, carbsGoal, "g");
         }
 
@@ -173,6 +175,7 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.fat_color),
                 ContextCompat.getColor(requireContext(), R.color.fat_overflow)
             );
+            fatBar.setShowTextBox(true);
             fatBar.setProgress(0, fatGoal, "g");
         }
     }

@@ -2,7 +2,6 @@ package com.example.muzfit.ui.dashboard.fragment;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
@@ -22,12 +21,18 @@ public class WeightGraphView extends View {
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
 
+    private static final float LABEL_GAP = 12f; // gap between y-labels and chart
+
     public WeightGraphView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
     private void init() {
+        // Card border is rendered by the MaterialCardView (MuzFit.Card.Graph).
+        // The View itself is transparent and only draws the chart content.
+        setBackgroundColor(android.graphics.Color.TRANSPARENT);
+
         linePaint.setColor(ContextCompat.getColor(getContext(), R.color.graph_line));
         linePaint.setStrokeWidth(7f);
         linePaint.setStyle(Paint.Style.STROKE);
@@ -56,6 +61,7 @@ public class WeightGraphView extends View {
 
         float width = getWidth();
         float height = getHeight();
+
         float labelWidth = 0f;
         float minWeight = getMinWeight();
         float maxWeight = getMaxWeight(minWeight);
@@ -65,10 +71,10 @@ public class WeightGraphView extends View {
             labelWidth = Math.max(labelWidth, textPaint.measureText(label));
         }
 
-        float leftPadding = getPaddingLeft() + labelWidth + 16f;
-        float rightPadding = Math.max(getPaddingRight(), 16f);
-        float topPadding = Math.max(getPaddingTop(), 12f);
-        float bottomPadding = Math.max(getPaddingBottom(), 20f);
+        float leftPadding = getPaddingLeft() + labelWidth + LABEL_GAP;
+        float rightPadding = getPaddingRight();
+        float topPadding = getPaddingTop();
+        float bottomPadding = getPaddingBottom();
         float graphWidth = Math.max(0f, width - leftPadding - rightPadding);
         float graphHeight = Math.max(0f, height - topPadding - bottomPadding);
 
@@ -77,7 +83,7 @@ public class WeightGraphView extends View {
             float y = topPadding + graphHeight - (i * graphHeight / 4);
             canvas.drawLine(leftPadding, y, width - rightPadding, y, gridPaint);
             String label = String.format(Locale.getDefault(), "%.1f kg", minWeight + (i * weightRange / 4));
-            canvas.drawText(label, leftPadding - 12f, y + 9f, textPaint);
+            canvas.drawText(label, leftPadding - LABEL_GAP, y + 9f, textPaint);
         }
 
         path.reset();

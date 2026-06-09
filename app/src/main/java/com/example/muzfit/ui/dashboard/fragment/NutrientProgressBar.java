@@ -27,20 +27,25 @@ public class NutrientProgressBar extends View {
     private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint boxPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint boxFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint boxBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF trackRect = new RectF();
     private final RectF boxRect = new RectF();
     private final Path clipPath = new Path();
 
     public NutrientProgressBar(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        // Usiamo muz_glass_border per la parte vuota: 
-        // fornisce un contrasto migliore sia in modalità giorno che notte.
-        trackPaint.setColor(ContextCompat.getColor(context, R.color.muz_glass_border));
+        // Track (background bar): onSurface @ 10% — same soft border tone as calendar cards
+        trackPaint.setColor(0x1afefeff);
         trackPaint.setStyle(Paint.Style.FILL);
 
-        boxPaint.setColor(ContextCompat.getColor(context, R.color.muz_glass_bg));
-        boxPaint.setStyle(Paint.Style.FILL);
+        // Text box background: muz_surface_l0 @ 70% with onSurface @ 12% border (matches calendar)
+        boxFillPaint.setColor(0xb30f0e0f);
+        boxFillPaint.setStyle(Paint.Style.FILL);
+        boxBorderPaint.setColor(0x1ffefeff);
+        boxBorderPaint.setStyle(Paint.Style.STROKE);
+        float density = context.getResources().getDisplayMetrics().density;
+        boxBorderPaint.setStrokeWidth(density * 1f);
 
         textPaint.setColor(ContextCompat.getColor(context, R.color.muz_on_surface));
         textPaint.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
@@ -130,7 +135,8 @@ public class NutrientProgressBar extends View {
                 boxRect.set(boxLeft, boxTop, boxLeft + boxWidth, boxTop + boxHeight);
 
                 float cornerRadius = boxHeight / 2f; // Semicircular ends
-                canvas.drawRoundRect(boxRect, cornerRadius, cornerRadius, boxPaint);
+                canvas.drawRoundRect(boxRect, cornerRadius, cornerRadius, boxFillPaint);
+                canvas.drawRoundRect(boxRect, cornerRadius, cornerRadius, boxBorderPaint);
             }
 
             float textY = trackTop + (trackHeight / 2f) - ((textPaint.descent() + textPaint.ascent()) / 2f);

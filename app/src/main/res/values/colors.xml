@@ -3,6 +3,7 @@
     <!-- MuzFit v3.0 Official Palette (Dark — default) -->
     <color name="muz_primary_lime">#c5f701</color>
     <color name="muz_on_surface">#fefeff</color>
+    <color name="muz_on_surface_border">#1ffefeff</color> <!-- muz_on_surface @ 12% — calendar card border -->
     <color name="muz_on_surface_variant">#9a9b9b</color>
     <color name="muz_surface_l0">#0f0e0f</color>
     <color name="muz_container_l2">#1a1b1b</color>

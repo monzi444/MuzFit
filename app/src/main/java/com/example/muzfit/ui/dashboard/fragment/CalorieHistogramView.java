@@ -12,7 +12,7 @@ import androidx.core.content.ContextCompat;
 import com.example.muzfit.R;
 
 /**
- * Custom view to display a histogram of calories burned over the last week.
+ * Custom view to display a histogram of calories consumed over the last week.
  */
 public class CalorieHistogramView extends View {
     private int[] caloriesData = {420, 720, 580, 1020, 850, 600, 910};
@@ -28,6 +28,10 @@ public class CalorieHistogramView extends View {
     }
 
     private void init() {
+        // Card border is rendered by the MaterialCardView (MuzFit.Card.Graph).
+        // The View itself is transparent and only draws the chart content.
+        setBackgroundColor(android.graphics.Color.TRANSPARENT);
+
         barPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_primary_lime));
         textPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface_variant));
         textPaint.setTextSize(24f);
@@ -49,10 +53,12 @@ public class CalorieHistogramView extends View {
 
         float width = getWidth();
         float height = getHeight();
-        float padding = 44f;
-        float bottomPadding = 60f;
-        float graphWidth = width - 2 * padding;
-        float graphHeight = height - padding - bottomPadding - 24f;
+
+        float sidePadding = Math.max(getPaddingLeft(), 32f);
+        float topPadding = Math.max(getPaddingTop(), 16f);
+        float bottomPadding = Math.max(getPaddingBottom(), 40f);
+        float graphWidth = width - 2 * sidePadding;
+        float graphHeight = height - topPadding - bottomPadding - 24f;
 
         int maxCalories = 0;
         for (int calorie : caloriesData) {
@@ -65,16 +71,16 @@ public class CalorieHistogramView extends View {
 
         for (int i = 0; i < caloriesData.length; i++) {
             float barHeight = (caloriesData[i] / (float) maxCalories) * graphHeight;
-            float left = padding + i * (barWidth + spacing) + spacing / 2;
-            float top = padding + graphHeight - barHeight;
+            float left = sidePadding + i * (barWidth + spacing) + spacing / 2;
+            float top = topPadding + graphHeight - barHeight;
             float right = left + barWidth;
-            float bottom = padding + graphHeight;
+            float bottom = topPadding + graphHeight;
 
             rectF.set(left, top, right, bottom);
             canvas.drawRoundRect(rectF, 10f, 10f, barPaint);
 
             canvas.drawText(String.valueOf(caloriesData[i]), left + barWidth / 2, top - 8f, valuePaint);
-            canvas.drawText(days[i], left + barWidth / 2, height - 20f, textPaint);
+            canvas.drawText(days[i], left + barWidth / 2, height - getPaddingBottom() / 2f, textPaint);
         }
     }
 }

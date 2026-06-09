@@ -33,10 +33,18 @@ import com.example.muzfit.ui.training.fragment.WorkoutFragment;
 import com.example.muzfit.ui.training.viewmodel.TrainingViewModel;
 import com.example.muzfit.ui.training.viewmodel.TrainingViewModelFactory;
 import com.example.muzfit.ui.training.TrainingDialogHelper;
+import com.example.muzfit.utils.NoiseBackground;
 import com.example.muzfit.utils.ServiceLocator;
 import com.example.muzfit.utils.ThemeHelper;
 
 import androidx.compose.ui.platform.ComposeView;
+
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.BlurAlgorithm;
+import eightbitlab.com.blurview.RenderEffectBlur;
+// NOTE: If the IDE shows "Cannot resolve symbol 'eightbitlab'" warnings,
+// run: File → Sync Project with Gradle Files, then Build → Clean Project.
+// (These warnings are IDE cache issues only — the CLI build succeeds.)
 
 public class MainActivity extends AppCompatActivity {
 
@@ -108,6 +116,52 @@ public class MainActivity extends AppCompatActivity {
         }
 
         ComposeView bottomNavCompose = findViewById(R.id.bottom_nav_compose);
+        BlurView bottomNavBlur = findViewById(R.id.bottom_nav_blur);
+        if (bottomNavBlur != null) {
+            // The BlurView needs a "root" ViewGroup to capture the content behind.
+            // The decor view IS a ViewGroup (FrameLayout subclass) — no cast needed.
+            android.view.ViewGroup rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+            float blurRadius = 15f; // 0..25 — 25% less than the previous 20f
+            BlurAlgorithm algorithm = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S)
+                    ? new RenderEffectBlur()
+                    : new eightbitlab.com.blurview.RenderScriptBlur(this);
+            bottomNavBlur.setupWith(rootView, algorithm)
+                    .setBlurRadius(blurRadius)
+                    .setBlurAutoUpdate(true);
+
+            // Resize the BlurView to match the actual pill size once the Compose pill has been measured.
+            // The pill uses widthIn(max=380dp) and shrinks to its content — we read its real width/height
+            // after layout so the blur doesn't extend past the visible pill shape.
+            // We use OnGlobalLayoutListener (instead of a single post()) because the Compose pill
+            // measures itself across several frames — the first post() may still see 0×0.
+            android.view.ViewTreeObserver.OnGlobalLayoutListener layoutListener = new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    int w = bottomNavCompose.getWidth();
+                    int h = bottomNavCompose.getHeight();
+                    if (w > 0 && h > 0) {
+                        // Inset the BlurView by 24dp on each side — keeps the blur narrower than
+                        // the pill, matching the visual inset of the navbar content.
+                        float density = getResources().getDisplayMetrics().density;
+                        int sideInsetPx = (int) (24 * density);
+                        int bottomInsetPx = (int) (12 * density);
+                        android.widget.FrameLayout.LayoutParams lp =
+                                (android.widget.FrameLayout.LayoutParams) bottomNavBlur.getLayoutParams();
+                        lp.width = Math.max(0, w - 2 * sideInsetPx);
+                        lp.height = h;
+                        lp.bottomMargin = bottomInsetPx;
+                        lp.gravity = android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.BOTTOM;
+                        bottomNavBlur.setLayoutParams(lp);
+                        // Re-setup blur with the new dimensions so the captured bitmap is re-cropped.
+                        bottomNavBlur.setupWith(rootView, algorithm)
+                                .setBlurRadius(blurRadius)
+                                .setBlurAutoUpdate(true);
+                        bottomNavCompose.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                }
+            };
+            bottomNavCompose.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+        }
         FloatingPillNavBridge.setContent(
                 bottomNavCompose,
                 id -> {
@@ -149,5 +203,8 @@ public class MainActivity extends AppCompatActivity {
                     .replace(R.id.fragment_container, new HomeFragment())
                     .commit();
         }
+
+        // Subtle film-grain texture over the whole app background.
+        NoiseBackground.apply(this);
     }
 }

@@ -173,7 +173,7 @@ fun DietWeekCalendarView(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(c.surface)
-            .border(1.dp, containerBorder(c), RoundedCornerShape(16.dp))
+            .border(2.dp, containerBorder(c), RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
         // ── Month/year header ──

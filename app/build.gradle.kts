@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.github.Dimezis:BlurView:version-2.0.6")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
     implementation("androidx.room:room-runtime:2.8.4")

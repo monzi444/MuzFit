@@ -37,12 +37,32 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/bottom_nav_compose"
+    <FrameLayout
+        android:id="@+id/bottom_nav_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- Blur layer — resized at runtime to match the actual pill width/height (see MainActivity).
+             Initial size match_parent lets us not worry about scroll/insets; the post() call sets
+             the exact dimensions to mirror the Compose pill. -->
+        <eightbitlab.com.blurview.BlurView
+            android:id="@+id/bottom_nav_blur"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_navbar_pill"
+            android:clipToOutline="true" />
+
+        <!-- Compose pill navigation — the BlurView mirrors this view's real size at runtime. -->
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/bottom_nav_compose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="12dp" />
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

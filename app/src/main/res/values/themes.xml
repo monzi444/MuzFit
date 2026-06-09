@@ -57,6 +57,14 @@
         <item name="strokeWidth">0dp</item>
     </style>
 
+    <!-- Card for chart views (weight graph, calorie histogram) — matches calendar style -->
+    <style name="MuzFit.Card.Graph" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">@color/muz_surface_l0</item>
+        <item name="strokeColor">@color/muz_on_surface_border</item>
+        <item name="strokeWidth">2dp</item>
+    </style>
+
     <style name="MuzFit.Button.Skeuo" parent="Widget.Material3.Button">
         <item name="android:background">@drawable/muzfit_skeuo_btn</item>
         <item name="backgroundTint">@null</item>

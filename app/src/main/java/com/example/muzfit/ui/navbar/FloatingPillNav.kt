@@ -50,34 +50,20 @@ fun FloatingPillNav(
     val limeColor = colorResource(id = R.color.muz_primary_lime)
     val onSurfaceVariant = colorResource(id = R.color.muz_on_surface_variant)
     val glassBorderColor = colorResource(id = R.color.muz_glass_border)
-    val navBarFillColor = glassBgColor.copy(alpha = 0.94f)
-    val navBarScrimColor = surfaceColor.copy(alpha = 0.82f)
+    // Very transparent fill (≈ 35%) so the content behind is clearly visible through the pill.
+    val navBarFillColor = glassBgColor.copy(alpha = 0.35f)
+    // Very light scrim — the heavy blur is doing the visual work, not the dark overlay.
+    val navBarScrimColor = surfaceColor.copy(alpha = 0.15f)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp),
+            .padding(start = 24.dp, end = 24.dp, bottom = 0.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Frosted backdrop — heavier blur + opaque scrim so content behind stays readable
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Box(
-                modifier = Modifier
-                    .width(380.dp)
-                    .height(72.dp)
-                    .blur(36.dp)
-                    .clip(CircleShape)
-                    .background(navBarScrimColor)
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .width(380.dp)
-                    .height(72.dp)
-                    .clip(CircleShape)
-                    .background(navBarFillColor)
-            )
-        }
+        // (No Compose-side blur here — the real blur is done by the XML BlurView underneath,
+        // which only blurs the area inside the pill shape. The previous Modifier.blur(80.dp)
+        // used to overflow the pill shape and blur content around it, which we don't want.)
 
         // Main Pill Container
         Surface(
