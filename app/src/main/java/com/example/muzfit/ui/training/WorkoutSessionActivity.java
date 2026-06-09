@@ -1,6 +1,9 @@
 package com.example.muzfit.ui.training;
 
 import android.content.Context;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.InputType;
@@ -670,9 +673,20 @@ public class WorkoutSessionActivity extends AppCompatActivity {
                 }
                 restTimer = null;
                 isTimerPaused = false;
+                playTimerFinishedSound();
                 Toast.makeText(WorkoutSessionActivity.this, R.string.rest_over_toast, Toast.LENGTH_SHORT).show();
             }
         }.start();
+    }
+
+    private void playTimerFinishedSound() {
+        try {
+            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+            r.play();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
