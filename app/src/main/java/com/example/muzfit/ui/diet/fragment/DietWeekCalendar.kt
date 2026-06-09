@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,13 +31,19 @@ import com.example.muzfit.R
 import java.util.Calendar
 import java.util.Locale
 
+/**
+ * Key = start-of-day millis, value = progress toward calorie goal.
+ * 0.0 = no meals, 0.63 = 63 % of goal, 1.0 = at goal, > 1.05 = over target (orange).
+ */
+typealias DayProgressMap = Map<Long, Float>
+
 // ─── Bridge ──────────────────────────────────────────────────────
 
 fun setupDietWeekCalendar(
     composeView: ComposeView,
     weekStartMillis: Long,
     selectedDateMillis: Long?,
-    mealsMap: Map<Long, Boolean>,
+    dayProgressMap: DayProgressMap,
     onDayClick: (Long) -> Unit,
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit
@@ -47,7 +52,7 @@ fun setupDietWeekCalendar(
         DietWeekCalendarView(
             weekStartMillis = weekStartMillis,
             selectedDateMillis = selectedDateMillis,
-            mealsMap = mealsMap,
+            dayProgressMap = dayProgressMap,
             onDayClick = onDayClick,
             onPrevWeek = onPrevWeek,
             onNextWeek = onNextWeek
@@ -67,14 +72,13 @@ private fun startOfDay(millis: Long): Long {
 
 private fun buildWeekDays(
     weekStartMillis: Long,
-    mealsMap: Map<Long, Boolean>
+    dayProgressMap: DayProgressMap
 ): List<WeekDay> {
     val todayCal = Calendar.getInstance()
     val todayDayOfYear = todayCal.get(Calendar.DAY_OF_YEAR)
     val todayYear = todayCal.get(Calendar.YEAR)
 
     val cal = Calendar.getInstance().apply { timeInMillis = weekStartMillis }
-    val nowMillis = System.currentTimeMillis()
     val days = mutableListOf<WeekDay>()
 
     for (i in 0 until 7) {
@@ -88,7 +92,7 @@ private fun buildWeekDays(
                 dayNumber = cal.get(Calendar.DAY_OF_MONTH),
                 dateMillis = dayStart,
                 isToday = isToday,
-                hasMeals = mealsMap[dayStart] == true
+                progress = dayProgressMap[dayStart] ?: 0f
             )
         )
         cal.add(Calendar.DAY_OF_YEAR, 1)
@@ -100,7 +104,8 @@ data class WeekDay(
     val dayNumber: Int,
     val dateMillis: Long,
     val isToday: Boolean,
-    val hasMeals: Boolean
+    /** 0 = no meals, 0.63 = 63 % toward goal, 1.0 = at goal, > 1.05 = over target */
+    val progress: Float
 )
 
 /** Abbreviated day-of-week labels (Mon, Tue … Sun). */
@@ -150,12 +155,12 @@ private val cellShape = RoundedCornerShape(10.dp)
 fun DietWeekCalendarView(
     weekStartMillis: Long,
     selectedDateMillis: Long?,
-    mealsMap: Map<Long, Boolean>,
+    dayProgressMap: DayProgressMap,
     onDayClick: (Long) -> Unit,
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit
 ) {
-    val days = buildWeekDays(weekStartMillis, mealsMap)
+    val days = buildWeekDays(weekStartMillis, dayProgressMap)
     val selectedDayStart = selectedDateMillis?.let { startOfDay(it) }
     val c = colors()
 
@@ -171,7 +176,7 @@ fun DietWeekCalendarView(
             .border(1.dp, containerBorder(c), RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        // ── Month/year header with prev/next arrows ──
+        // ── Month/year header ──
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -190,7 +195,7 @@ fun DietWeekCalendarView(
 
         Spacer(Modifier.height(8.dp))
 
-        // ── Day-of-week header row ──
+        // ── Day-of-week header ──
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -216,7 +221,12 @@ fun DietWeekCalendarView(
         ) {
             days.forEach { day ->
                 val isSelected = day.dateMillis == selectedDayStart
-                val dayNumColor = if (day.isToday) c.greenAccent else c.onSurface.copy(alpha = 0.60f)
+                val dayNumColor = if (day.progress > 0f) {
+                        val pa = (day.progress * 0.75f).coerceIn(0.10f, 0.75f)
+                        val t = (pa - 0.10f) / 0.65f
+                        Color(1f - t, 1f - t, 1f - t)
+                    } else if (day.isToday) c.greenAccent
+                    else c.onSurface.copy(alpha = 0.60f)
 
                 val borderMod = if (isSelected) Modifier.border(
                     1.dp, c.onSurface.copy(alpha = 0.50f), cellShape
@@ -226,11 +236,20 @@ fun DietWeekCalendarView(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.width(34.dp)
                 ) {
-                    // Day number box
+                    // Day number box with progress background
+                    val cellBg = if (day.progress > 1.05f) {
+                        c.orangeAccent.copy(alpha = 0.50f)
+                    } else if (day.progress > 0f) {
+                        val alpha = (day.progress * 0.75f).coerceIn(0.10f, 0.75f)
+                        c.greenAccent.copy(alpha = alpha)
+                    } else {
+                        Color.Transparent
+                    }
                     Box(
                         modifier = Modifier
                             .size(34.dp)
                             .clip(cellShape)
+                            .background(cellBg)
                             .then(borderMod)
                             .clickable(onClick = { onDayClick(day.dateMillis) }),
                         contentAlignment = Alignment.Center
@@ -241,19 +260,6 @@ fun DietWeekCalendarView(
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
                         )
-                    }
-
-                    // Dot — 4dp, green accent 50 %, hidden when selected
-                    Spacer(Modifier.height(4.dp))
-                    if (!isSelected && day.hasMeals) {
-                        Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .clip(CircleShape)
-                                .background(c.greenAccent.copy(alpha = 0.50f))
-                        )
-                    } else {
-                        Spacer(Modifier.size(4.dp))
                     }
                 }
             }
@@ -275,7 +281,7 @@ private fun PrevNextArrow(isNext: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = if (isNext) "\u276F" else "\u276E",  // ❯ / ❮
+            text = if (isNext) "\u276F" else "\u276E",
             color = c.onSurface.copy(alpha = 0.60f),
             fontSize = 18.sp,
             textAlign = TextAlign.Center

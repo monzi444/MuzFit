@@ -48,6 +48,7 @@ public abstract class MuzFitDatabase extends RoomDatabase {
                                     DATABASE_NAME
                             )
                             .fallbackToDestructiveMigration()
+                            .allowMainThreadQueries()
                             .build();
                 }
             }

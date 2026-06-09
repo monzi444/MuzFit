@@ -52,8 +52,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
@@ -82,6 +84,8 @@ public class HomeFragment extends Fragment {
     private float fatGoal = DEFAULT_FAT_GOAL;
     private int todayCaloriesBurned;
     private long selectedDateMillis = System.currentTimeMillis();
+    // Day-of-month → progress toward calorie target (0.0 … 1.5+)
+    private final Map<Integer, Float> dayProgressMap = new HashMap<>();
 
     @Nullable
     @Override
@@ -278,6 +282,9 @@ public class HomeFragment extends Fragment {
         if (fatBar != null) {
             fatBar.setProgress(consumedFats, fatGoal, "g");
         }
+
+        // Re-render the calendar now that we have real goals for progress calculation
+        renderSelectedMonth();
     }
 
     private float[] toWeightData(List<WeightEntry> weights) {
@@ -306,6 +313,28 @@ public class HomeFragment extends Fragment {
     private void updateMonthlyCalendar(List<DashboardCalendarDay> data) {
         if (data == null) return;
 
+        // Build progress map for the visible month
+        dayProgressMap.clear();
+        try {
+            String uid = com.example.muzfit.utils.RepositorySupport.currentUidOrDefault();
+            com.example.muzfit.utils.RepositorySupport.ensureLocalUser(
+                ServiceLocator.getInstance().getDatabase().muzFitDao(), uid
+            );
+            com.example.muzfit.database.MuzFitDao dao =
+                ServiceLocator.getInstance().getDatabase().muzFitDao();
+            for (DashboardCalendarDay d : data) {
+                if (d.isCurrentMonth()) {
+                    long dayStart = getDayStartMillis(selectedYear, selectedMonth, d.getDayNumber());
+                    long dayEnd = dayStart + 24L * 60L * 60L * 1000L;
+                    float consumed = dao.getConsumedCalories(uid, dayStart, dayEnd);
+                    if (consumed > 0f) {
+                        float goal = calorieGoal > 0 ? calorieGoal : 2000f;
+                        dayProgressMap.put(d.getDayNumber(), consumed / goal);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
         Calendar today = Calendar.getInstance();
         int todayDay = today.get(Calendar.DAY_OF_MONTH);
         int todayMonth = today.get(Calendar.MONTH);
@@ -323,6 +352,7 @@ public class HomeFragment extends Fragment {
             todayDay, todayMonth, todayYear,
             selDay, selMonth, selYear,
             selectedMonth, selectedYear,
+            dayProgressMap,
             dayNum -> {
                 Calendar calendar = Calendar.getInstance();
                 calendar.set(selectedYear, selectedMonth, dayNum);
@@ -341,6 +371,13 @@ public class HomeFragment extends Fragment {
                 return kotlin.Unit.INSTANCE;
             }
         );
+    }
+
+    private long getDayStartMillis(int year, int month, int day) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(year, month, day, 0, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
     }
 
     private void showWeightHistoryDialog() {

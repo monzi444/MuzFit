@@ -40,6 +40,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.muzfit.R;
 import com.example.muzfit.adapter.FoodSearchAdapter;
+import com.example.muzfit.database.MuzFitDao;
+import com.example.muzfit.database.MuzFitDatabase;
 import com.example.muzfit.model.Meal;
 import com.example.muzfit.model.MealCategory;
 import com.example.muzfit.model.Result;
@@ -79,8 +81,8 @@ public class DietFragment extends Fragment {
     private int calorieGoal = 0;
     private float caloriesAssumed = 0;
     private List<UserMeal> lastUserMeals = new ArrayList<>();
-    // Tracks which days (start-of-day millis) have logged meals — updated as data loads
-    private final Map<Long, Boolean> daysWithMealsMap = new HashMap<>();
+    // Day start millis → progress toward calorie goal (0.0 … 1.5+)
+    private final Map<Long, Float> dayProgressMap = new HashMap<>();
     
     private com.example.muzfit.ui.diet.DietDialogHelper dialogHelper;
 
@@ -123,7 +125,7 @@ public class DietFragment extends Fragment {
             weekCalendarCompose,
             currentWeekStart.getTimeInMillis(),
             viewModel.getSelectedDateMillis().getValue(),
-            daysWithMealsMap,
+            dayProgressMap,
             millis -> {
                 viewModel.setSelectedDate(millis);
                 return kotlin.Unit.INSTANCE;
@@ -148,6 +150,8 @@ public class DietFragment extends Fragment {
                 calorieGoal = user.getCalorieGoal();
                 tvGreeting.setText(getString(R.string.greeting_prefix, user.getName()));
                 updateRemainingCalories();
+                // Re-run progress calculations now that we have the real calorie goal
+                setupCalendar();
             }
         });
 
@@ -172,7 +176,15 @@ public class DietFragment extends Fragment {
                     cal.set(Calendar.SECOND, 0);
                     cal.set(Calendar.MILLISECOND, 0);
                     long dayStart = cal.getTimeInMillis();
-                    daysWithMealsMap.put(dayStart, lastUserMeals != null && !lastUserMeals.isEmpty());
+                    if (lastUserMeals != null && !lastUserMeals.isEmpty()) {
+                        float totalKcal = 0;
+                        for (UserMeal um : lastUserMeals) {
+                            Meal m = viewModel.getMealFor(um);
+                            if (m != null) totalKcal += m.getCalories();
+                        }
+                        float progress = calorieGoal > 0 ? totalKcal / calorieGoal : 0f;
+                        dayProgressMap.put(dayStart, progress);
+                    }
                 }
                 refreshDietUi();
             }
@@ -280,12 +292,15 @@ public class DietFragment extends Fragment {
     }
 
     private void setupCalendar() {
-        // Update the ComposeView content with the latest week data
+        // Load progress data for all days in the visible week
+        loadWeekProgress();
+
+        // Update the ComposeView content
         setupDietWeekCalendar(
             weekCalendarCompose,
             currentWeekStart.getTimeInMillis(),
             viewModel.getSelectedDateMillis().getValue(),
-            daysWithMealsMap,
+            dayProgressMap,
             millis -> {
                 viewModel.setSelectedDate(millis);
                 return kotlin.Unit.INSTANCE;
@@ -301,6 +316,40 @@ public class DietFragment extends Fragment {
                 return kotlin.Unit.INSTANCE;
             }
         );
+    }
+
+    private void loadWeekProgress() {
+        try {
+            MuzFitDatabase db = ServiceLocator.getInstance().getDatabase();
+            if (db == null) return;
+            MuzFitDao dao = db.muzFitDao();
+            String uid = com.example.muzfit.utils.RepositorySupport.currentUidOrDefault();
+            if (uid == null) return;
+
+            Calendar cal = (Calendar) currentWeekStart.clone();
+            for (int i = 0; i < 7; i++) {
+                long dayStart = startOfDayMillis(cal.getTimeInMillis());
+                long dayEnd = dayStart + 24L * 60L * 60L * 1000L;
+                float consumed = dao.getConsumedCalories(uid, dayStart, dayEnd);
+                if (consumed > 0f) {
+                    float progress = calorieGoal > 0 ? consumed / calorieGoal : 0f;
+                    dayProgressMap.put(dayStart, progress);
+                }
+                cal.add(Calendar.DAY_OF_YEAR, 1);
+            }
+        } catch (Exception ignored) {
+            // Gracefully degrade if database or auth isn't ready yet
+        }
+    }
+
+    private long startOfDayMillis(long millis) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(millis);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
     }
 
     private String formatMealEntry(Meal meal) {

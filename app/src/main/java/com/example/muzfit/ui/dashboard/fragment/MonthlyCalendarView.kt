@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 
 import com.example.muzfit.R
 import com.example.muzfit.model.DashboardCalendarDay
-import com.example.muzfit.model.DashboardCalendarDay.ActivityLevel
 import java.util.Calendar
 import java.util.Locale
 
@@ -41,6 +40,7 @@ fun setupMonthlyCalendar(
     todayDay: Int, todayMonth: Int, todayYear: Int,
     selDay: Int, selMonth: Int, selYear: Int,
     displayMonth: Int, displayYear: Int,
+    dayProgressMap: Map<Int, Float>,
     onDayClick: (Int) -> Unit,
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit
@@ -51,6 +51,7 @@ fun setupMonthlyCalendar(
             todayDay = todayDay, todayMonth = todayMonth, todayYear = todayYear,
             selDay = selDay, selMonth = selMonth, selYear = selYear,
             displayMonth = displayMonth, displayYear = displayYear,
+            dayProgressMap = dayProgressMap,
             onDayClick = onDayClick,
             onPrevMonth = onPrevMonth,
             onNextMonth = onNextMonth
@@ -100,9 +101,8 @@ private val cellShape = RoundedCornerShape(10.dp)
 // ─── Monthly calendar grid ───────────────────────────────────────
 
 /**
- * Monthly calendar grid — month/year header, day-of-week header, 7×6 day cells.
- *
- * Visual language shared with [DietWeekCalendarView].
+ * Monthly calendar — month/year header, day headers, 7×6 grid.
+ * Cell opacity = progress toward calorie target.
  */
 @Composable
 fun MonthlyCalendarGrid(
@@ -110,6 +110,7 @@ fun MonthlyCalendarGrid(
     todayDay: Int, todayMonth: Int, todayYear: Int,
     selDay: Int, selMonth: Int, selYear: Int,
     displayMonth: Int, displayYear: Int,
+    dayProgressMap: Map<Int, Float>,
     onDayClick: (Int) -> Unit,
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit
@@ -121,7 +122,7 @@ fun MonthlyCalendarGrid(
             .fillMaxWidth()
             .padding(top = 8.dp)
     ) {
-        // ── Month/year header with prev/next arrows ──
+        // ── Month/year header ──
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -168,32 +169,40 @@ fun MonthlyCalendarGrid(
                 week.forEach { day ->
                     val num = day.dayNumber
                     val isCurrent = day.isCurrentMonth
-                    val isToday = isCurrent && num == todayDay && displayMonth == todayMonth && displayYear == todayYear
-                    val isSel = isCurrent && num == selDay && displayMonth == selMonth && displayYear == selYear
+                    val isToday = isCurrent && num == todayDay &&
+                            displayMonth == todayMonth && displayYear == todayYear
+                    val isSel = isCurrent && num == selDay &&
+                            displayMonth == selMonth && displayYear == selYear
 
-                    val cellBg: Color
-                    val cellFg: Color
+                    val progress = if (isCurrent) (dayProgressMap[num] ?: 0f) else 0f
 
+                    // Base background + text from progress
+                    val baseBg: Color
+                    val baseFg: Color
                     when {
-                        day.level == ActivityLevel.OVERFLOW -> {
-                            cellBg = c.orangeAccent.copy(alpha = 0.15f)
-                            cellFg = c.orangeAccent
+                        progress > 1.05f -> {
+                            baseBg = c.orangeAccent.copy(alpha = 0.50f)
+                            baseFg = c.orangeAccent
                         }
-                        day.level == ActivityLevel.GOAL -> {
-                            cellBg = c.greenAccent.copy(alpha = 0.15f)
-                            cellFg = c.greenAccent
+                        progress > 0f -> {
+                            val alpha = (progress * 0.75f).coerceIn(0.10f, 0.75f)
+                            baseBg = c.greenAccent.copy(alpha = alpha)
+                            val t = (alpha - 0.10f) / 0.65f
+                            baseFg = Color(1f - t, 1f - t, 1f - t)
                         }
                         !isCurrent -> {
-                            cellBg = Color.Transparent
-                            cellFg = c.onSurface.copy(alpha = 0.20f)
+                            baseBg = Color.Transparent
+                            baseFg = c.onSurface.copy(alpha = 0.20f)
                         }
                         else -> {
-                            cellBg = Color.Transparent
-                            cellFg = c.onSurface.copy(alpha = 0.60f)
+                            baseBg = Color.Transparent
+                            baseFg = c.onSurface.copy(alpha = 0.60f)
                         }
                     }
 
-                    val finalFg = if (isToday) c.greenAccent else cellFg
+                    // Today → green accent text if no progress, otherwise black
+                    val cellFg = if (isToday && progress <= 0f) c.greenAccent else baseFg
+                    // Selected → white border ring, keeps progress bg
                     val borderMod = if (isSel) Modifier.border(
                         1.dp, c.onSurface.copy(alpha = 0.50f), cellShape
                     ) else Modifier
@@ -202,14 +211,14 @@ fun MonthlyCalendarGrid(
                         modifier = Modifier
                             .size(34.dp)
                             .clip(cellShape)
-                            .background(cellBg)
+                            .background(baseBg)
                             .then(borderMod)
                             .clickable(onClick = { onDayClick(num) }),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = num.toString(),
-                            color = finalFg,
+                            color = cellFg,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
                         )
@@ -235,7 +244,7 @@ private fun PrevNextArrow(isNext: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = if (isNext) "\u276F" else "\u276E",  // ❯ / ❮
+            text = if (isNext) "\u276F" else "\u276E",
             color = c.onSurface.copy(alpha = 0.60f),
             fontSize = 18.sp,
             textAlign = TextAlign.Center
