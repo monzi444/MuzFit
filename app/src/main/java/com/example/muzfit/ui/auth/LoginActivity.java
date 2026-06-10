@@ -40,7 +40,6 @@ public class LoginActivity extends AppCompatActivity {
     private MaterialButton loginButton;
     private MaterialButton createAccountButton;
     private MaterialButton googleLoginButton;
-    private MaterialButton continueWithoutLoginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,12 +62,10 @@ public class LoginActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.login_button);
         googleLoginButton = findViewById(R.id.google_login_button);
         createAccountButton = findViewById(R.id.create_account_button);
-        continueWithoutLoginButton = findViewById(R.id.continue_without_login_button);
 
         loginButton.setOnClickListener(v -> loginWithEmail());
         createAccountButton.setOnClickListener(v -> createAccount());
         googleLoginButton.setOnClickListener(v -> signInWithGoogle());
-        continueWithoutLoginButton.setOnClickListener(v -> openMainActivity());
     }
 
     private void setupGoogleSignIn() {
@@ -242,7 +239,6 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setEnabled(!loading);
         createAccountButton.setEnabled(!loading);
         googleLoginButton.setEnabled(!loading);
-        continueWithoutLoginButton.setEnabled(!loading);
     }
 
     private void updateUI(FirebaseUser user) {

@@ -81,7 +81,6 @@
     <string name="login_button">Login</string>
     <string name="google_login_button">Login with Google</string>
     <string name="create_account_button">Create a new account</string>
-    <string name="continue_without_login_button">continue without login</string>
     <string name="missing_credentials_toast">Insert email and password</string>
     <string name="login_success_toast">Login successful</string>
     <string name="account_created_toast">Account created</string>
