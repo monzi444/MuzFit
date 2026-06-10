@@ -4,6 +4,9 @@
         <item name="android:windowBackground">@color/muz_surface_l0</item>
         <item name="colorPrimary">@color/muz_primary_lime</item>
         <item name="colorSurface">@color/muz_surface_l0</item>
+        <!-- Apply Syne as the default font for every TextView, Button, EditText in the app. -->
+        <item name="android:fontFamily">@font/syne</item>
+        <item name="fontFamily">@font/syne</item>
     </style>
 
     <style name="Theme.MuzFit" parent="Base.Theme.MuzFit">
@@ -28,14 +31,14 @@
     <style name="MuzFit.Text.Display" parent="TextAppearance.Material3.HeadlineLarge">
         <item name="android:textColor">@color/muz_on_surface</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:fontFamily">@font/syne</item>
     </style>
 
     <style name="MuzFit.Text.Label" parent="TextAppearance.Material3.LabelMedium">
         <item name="android:textColor">@color/muz_on_surface_variant</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.08</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">@font/syne</item>
     </style>
 
     <!-- MuzFit v3.0 Components -->

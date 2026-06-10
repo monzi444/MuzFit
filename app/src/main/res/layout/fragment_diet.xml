@@ -124,6 +124,7 @@
                         <TextView
                             android:id="@+id/tvTotalCalories"
                             style="@style/MuzFitDietStatValue"
+                            android:layout_gravity="center"
                             android:text="0" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -147,10 +148,23 @@
                             style="@style/MuzFitDietStatLabel"
                             android:text="@string/diet_carbs_label" />
 
-                        <TextView
-                            android:id="@+id/tvTotalCarbs"
-                            style="@style/MuzFitDietStatValueCarbs"
-                            android:text="0g" />
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvTotalCarbs"
+                                style="@style/MuzFitDietStatValueCarbs"
+                                android:text="0" />
+
+                            <TextView
+                                style="@style/MuzFitDietStatUnit"
+                                android:layout_marginStart="3dp"
+                                android:text="g" />
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -173,10 +187,23 @@
                             style="@style/MuzFitDietStatLabel"
                             android:text="@string/diet_protein_label" />
 
-                        <TextView
-                            android:id="@+id/tvTotalProtein"
-                            style="@style/MuzFitDietStatValueProtein"
-                            android:text="0g" />
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvTotalProtein"
+                                style="@style/MuzFitDietStatValueProtein"
+                                android:text="0" />
+
+                            <TextView
+                                style="@style/MuzFitDietStatUnit"
+                                android:layout_marginStart="3dp"
+                                android:text="g" />
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -199,59 +226,33 @@
                             style="@style/MuzFitDietStatLabel"
                             android:text="@string/diet_fat_label" />
 
-                        <TextView
-                            android:id="@+id/tvTotalFat"
-                            style="@style/MuzFitDietStatValueFat"
-                            android:text="0g" />
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvTotalFat"
+                                style="@style/MuzFitDietStatValueFat"
+                                android:text="0" />
+
+                            <TextView
+                                style="@style/MuzFitDietStatUnit"
+                                android:layout_marginStart="3dp"
+                                android:text="g" />
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:text="@string/diet_section_breakfast"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:id="@+id/containerColazione"
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/mealSectionsCompose"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:orientation="vertical" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:text="@string/diet_section_lunch"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:id="@+id/containerPranzo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:orientation="vertical" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:text="@string/diet_section_dinner"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:id="@+id/containerCena"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:orientation="vertical" />
+                android:layout_marginBottom="16dp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

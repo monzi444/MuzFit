@@ -71,6 +71,16 @@ public class DietDialogHelper {
     }
 
     public void showChooseMealDialog() {
+        showChooseMealDialog(null);
+    }
+
+    /**
+     * Overload that opens the meal picker with a preselected category.
+     * Currently behaves like the no-arg version (UI logic is unchanged),
+     * but the parameter is preserved so the caller can express intent
+     * and we can wire the preselection later without touching call sites.
+     */
+    public void showChooseMealDialog(@Nullable MealCategory preselectedCategory) {
         List<Meal> masterMeals = new ArrayList<>();
         // Basic static placeholders
         masterMeals.add(new Meal(0, "Apple", 95, 25, 1, 0));
