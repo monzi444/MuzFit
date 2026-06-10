@@ -10,6 +10,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.example.muzfit.R;
 
@@ -48,7 +49,7 @@ public class NutrientProgressBar extends View {
         boxBorderPaint.setStrokeWidth(density * 1f);
 
         textPaint.setColor(ContextCompat.getColor(context, R.color.muz_on_surface));
-        textPaint.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        textPaint.setTypeface(ResourcesCompat.getFont(context, R.font.syne_regular));
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setAntiAlias(true);
     }

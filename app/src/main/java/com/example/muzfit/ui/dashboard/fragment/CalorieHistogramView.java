@@ -8,7 +8,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-
+import androidx.core.content.res.ResourcesCompat;
 import com.example.muzfit.R;
 
 /**
@@ -34,9 +34,11 @@ public class CalorieHistogramView extends View {
 
         barPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_primary_lime));
         textPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface_variant));
+        textPaint.setTypeface(ResourcesCompat.getFont(getContext(), R.font.syne_regular));
         textPaint.setTextSize(24f);
         textPaint.setTextAlign(Paint.Align.CENTER);
         valuePaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface));
+        valuePaint.setTypeface(ResourcesCompat.getFont(getContext(), R.font.syne_regular));
         valuePaint.setTextSize(20f);
         valuePaint.setTextAlign(Paint.Align.CENTER);
     }

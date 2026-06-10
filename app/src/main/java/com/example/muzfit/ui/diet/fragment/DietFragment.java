@@ -50,6 +50,8 @@ import com.example.muzfit.model.UserMeal;
 import com.example.muzfit.repository.diet.IDietRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.service.dto.openfoodfacts.OpenFoodFactsMapper;
+import com.example.muzfit.ui.diet.DietDialogHelper;
+import com.example.muzfit.ui.diet.fragment.MealSectionsBridge;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModelFactory;
 import com.example.muzfit.ui.profile.viewmodel.ProfileViewModel;
@@ -75,8 +77,8 @@ public class DietFragment extends Fragment {
     private ProfileViewModel profileViewModel;
     private TextView tvCaloriesRemaining;
     private ComposeView weekCalendarCompose;
+    private ComposeView mealSectionsCompose;
     private TextView tvTotalCalories, tvTotalCarbs, tvTotalProtein, tvTotalFat;
-    private LinearLayout containerColazione, containerPranzo, containerCena;
     private Calendar currentWeekStart;
     private int calorieGoal = 0;
     private float caloriesAssumed = 0;
@@ -93,11 +95,8 @@ public class DietFragment extends Fragment {
 
         TextView tvGreeting = view.findViewById(R.id.tvGreeting);
         weekCalendarCompose = view.findViewById(R.id.weekCalendarCompose);
-        
-        containerColazione = view.findViewById(R.id.containerColazione);
-        containerPranzo = view.findViewById(R.id.containerPranzo);
-        containerCena = view.findViewById(R.id.containerCena);
-        
+        mealSectionsCompose = view.findViewById(R.id.mealSectionsCompose);
+
         MaterialButton chooseMealButton = view.findViewById(R.id.chooseMealButton);
 
         tvTotalCalories = view.findViewById(R.id.tvTotalCalories);
@@ -201,7 +200,7 @@ public class DietFragment extends Fragment {
 
     private void refreshDietUi() {
         updateTotalsFromUserMeals(lastUserMeals);
-        populateFoodContainersFromUserMeals(lastUserMeals);
+        renderMealSections(lastUserMeals);
     }
 
     private void updateTotalsFromUserMeals(List<UserMeal> userMeals) {
@@ -221,9 +220,9 @@ public class DietFragment extends Fragment {
         tvTotalCalories.setText(String.valueOf((int)totalKcal));
         caloriesAssumed = totalKcal;
         updateRemainingCalories();
-        tvTotalCarbs.setText(String.format(Locale.getDefault(), "%.0fg", totalCarbs));
-        tvTotalProtein.setText(String.format(Locale.getDefault(), "%.0fg", totalProtein));
-        tvTotalFat.setText(String.format(Locale.getDefault(), "%.0fg", totalFat));
+        tvTotalCarbs.setText(String.format(Locale.getDefault(), "%.0f", totalCarbs));
+        tvTotalProtein.setText(String.format(Locale.getDefault(), "%.0f", totalProtein));
+        tvTotalFat.setText(String.format(Locale.getDefault(), "%.0f", totalFat));
     }
 
     private void updateRemainingCalories() {
@@ -234,61 +233,45 @@ public class DietFragment extends Fragment {
         }
     }
 
-    private void populateFoodContainersFromUserMeals(List<UserMeal> userMeals) {
-        containerColazione.removeAllViews();
-        containerPranzo.removeAllViews();
-        containerCena.removeAllViews();
-        
-        int countColazione = 0, countPranzo = 0, countCena = 0;
-        LayoutInflater inflater = LayoutInflater.from(requireContext());
+    private void renderMealSections(List<UserMeal> userMeals) {
+        java.util.List<UserMeal> colazione = new ArrayList<>();
+        java.util.List<UserMeal> pranzo = new ArrayList<>();
+        java.util.List<UserMeal> cena = new ArrayList<>();
 
         if (userMeals != null) {
-            for (UserMeal userMeal : userMeals) {
-                Meal meal = viewModel.getMealFor(userMeal);
-                if (meal == null) {
-                    continue;
-                }
-                View itemView = inflater.inflate(R.layout.list_item_food, null);
-                TextView nameTv = itemView.findViewById(R.id.foodNameTextView);
-                ImageButton deleteBtn = itemView.findViewById(R.id.deleteFoodButton);
-                nameTv.setText(formatMealEntry(meal));
-                deleteBtn.setOnClickListener(v -> viewModel.deleteLoggedMeal(userMeal)
-                        .observe(getViewLifecycleOwner(), result -> {
-                            if (result.isSuccess()) {
-                                MuzFitToast.show(requireContext(), R.string.food_removed_toast);
-                            } else if (result.isError()) {
-                                MuzFitToast.showError(
-                                        requireContext(),
-                                        ((com.example.muzfit.model.Result.Error<?>) result).getMessage()
-                                );
-                            }
-                        }));
-
-                if (userMeal.getCategory() == MealCategory.COLAZIONE) {
-                    containerColazione.addView(itemView);
-                    countColazione++;
-                } else if (userMeal.getCategory() == MealCategory.PRANZO) {
-                    containerPranzo.addView(itemView);
-                    countPranzo++;
-                } else if (userMeal.getCategory() == MealCategory.CENA) {
-                    containerCena.addView(itemView);
-                    countCena++;
+            for (UserMeal um : userMeals) {
+                if (um.getCategory() == MealCategory.COLAZIONE) {
+                    colazione.add(um);
+                } else if (um.getCategory() == MealCategory.PRANZO) {
+                    pranzo.add(um);
+                } else if (um.getCategory() == MealCategory.CENA) {
+                    cena.add(um);
                 }
             }
         }
 
-        if (countColazione == 0) addEmptyStateText(containerColazione);
-        if (countPranzo == 0) addEmptyStateText(containerPranzo);
-        if (countCena == 0) addEmptyStateText(containerCena);
+        MealSectionsBridge.setContent(
+                mealSectionsCompose,
+                colazione, pranzo, cena,
+                (UserMeal um) -> viewModel.getMealFor(um),
+                (UserMeal um) -> { deleteLoggedMeal(um); return kotlin.Unit.INSTANCE; },
+                () -> { dialogHelper.showChooseMealDialog(MealCategory.COLAZIONE); return kotlin.Unit.INSTANCE; },
+                () -> { dialogHelper.showChooseMealDialog(MealCategory.PRANZO); return kotlin.Unit.INSTANCE; },
+                () -> { dialogHelper.showChooseMealDialog(MealCategory.CENA); return kotlin.Unit.INSTANCE; }
+        );
     }
 
-    private void addEmptyStateText(LinearLayout container) {
-        TextView emptyTv = new TextView(requireContext());
-        emptyTv.setText(R.string.diet_empty_meals);
-        emptyTv.setPadding(16, 8, 16, 24);
-        emptyTv.setAlpha(0.6f);
-        emptyTv.setTypeface(null, Typeface.ITALIC);
-        container.addView(emptyTv);
+    private void deleteLoggedMeal(UserMeal um) {
+        viewModel.deleteLoggedMeal(um).observe(getViewLifecycleOwner(), result -> {
+            if (result.isSuccess()) {
+                com.example.muzfit.utils.MuzFitToast.show(requireContext(), R.string.food_removed_toast);
+            } else if (result.isError()) {
+                com.example.muzfit.utils.MuzFitToast.showError(
+                        requireContext(),
+                        ((com.example.muzfit.model.Result.Error<?>) result).getMessage()
+                );
+            }
+        });
     }
 
     private void setupCalendar() {

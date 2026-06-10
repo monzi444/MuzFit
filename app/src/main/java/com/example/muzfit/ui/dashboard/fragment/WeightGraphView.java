@@ -8,7 +8,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-
+import androidx.core.content.res.ResourcesCompat;
 import com.example.muzfit.R;
 
 import java.text.SimpleDateFormat;
@@ -50,6 +50,7 @@ public class WeightGraphView extends View {
         gridPaint.setStrokeWidth(2f);
 
         textPaint.setColor(ContextCompat.getColor(getContext(), R.color.muz_on_surface_variant));
+        textPaint.setTypeface(ResourcesCompat.getFont(getContext(), R.font.syne_regular));
         textPaint.setTextSize(26f);
         textPaint.setTextAlign(Paint.Align.RIGHT);
     }
