@@ -11,15 +11,20 @@ import androidx.core.content.ContextCompat;
 
 import com.example.muzfit.R;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 public class WeightGraphView extends View {
     private float[] data = {75.0f, 74.5f, 74.8f, 74.2f, 73.9f, 73.5f, 73.2f};
+    private long[] dates = null;
     private final Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint gridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM", Locale.getDefault());
+    private final Date reusableDate = new Date();
 
     private static final float LABEL_GAP = 12f; // gap between y-labels and chart
 
@@ -49,8 +54,9 @@ public class WeightGraphView extends View {
         textPaint.setTextAlign(Paint.Align.RIGHT);
     }
 
-    public void setData(float[] data) {
+    public void setData(float[] data, long[] dates) {
         this.data = data;
+        this.dates = dates;
         invalidate();
     }
 
@@ -74,11 +80,11 @@ public class WeightGraphView extends View {
         float leftPadding = getPaddingLeft() + labelWidth + LABEL_GAP;
         float rightPadding = getPaddingRight();
         float topPadding = getPaddingTop();
-        float bottomPadding = getPaddingBottom();
+        float bottomPadding = getPaddingBottom() + 40f; // Extra space for X-axis labels
         float graphWidth = Math.max(0f, width - leftPadding - rightPadding);
         float graphHeight = Math.max(0f, height - topPadding - bottomPadding);
 
-        // Draw grid lines and labels
+        // Draw grid lines and labels (Y-axis)
         for (int i = 0; i <= 4; i++) {
             float y = topPadding + graphHeight - (i * graphHeight / 4);
             canvas.drawLine(leftPadding, y, width - rightPadding, y, gridPaint);
@@ -89,6 +95,7 @@ public class WeightGraphView extends View {
         path.reset();
         float stepX = data.length > 1 ? graphWidth / (data.length - 1) : 0f;
 
+        textPaint.setTextAlign(Paint.Align.CENTER);
         for (int i = 0; i < data.length; i++) {
             float x = data.length > 1 ? leftPadding + i * stepX : leftPadding + (graphWidth / 2f);
             float y = topPadding + graphHeight - ((data[i] - minWeight) / weightRange * graphHeight);
@@ -98,7 +105,19 @@ public class WeightGraphView extends View {
             } else {
                 path.lineTo(x, y);
             }
+
+            // Draw X-axis date labels
+            if (dates != null && dates.length > i) {
+                // Show labels only for some points if there are many to avoid overlapping
+                boolean showLabel = data.length <= 7 || i == 0 || i == data.length - 1 || i == data.length / 2;
+                if (showLabel) {
+                    reusableDate.setTime(dates[i]);
+                    String dateStr = dateFormat.format(reusableDate);
+                    canvas.drawText(dateStr, x, height - getPaddingBottom() + 25f, textPaint);
+                }
+            }
         }
+        textPaint.setTextAlign(Paint.Align.RIGHT); // Restore align for next draw
         canvas.drawPath(path, linePaint);
 
         // Draw dots

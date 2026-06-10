@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.muzfit.R;
+import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
 import com.example.muzfit.repository.profile.IProfileRepository;
@@ -133,13 +134,21 @@ public class ProfileSetupActivity extends AppCompatActivity {
             if (result.isLoading()) {
                 return;
             }
-            setLoading(false);
-            if (result.isError()) {
+            if (result.isSuccess()) {
+                // Save the initial weight as a WeightEntry to show it on the graph
+                WeightEntry weightEntry = new WeightEntry();
+                weightEntry.setUid(uid);
+                weightEntry.setWeight(user.getWeight());
+                weightEntry.setDateMillis(System.currentTimeMillis());
+                profileViewModel.addWeightEntry(weightEntry);
+
+                Toast.makeText(this, R.string.profile_setup_saved_toast, Toast.LENGTH_SHORT).show();
+                setLoading(false);
+                openMainActivity();
+            } else if (result.isError()) {
+                setLoading(false);
                 Toast.makeText(this, ((Result.Error<Void>) result).getMessage(), Toast.LENGTH_SHORT).show();
-                return;
             }
-            Toast.makeText(this, R.string.profile_setup_saved_toast, Toast.LENGTH_SHORT).show();
-            openMainActivity();
         });
     }
 

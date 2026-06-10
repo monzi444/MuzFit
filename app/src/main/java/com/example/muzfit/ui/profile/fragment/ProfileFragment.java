@@ -28,6 +28,7 @@ import com.example.muzfit.R;
 import com.example.muzfit.model.Gender;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.User;
+import com.example.muzfit.model.WeightEntry;
 import com.example.muzfit.repository.auth.IAuthRepository;
 import com.example.muzfit.repository.profile.IProfileRepository;
 import com.example.muzfit.ui.auth.viewmodel.AuthViewModel;
@@ -216,6 +217,9 @@ public class ProfileFragment extends Fragment {
     }
 
     private void saveProfile(User updated, int successMessageRes) {
+        float oldWeight = currentUser != null ? currentUser.getWeight() : 0f;
+        float newWeight = updated.getWeight();
+
         profileViewModel.updateUser(updated).observe(getViewLifecycleOwner(), result -> {
             if (result.isLoading()) {
                 return;
@@ -225,6 +229,15 @@ public class ProfileFragment extends Fragment {
                         ((Result.Error<Void>) result).getMessage(), Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            if (oldWeight != newWeight) {
+                WeightEntry entry = new WeightEntry();
+                entry.setUid(updated.getUid());
+                entry.setWeight(newWeight);
+                entry.setDateMillis(System.currentTimeMillis());
+                profileViewModel.addWeightEntry(entry);
+            }
+
             currentUser = updated;
             bindUser(currentUser);
             Toast.makeText(requireContext(), successMessageRes, Toast.LENGTH_SHORT).show();

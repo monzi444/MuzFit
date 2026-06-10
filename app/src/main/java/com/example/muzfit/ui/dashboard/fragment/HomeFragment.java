@@ -210,7 +210,17 @@ public class HomeFragment extends Fragment {
         viewModel.getWeights().observe(getViewLifecycleOwner(), result -> {
             if (result instanceof Result.Success && weightGraph != null) {
                 List<WeightEntry> weights = ((Result.Success<List<WeightEntry>>) result).getData();
-                weightGraph.setData(toWeightData(weights));
+                if (weights != null && !weights.isEmpty()) {
+                    List<WeightEntry> sorted = new ArrayList<>(weights);
+                    Collections.sort(sorted, Comparator.comparingLong(WeightEntry::getDateMillis));
+                    float[] weightData = new float[sorted.size()];
+                    long[] dateData = new long[sorted.size()];
+                    for (int i = 0; i < sorted.size(); i++) {
+                        weightData[i] = sorted.get(i).getWeight();
+                        dateData[i] = sorted.get(i).getDateMillis();
+                    }
+                    weightGraph.setData(weightData, dateData);
+                }
             }
         });
     }
@@ -290,21 +300,6 @@ public class HomeFragment extends Fragment {
 
         // Re-render the calendar now that we have real goals for progress calculation
         renderSelectedMonth();
-    }
-
-    private float[] toWeightData(List<WeightEntry> weights) {
-        if (weights == null || weights.isEmpty()) {
-            return new float[0];
-        }
-
-        List<WeightEntry> sorted = new ArrayList<>(weights);
-        Collections.sort(sorted, Comparator.comparingLong(WeightEntry::getDateMillis));
-
-        float[] data = new float[sorted.size()];
-        for (int i = 0; i < sorted.size(); i++) {
-            data[i] = sorted.get(i).getWeight();
-        }
-        return data;
     }
 
     private void updateDailyCalorieBar() {
@@ -449,13 +444,7 @@ public class HomeFragment extends Fragment {
                 profileRepository.addWeightEntry(entry).observe(getViewLifecycleOwner(), result -> {
                     if (result.isSuccess()) {
                         MuzFitToast.show(requireContext(), R.string.profile_update_success);
-                        // Refresh the weight graph data
-                        viewModel.getWeights().observe(getViewLifecycleOwner(), weightResult -> {
-                            if (weightResult.isSuccess() && weightGraph != null) {
-                                List<WeightEntry> weights = ((Result.Success<List<WeightEntry>>) weightResult).getData();
-                                weightGraph.setData(toWeightData(weights));
-                            }
-                        });
+                        // The graph will auto-refresh via the observer in observeDashboardData()
                     } else if (result.isError()) {
                         MuzFitToast.showError(requireContext(), ((Result.Error<?>) result).getMessage());
                     }
