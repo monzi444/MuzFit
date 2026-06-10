@@ -49,6 +49,7 @@
     <string name="food_category_label">Meal</string>
     <string name="food_logged_toast">Meal logged!</string>
     <string name="food_removed_toast">Food removed!</string>
+    <string name="weight_removed_toast">Peso eliminato!</string>
     <string name="catalog_food_removed_toast">Removed from list</string>
     <string name="catalog_meal_remove_in_use">You can\'t remove meals that you have eaten</string>
     <string name="meal_entry_kcal_unit">kcal</string>
@@ -149,6 +150,8 @@
     <string name="quick_action_workout">Start Workout</string>
     <string name="quick_action_weight">Log Body Weight</string>
     <string name="quick_action_goal">Update Goal</string>
+    <string name="weight_management_title">Gestione Peso</string>
+    <string name="weight_history_button">Elimina peso</string>
     <string name="see_execution">Vedi Esecuzione</string>
     <string name="hide_execution">Nascondi Esecuzione</string>
 </resources>

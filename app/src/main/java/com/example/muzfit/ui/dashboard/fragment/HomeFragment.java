@@ -1,5 +1,6 @@
 package com.example.muzfit.ui.dashboard.fragment;
 
+import android.content.res.ColorStateList;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
@@ -43,6 +44,7 @@ import com.example.muzfit.ui.dashboard.viewmodel.DashboardViewModelFactory;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.MuzFitToast;
 import com.example.muzfit.utils.ServiceLocator;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -191,7 +193,7 @@ public class HomeFragment extends Fragment {
     private void setupWeightGraph(View view) {
         weightGraph = view.findViewById(R.id.weight_graph);
         if (weightGraph != null) {
-            weightGraph.setOnClickListener(v -> showWeightHistoryDialog());
+            weightGraph.setOnClickListener(v -> showWeightManagementDialog());
         }
     }
 
@@ -383,10 +385,12 @@ public class HomeFragment extends Fragment {
         return cal.getTimeInMillis();
     }
 
-    private void showWeightHistoryDialog() {
+    private void showWeightManagementDialog() {
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_profile_generic, null);
         TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
         LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
+        MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
 
         tvTitle.setText(R.string.quick_action_weight);
 
@@ -398,6 +402,31 @@ public class HomeFragment extends Fragment {
         tiet.setText("");
         container.addView(inputView);
 
+        MaterialButton btnHistory = new MaterialButton(requireContext());
+        btnHistory.setText(R.string.weight_history_button);
+        btnHistory.setTextColor(ContextCompat.getColor(requireContext(), R.color.muz_on_surface_variant));
+        btnHistory.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        btnHistory.setStrokeWidth(0);
+        btnHistory.setCornerRadius(30);
+        btnHistory.setAllCaps(true);
+        btnHistory.setTextSize(12);
+        btnHistory.setLetterSpacing(0.05f);
+        btnHistory.setPadding(0, 0, 0, 0);
+        btnHistory.setMinimumHeight(0);
+        btnHistory.setMinHeight(0);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                (int) (32 * getResources().getDisplayMetrics().density)
+        );
+        layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+        layoutParams.setMargins(0, (int) (4 * getResources().getDisplayMetrics().density), 0, 0);
+        btnHistory.setLayoutParams(layoutParams);
+
+        // Add to the root layout of the dialog, after btnSave
+        LinearLayout rootLayout = (LinearLayout) dialogView;
+        int saveIndex = rootLayout.indexOfChild(btnSave);
+        rootLayout.addView(btnHistory, saveIndex + 1);
+
         AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
                 .setView(dialogView)
                 .create();
@@ -406,7 +435,7 @@ public class HomeFragment extends Fragment {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
-        dialogView.findViewById(R.id.btnSave).setOnClickListener(v -> {
+        btnSave.setOnClickListener(v -> {
             String weightStr = tiet.getText().toString().trim();
             if (weightStr.isEmpty()) return;
 
@@ -435,8 +464,62 @@ public class HomeFragment extends Fragment {
             } catch (NumberFormatException ignored) {}
         });
 
-        dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+        btnHistory.setOnClickListener(v -> {
+            dialog.dismiss();
+            showWeightHistoryListDialog();
+        });
 
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    private void showWeightHistoryListDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_choose_meal, null);
+        ListView listView = dialogView.findViewById(R.id.lvChooseMeal);
+        TextView titleView = dialogView.findViewById(R.id.choose_meal_title);
+        TextView emptyView = dialogView.findViewById(R.id.tvChooseMealEmpty);
+
+        titleView.setText(R.string.weight_history_button);
+        dialogView.findViewById(R.id.tilChooseMealSort).setVisibility(View.GONE);
+        // Hide search field by finding its parent TextInputLayout container
+        View searchField = dialogView.findViewById(R.id.etChooseMealSearch);
+        if (searchField != null && searchField.getParent() != null && searchField.getParent().getParent() instanceof View) {
+            ((View) searchField.getParent().getParent()).setVisibility(View.GONE);
+        }
+        dialogView.findViewById(R.id.btnAddFoodFromPicker).setVisibility(View.GONE);
+
+        List<WeightEntry> weightEntries = new ArrayList<>();
+        WeightHistoryAdapter adapter = new WeightHistoryAdapter(requireContext(), weightEntries, entry -> {
+            viewModel.deleteWeightEntry(entry).observe(getViewLifecycleOwner(), result -> {
+                if (result instanceof Result.Success) {
+                    MuzFitToast.show(requireContext(), R.string.weight_removed_toast);
+                }
+            });
+        });
+        listView.setAdapter(adapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
+                .setView(dialogView)
+                .create();
+
+        viewModel.getWeights().observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof Result.Success) {
+                List<WeightEntry> data = ((Result.Success<List<WeightEntry>>) result).getData();
+                weightEntries.clear();
+                if (data != null && !data.isEmpty()) {
+                    weightEntries.addAll(data);
+                    Collections.sort(weightEntries, (e1, e2) -> Long.compare(e2.getDateMillis(), e1.getDateMillis()));
+                    emptyView.setVisibility(View.GONE);
+                } else {
+                    emptyView.setText("Nessun peso registrato");
+                    emptyView.setVisibility(View.VISIBLE);
+                }
+                adapter.notifyDataSetChanged();
+            }
+        });
+
+        dialogView.findViewById(R.id.btnCancelChooseMeal).setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 }
