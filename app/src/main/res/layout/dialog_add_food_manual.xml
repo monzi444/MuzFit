@@ -1,122 +1,259 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Dialog: insert a new food manually (name + macros).
+  Same look as dialog_choose_meal: BlurView backdrop + translucent glass content.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/add_food_manual_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_dialog_blur_rounded"
+        android:clipToOutline="true" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/muzfit_dialog_background"
+        android:background="@drawable/muzfit_dialog_glass_translucent"
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Header label uppercase -->
         <TextView
-            style="@style/MuzFit.Text.Label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/add_food_manual_title" />
+            android:fontFamily="@font/syne_regular"
+            android:letterSpacing="0.12"
+            android:text="@string/add_food_manual_label"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
+        <!-- Title display Syne. Kept @id for backward compatibility with the host code. -->
+        <TextView
+            android:id="@+id/add_food_manual_title"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/food_name_hint"
-            app:boxBackgroundMode="outline"
-            app:boxStrokeColor="@color/muz_primary_lime"
-            app:hintTextColor="@color/muz_primary_lime">
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/syne_regular"
+            android:text="@string/add_food_manual_title"
+            android:textColor="@color/muz_on_surface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextFoodName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:textColor="@color/muz_on_surface" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="@string/food_calories_hint"
-            app:boxBackgroundMode="outline"
-            app:boxStrokeColor="@color/muz_primary_lime"
-            app:hintTextColor="@color/muz_primary_lime">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextCalories"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:textColor="@color/muz_on_surface" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="@string/food_carbs_hint"
-            app:boxBackgroundMode="outline"
-            app:boxStrokeColor="@color/muz_primary_lime"
-            app:hintTextColor="@color/muz_primary_lime">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextCarbs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:textColor="@color/muz_on_surface" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="@string/food_protein_hint"
-            app:boxBackgroundMode="outline"
-            app:boxStrokeColor="@color/muz_primary_lime"
-            app:hintTextColor="@color/muz_primary_lime">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextProtein"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:textColor="@color/muz_on_surface" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="@string/food_fat_hint"
-            app:boxBackgroundMode="outline"
-            app:boxStrokeColor="@color/muz_primary_lime"
-            app:hintTextColor="@color/muz_primary_lime">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextFat"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:textColor="@color/muz_on_surface" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSaveManualFood"
-            style="@style/MuzFit.Button.Skeuo"
+        <!-- Food name input -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="@string/save" />
+            android:background="@drawable/bg_input_glass"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingVertical="2dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBackManualFood"
-            style="@style/Widget.Material3.Button.TextButton"
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lucide_user"
+                app:tint="@color/muz_on_surface_variant" />
+
+            <EditText
+                android:id="@+id/editTextFoodName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/syne_regular"
+                android:hint="@string/food_name_hint"
+                android:inputType="text"
+                android:paddingVertical="14dp"
+                android:singleLine="true"
+                android:textColor="@color/muz_on_surface"
+                android:textColorHint="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Calories input -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/back"
-            android:textColor="@color/muz_on_surface_variant" />
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input_glass"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingVertical="2dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lucide_dumbbell"
+                app:tint="@color/muz_on_surface_variant" />
+
+            <EditText
+                android:id="@+id/editTextCalories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/syne_regular"
+                android:hint="@string/food_calories_hint"
+                android:inputType="numberDecimal"
+                android:paddingVertical="14dp"
+                android:singleLine="true"
+                android:textColor="@color/muz_on_surface"
+                android:textColorHint="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Macros row: carbs / protein / fat -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_input_glass"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingVertical="2dp">
+
+                <EditText
+                    android:id="@+id/editTextCarbs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:fontFamily="@font/syne_regular"
+                    android:hint="@string/food_carbs_hint"
+                    android:inputType="numberDecimal"
+                    android:paddingVertical="14dp"
+                    android:singleLine="true"
+                    android:textColor="@color/muz_on_surface"
+                    android:textColorHint="@color/muz_on_surface_variant"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="3dp"
+                android:layout_marginEnd="3dp"
+                android:background="@drawable/bg_input_glass"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingVertical="2dp">
+
+                <EditText
+                    android:id="@+id/editTextProtein"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:fontFamily="@font/syne_regular"
+                    android:hint="@string/food_protein_hint"
+                    android:inputType="numberDecimal"
+                    android:paddingVertical="14dp"
+                    android:singleLine="true"
+                    android:textColor="@color/muz_on_surface"
+                    android:textColorHint="@color/muz_on_surface_variant"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_input_glass"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingVertical="2dp">
+
+                <EditText
+                    android:id="@+id/editTextFat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:fontFamily="@font/syne_regular"
+                    android:hint="@string/food_fat_hint"
+                    android:inputType="numberDecimal"
+                    android:paddingVertical="14dp"
+                    android:singleLine="true"
+                    android:textColor="@color/muz_on_surface"
+                    android:textColorHint="@color/muz_on_surface_variant"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Action row: back (text+icon) + save (lime, with check icon) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBackManualFood"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/back"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="14sp"
+                app:icon="@drawable/ic_lucide_arrow_left"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="16dp"
+                app:iconTint="@color/muz_on_surface_variant" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveManualFood"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="2"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="@color/muz_primary_lime"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/save"
+                android:textColor="@color/muz_surface_l0"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_lucide_check"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/muz_surface_l0" />
+        </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+
+</FrameLayout>

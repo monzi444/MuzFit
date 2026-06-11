@@ -1,27 +1,23 @@
 package com.example.muzfit.ui.training.fragment;
 
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -33,7 +29,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.muzfit.R;
 import com.example.muzfit.adapter.ExerciseSearchAdapter;
 import com.example.muzfit.adapter.SelectedExercisesAdapter;
-import com.example.muzfit.adapter.WorkoutRecyclerAdapter;
 import com.example.muzfit.model.Exercise;
 import com.example.muzfit.model.Result;
 import com.example.muzfit.model.WorkoutRoutine;
@@ -44,20 +39,19 @@ import com.example.muzfit.utils.ServiceLocator;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 
+import eightbitlab.com.blurview.BlurAlgorithm;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderEffectBlur;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class WorkoutFragment extends Fragment {
 
-    private RecyclerView routineRecyclerView;
+    private ComposeView workoutRoutinesCompose;
     private Button startWorkoutButton;
     private Button btnRoutineOptions;
     private Button createRoutineButton;
-    private WorkoutRecyclerAdapter adapter;
-    private LinearLayout scrollbarContainer;
     private TrainingViewModel viewModel;
     private final List<WorkoutRoutine> routineList = new ArrayList<>();
     private int selectedPosition = -1;
@@ -72,17 +66,10 @@ public class WorkoutFragment extends Fragment {
         );
         viewModel = new ViewModelProvider(this, factory).get(TrainingViewModel.class);
 
-        routineRecyclerView = view.findViewById(R.id.routineRecyclerView);
-        scrollbarContainer = view.findViewById(R.id.scrollbar_container);
+        workoutRoutinesCompose = view.findViewById(R.id.workoutRoutinesCompose);
         startWorkoutButton = view.findViewById(R.id.startWorkoutButton);
         btnRoutineOptions = view.findViewById(R.id.btnRoutineOptions);
         createRoutineButton = view.findViewById(R.id.createRoutineButton);
-
-        adapter = new WorkoutRecyclerAdapter(routineList, position -> {
-            selectedPosition = position;
-        });
-        routineRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        routineRecyclerView.setAdapter(adapter);
 
         view.findViewById(R.id.btnWorkoutHistory).setOnClickListener(v -> {
             startActivity(new Intent(getContext(), com.example.muzfit.ui.training.WorkoutHistoryActivity.class));
@@ -102,7 +89,7 @@ public class WorkoutFragment extends Fragment {
                     Toast.makeText(getContext(), "This routine has no exercises!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                
+
                 Intent intent = new Intent(getContext(), WorkoutSessionActivity.class);
                 intent.putExtra("EXTRA_ROUTINE", routine);
                 startActivity(intent);
@@ -142,17 +129,43 @@ public class WorkoutFragment extends Fragment {
             if (!isAdded()) return;
             if (result.isLoading()) return;
             if (result.isError()) return;
-            
+
             List<WorkoutRoutine> data = ((Result.Success<List<WorkoutRoutine>>) result).getData();
             if (data != null) {
                 routineList.clear();
                 routineList.addAll(data);
-                Collections.sort(routineList, (r1, r2) -> r1.getName().compareToIgnoreCase(r2.getName()));
-                adapter.notifyDataSetChanged();
-                setupAlphabetScrollbar();
+                java.util.Collections.sort(routineList, (r1, r2) -> r1.getName().compareToIgnoreCase(r2.getName()));
+                renderRoutines();
                 preloadRoutineGifs(data);
             }
         });
+    }
+
+    private void renderRoutines() {
+        if (workoutRoutinesCompose == null) return;
+        WorkoutRoutinesBridge.setContent(
+                workoutRoutinesCompose,
+                routineList,
+                selectedPosition,
+                (Integer idx) -> { selectedPosition = idx; renderRoutines(); return kotlin.Unit.INSTANCE; },
+                (WorkoutRoutine r) -> { showManageRoutineDialog(r); return kotlin.Unit.INSTANCE; },
+                (WorkoutRoutine r) -> {
+                    int pos = routineList.indexOf(r);
+                    if (pos >= 0) showDeleteConfirmDialog(pos);
+                    return kotlin.Unit.INSTANCE;
+                },
+                () -> {
+                    List<Exercise> selectedExercises = new ArrayList<>();
+                    showRoutineDialog(selectedExercises, () -> {
+                        if (!selectedExercises.isEmpty()) {
+                            showManageRoutineDialog(new WorkoutRoutine(getNextDefaultWorkoutName(), selectedExercises));
+                        } else {
+                            Toast.makeText(getContext(), "Select at least one exercise to continue", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return kotlin.Unit.INSTANCE;
+                }
+        );
     }
 
     private void preloadRoutineGifs(List<WorkoutRoutine> routines) {
@@ -172,142 +185,90 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
-    private void setupAlphabetScrollbar() {
-        if (scrollbarContainer == null) return;
-        scrollbarContainer.removeAllViews();
-        scrollbarContainer.setBackgroundColor(Color.TRANSPARENT);
-
-        Set<Character> lettersSet = new TreeSet<>();
-        for (WorkoutRoutine r : routineList) {
-            if (r.getName() != null && !r.getName().isEmpty()) {
-                lettersSet.add(Character.toUpperCase(r.getName().charAt(0)));
-            }
-        }
-        
-        List<Character> letters = new ArrayList<>(lettersSet);
-        if (letters.isEmpty()) return;
-
-        int primaryColor = ContextCompat.getColor(requireContext(), R.color.muz_primary_lime);
-        int textColor = ContextCompat.getColor(requireContext(), R.color.muz_on_surface);
-
-        int numLetters = letters.size();
-        
-        // Formule dinamiche per ridimensionamento
-        float scaleFactor = Math.max(0.4f, Math.min(1.0f, 10f / numLetters));
-        
-        int dotSizeDp = (int) (16 * scaleFactor);
-        if (dotSizeDp < 6) dotSizeDp = 6;
-        
-        int textSizeSp = (int) (14 * scaleFactor);
-        if (textSizeSp < 9) textSizeSp = 9;
-
-        for (Character letter : letters) {
-            LinearLayout itemLayout = new LinearLayout(requireContext());
-            itemLayout.setOrientation(LinearLayout.VERTICAL);
-            itemLayout.setGravity(Gravity.CENTER);
-            
-            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
-            itemLayout.setLayoutParams(itemParams);
-
-            View dot = new View(requireContext());
-            int dotSizePx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dotSizeDp, getResources().getDisplayMetrics());
-            LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(dotSizePx, dotSizePx);
-            dot.setLayoutParams(dotParams);
-            
-            android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
-            shape.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-            shape.setColor(primaryColor);
-            dot.setBackground(shape);
-
-            TextView tv = new TextView(requireContext());
-            tv.setText(String.valueOf(letter));
-            tv.setGravity(Gravity.CENTER);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp);
-            tv.setTextColor(textColor);
-            tv.setTypeface(null, Typeface.BOLD);
-            
-            itemLayout.addView(dot);
-            itemLayout.addView(tv);
-            
-            scrollbarContainer.addView(itemLayout);
-        }
-
-        scrollbarContainer.setOnTouchListener((v, event) -> {
-            if (event.getAction() == android.view.MotionEvent.ACTION_MOVE || 
-                event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
-                
-                float y = event.getY();
-                int childCount = scrollbarContainer.getChildCount();
-                if (childCount == 0) return true;
-                
-                for (int i = 0; i < childCount; i++) {
-                    View child = scrollbarContainer.getChildAt(i);
-                    if (y >= child.getTop() && y <= child.getBottom()) {
-                        scrollToLetter(letters.get(i));
-                        break;
-                    }
-                }
-                return true;
-            }
-            return false;
-        });
-    }
-
-    private void scrollToLetter(Character letter) {
-        for (int i = 0; i < routineList.size(); i++) {
-            if (Character.toUpperCase(routineList.get(i).getName().charAt(0)) == letter) {
-                ((LinearLayoutManager) routineRecyclerView.getLayoutManager())
-                        .scrollToPositionWithOffset(i, 0);
-                break;
-            }
-        }
-    }
-
     private void showDeleteConfirmDialog(int position) {
         WorkoutRoutine routine = routineList.get(position);
-        new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
-                .setTitle(R.string.delete_confirm_title)
-                .setMessage(R.string.delete_confirm_message)
-                .setPositiveButton(R.string.delete, (dialog, which) -> {
-                    viewModel.deleteRoutine(routine.getName()).observe(getViewLifecycleOwner(), result -> {
-                        if (!isAdded()) return;
-                        if (result.isLoading()) return;
-                        if (result.isSuccess()) {
-                            loadRoutines();
-                            selectedPosition = -1;
-                            adapter.clearSelection();
-                            Toast.makeText(getContext(), R.string.routine_deleted_toast, Toast.LENGTH_SHORT).show();
-                        } else {
-                            String msg = ((Result.Error<Void>) result).getMessage();
-                            Toast.makeText(getContext(), "Error deleting: " + msg, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_delete_confirm, null);
+        setupDeleteConfirmDialogBlur(dialogView);
+
+        TextView tvDeleteConfirmMessage = dialogView.findViewById(R.id.tvDeleteConfirmMessage);
+        // Personalize the message with the routine name so the user knows
+        // exactly which routine they're about to remove.
+        tvDeleteConfirmMessage.setText(getString(R.string.delete_confirm_message_with_name, routine.getName()));
+
+        com.google.android.material.button.MaterialButton btnCancelDelete =
+                dialogView.findViewById(R.id.btnCancelDelete);
+        com.google.android.material.button.MaterialButton btnConfirmDelete =
+                dialogView.findViewById(R.id.btnConfirmDelete);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
+                .setView(dialogView)
+                .create();
+
+        btnCancelDelete.setOnClickListener(v -> dialog.dismiss());
+
+        btnConfirmDelete.setOnClickListener(v -> {
+            viewModel.deleteRoutine(routine.getName()).observe(getViewLifecycleOwner(), result -> {
+                if (!isAdded()) return;
+                if (result.isLoading()) return;
+                if (result.isSuccess()) {
+                    dialog.dismiss();
+                    loadRoutines();
+                    selectedPosition = -1;
+                    Toast.makeText(getContext(), R.string.routine_deleted_toast, Toast.LENGTH_SHORT).show();
+                } else {
+                    String msg = ((Result.Error<Void>) result).getMessage();
+                    Toast.makeText(getContext(), "Error deleting: " + msg, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        dialog.show();
     }
 
     private void showRoutineOptionsDialog(WorkoutRoutine routine, int position) {
-        String[] options = {"Edit", "Delete"};
-        new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
-                .setTitle("Routine Options")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        showManageRoutineDialog(routine);
-                    } else if (which == 1) {
-                        showDeleteConfirmDialog(position);
-                    }
-                })
-                .show();
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_routine_options, null);
+        setupRoutineOptionsDialogBlur(dialogView);
+
+        TextView tvRoutineOptionsName = dialogView.findViewById(R.id.tvRoutineOptionsName);
+        View llOptionEdit = dialogView.findViewById(R.id.llOptionEdit);
+        View llOptionDelete = dialogView.findViewById(R.id.llOptionDelete);
+        com.google.android.material.button.MaterialButton btnCancel =
+                dialogView.findViewById(R.id.btnCancelRoutineOptions);
+
+        if (routine != null && tvRoutineOptionsName != null) {
+            tvRoutineOptionsName.setText(routine.getName());
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
+                .setView(dialogView)
+                .create();
+
+        llOptionEdit.setOnClickListener(v -> {
+            dialog.dismiss();
+            showManageRoutineDialog(routine);
+        });
+        llOptionDelete.setOnClickListener(v -> {
+            dialog.dismiss();
+            showDeleteConfirmDialog(position);
+        });
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void showManageRoutineDialog(@Nullable WorkoutRoutine routineToEdit) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_manage_exercises, null);
+        setupManageExercisesDialogBlur(dialogView);
         TextInputEditText etRoutineName = dialogView.findViewById(R.id.etRoutineName);
         RecyclerView rvSelectedExercises = dialogView.findViewById(R.id.rvSelectedExercises);
         Button btnAddNewExercise = dialogView.findViewById(R.id.btnAddNewExercise);
+        com.google.android.material.button.MaterialButton btnCancelManage =
+                dialogView.findViewById(R.id.btnCancelManage);
+        com.google.android.material.button.MaterialButton btnSaveManage =
+                dialogView.findViewById(R.id.btnSaveManage);
 
         List<SelectedExercisesAdapter.SelectableExercise> selectableExercises = new ArrayList<>();
         if (routineToEdit != null) {
@@ -350,9 +311,20 @@ public class WorkoutFragment extends Fragment {
             });
         });
 
-        builder.setTitle(routineToEdit == null ? R.string.create_routine_title : R.string.edit_routine_title);
+        // Build the dialog WITHOUT system title/positive/negative buttons — those
+        // would sit outside our glass card. Instead wire the in-XML Cancel/Save
+        // buttons so the entire panel reads as one coherent surface.
         builder.setView(dialogView);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> {
+        final AlertDialog dialog = builder.create();
+
+        // Hold a ref to the final selected exercises list for the save handler.
+        final List<SelectedExercisesAdapter.SelectableExercise> finalSelectable = selectableExercises;
+
+        btnCancelManage.setOnClickListener(v -> {
+            dialog.dismiss();
+        });
+
+        btnSaveManage.setOnClickListener(v -> {
             if (etRoutineName.getText() == null) {
                 return;
             }
@@ -363,7 +335,7 @@ public class WorkoutFragment extends Fragment {
             }
 
             List<Exercise> finalExercises = new ArrayList<>();
-            for (SelectedExercisesAdapter.SelectableExercise se : selectableExercises) {
+            for (SelectedExercisesAdapter.SelectableExercise se : finalSelectable) {
                 if (se.isSelected) {
                     finalExercises.add(se.exercise);
                 }
@@ -377,6 +349,7 @@ public class WorkoutFragment extends Fragment {
                 if (result.isLoading()) return;
 
                 if (result.isSuccess()) {
+                    dialog.dismiss();
                     loadRoutines();
                     Toast.makeText(getContext(), getString(R.string.routine_created_toast), Toast.LENGTH_SHORT).show();
                 } else {
@@ -385,20 +358,24 @@ public class WorkoutFragment extends Fragment {
                 }
             });
         });
-        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
-        builder.show();
+
+        dialog.show();
     }
 
     private void showRoutineDialog(List<Exercise> selectedExercises, Runnable onComplete) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_workout, null);
+        setupCreateWorkoutDialogBlur(dialogView);
         View til = dialogView.findViewById(R.id.tilRoutineName);
         if (til != null) til.setVisibility(View.GONE);
-        
+
         EditText etSearchExercise = dialogView.findViewById(R.id.etSearchExercise);
         RecyclerView rvExerciseResults = dialogView.findViewById(R.id.rvExerciseResults);
         TextView tvSelectedExercisesCount = dialogView.findViewById(R.id.tvSelectedExercisesCount);
         ChipGroup cgBodyParts = dialogView.findViewById(R.id.cgBodyParts);
+        com.google.android.material.button.MaterialButton btnCancelCreateWorkout =
+                dialogView.findViewById(R.id.btnCancelCreateWorkout);
+        com.google.android.material.button.MaterialButton btnSaveCreateWorkout =
+                dialogView.findViewById(R.id.btnSaveCreateWorkout);
 
         List<Exercise> searchResults = new ArrayList<>();
 
@@ -439,10 +416,20 @@ public class WorkoutFragment extends Fragment {
             public void afterTextChanged(Editable s) {}
         });
 
-        builder.setTitle(R.string.search_exercises);
-        builder.setView(dialogView);
-        builder.setPositiveButton(R.string.save, (dialog, which) -> onComplete.run());
-        builder.show();
+        // Build the dialog WITHOUT system title/positive/negative buttons — those
+        // would sit outside our glass card and double up with the in-XML header
+        // and the in-XML Cancel/Save buttons.
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.Theme_MuzFit_Dialog)
+                .setView(dialogView)
+                .create();
+
+        btnCancelCreateWorkout.setOnClickListener(v -> dialog.dismiss());
+        btnSaveCreateWorkout.setOnClickListener(v -> {
+            dialog.dismiss();
+            onComplete.run();
+        });
+
+        dialog.show();
     }
 
     private void showRoutineDialog(@Nullable WorkoutRoutine routineToEdit) {
@@ -545,5 +532,85 @@ public class WorkoutFragment extends Fragment {
             }
         }
         return null;
+    }
+
+    /**
+     * Wires the BlurView on the manage-exercises dialog (Android 12+). On older
+     * devices the BlurView stays transparent and the translucent glass
+     * background still gives a soft frosted look.
+     */
+    private void setupManageExercisesDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.manage_exercises_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = requireActivity().findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /** Same as above, for the search-exercises dialog. */
+    private void setupCreateWorkoutDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.create_workout_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = requireActivity().findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /** Blur for dialog_routine_options (edit / delete routine). */
+    private void setupRoutineOptionsDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.routine_options_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = requireActivity().findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /** Blur for dialog_delete_confirm (confirm a routine deletion). */
+    private void setupDeleteConfirmDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.delete_confirm_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = requireActivity().findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /**
+     * Clips the given BlurView to a 28dp rounded rectangle. The XML
+     * `bg_dialog_blur_rounded` background + clipToOutline combo is
+     * unreliable for BlurView (which extends ConstraintLayout) on
+     * some devices/emulators, so we also set a programmatic outline
+     * provider. The two are belt-and-braces and both yield the same
+     * 28dp corner radius as the glass card on top.
+     */
+    private void applyRoundedOutline(BlurView blurView) {
+        if (blurView == null) return;
+        final float radiusPx = 28f * blurView.getResources().getDisplayMetrics().density;
+        blurView.setOutlineProvider(new android.view.ViewOutlineProvider() {
+            @Override
+            public void getOutline(android.view.View view, android.graphics.Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+            }
+        });
+        blurView.setClipToOutline(true);
     }
 }

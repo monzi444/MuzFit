@@ -1,248 +1,536 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Profile fragment — full editorial redesign.
+  Layout sections, top to bottom:
+    1. Sticky top bar with screen label + theme toggle (in a glass chip)
+    2. Hero: avatar 120dp + name 28sp Syne bold + email label
+    3. Physique stats card (Peso, Altezza, Età/Gender) — Lucide icons + values
+    4. Action row: Edit profile + Set goals (lime primary, in-card)
+    5. Goals card: Kcal target big number + Carbo/Proteine/Grassi rows
+    6. Footer action: Logout (red outlined)
+-->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:tools="http://schemas.tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/muz_surface_l0"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    android:paddingBottom="120dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="32dp">
 
+        <!-- ============== TOP BAR ============== -->
         <LinearLayout
-            android:id="@+id/ll_theme_toggle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:contentDescription="Light Mode"
-                android:src="@drawable/ic_sun"
-                app:tint="@color/muz_on_surface_variant" />
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/switch_theme"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
-                app:thumbTint="@color/muzfit_switch_thumb"
-                app:trackTint="@color/muzfit_switch_track" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:contentDescription="Dark Mode"
-                android:src="@drawable/ic_moon"
-                app:tint="@color/muz_on_surface_variant" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/syne_regular"
+                    android:letterSpacing="0.12"
+                    android:text="@string/profile_screen_label"
+                    android:textColor="@color/muz_on_surface_variant"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/syne_regular"
+                    android:text="@string/profile_screen_title"
+                    android:textColor="@color/muz_on_surface"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Theme toggle chip: glass card containing sun + switch + moon -->
+            <LinearLayout
+                android:id="@+id/ll_theme_toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:background="@drawable/muzfit_glass_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="Light Mode"
+                    android:src="@drawable/ic_lucide_sun"
+                    app:tint="@color/muz_on_surface_variant" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switch_theme"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="6dp"
+                    app:thumbTint="@color/muzfit_switch_thumb"
+                    app:trackTint="@color/muzfit_switch_track" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="Dark Mode"
+                    android:src="@drawable/ic_lucide_moon"
+                    app:tint="@color/muz_on_surface_variant" />
+            </LinearLayout>
         </LinearLayout>
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/iv_avatar"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_marginTop="32dp"
-            android:padding="2dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearanceOverlay="@style/CircleAppearance"
-            app:strokeColor="@color/muz_glass_border"
-            app:strokeWidth="1.5dp" />
-
-        <TextView
-            android:id="@+id/tv_nome_utente"
-            style="@style/MuzFit.Text.Display"
-            android:layout_width="wrap_content"
+        <!-- ============== HERO (avatar + name + email) ============== -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Nome Utente"
-            android:textSize="28sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/iv_avatar" />
+            android:layout_marginTop="36dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_email_utente"
-            style="@style/MuzFit.Text.Label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="utente@example.com"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_nome_utente" />
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/iv_avatar"
+                android:layout_width="112dp"
+                android:layout_height="112dp"
+                android:padding="2dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/bg_profile_avatar_placeholder"
+                app:shapeAppearanceOverlay="@style/CircleAppearance"
+                app:strokeColor="@color/muz_glass_border"
+                app:strokeWidth="1.5dp" />
 
-        <!-- Physique Card (Glassmorphism) -->
+            <TextView
+                android:id="@+id/tv_nome_utente"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:fontFamily="@font/syne_regular"
+                android:text="Nome Utente"
+                android:textColor="@color/muz_on_surface"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_email_utente"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/syne_regular"
+                android:letterSpacing="0.05"
+                android:text="utente@example.com"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- ============== PHYSIQUE STATS CARD ============== -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_physique"
             style="@style/MuzFit.Card.Glass"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            app:layout_constraintTop_toBottomOf="@+id/tv_email_utente">
+            android:layout_marginTop="28dp">
 
             <LinearLayout
                 android:id="@+id/ll_info_fisiche"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="24dp">
+                android:padding="18dp"
+                android:weightSum="3">
 
-                <LinearLayout style="@style/VerticalStatBox">
-                    <TextView
-                        style="@style/MuzFit.Text.Label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Peso" />
+                <!-- Weight -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="Weight"
+                        android:src="@drawable/ic_lucide_scale"
+                        app:tint="@color/muz_primary_lime" />
 
                     <TextView
                         android:id="@+id/tv_peso"
-                        style="@style/MuzFit.Text.Display"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/syne_regular"
                         android:text="-- kg"
-                        android:textSize="20sp" />
+                        android:textColor="@color/muz_on_surface"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/syne_regular"
+                        android:letterSpacing="0.12"
+                        android:text="@string/profile_weight_label"
+                        android:textColor="@color/muz_on_surface_variant"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <LinearLayout style="@style/VerticalStatBox">
-                    <TextView
-                        style="@style/MuzFit.Text.Label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Altezza" />
+                <!-- Vertical divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginHorizontal="6dp"
+                    android:background="@color/muz_glass_border" />
+
+                <!-- Height -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="Height"
+                        android:src="@drawable/ic_lucide_ruler"
+                        app:tint="@color/muz_primary_lime" />
 
                     <TextView
                         android:id="@+id/tv_altezza"
-                        style="@style/MuzFit.Text.Display"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/syne_regular"
                         android:text="-- cm"
-                        android:textSize="20sp" />
+                        android:textColor="@color/muz_on_surface"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/syne_regular"
+                        android:letterSpacing="0.12"
+                        android:text="@string/profile_height_label"
+                        android:textColor="@color/muz_on_surface_variant"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <LinearLayout style="@style/VerticalStatBox">
-                    <TextView
-                        style="@style/MuzFit.Text.Label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/profile_gender_label" />
+                <!-- Vertical divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginHorizontal="6dp"
+                    android:background="@color/muz_glass_border" />
+
+                <!-- Age / Gender -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="Age"
+                        android:src="@drawable/ic_lucide_user"
+                        app:tint="@color/muz_primary_lime" />
 
                     <TextView
                         android:id="@+id/tv_eta"
-                        style="@style/MuzFit.Text.Display"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/syne_regular"
                         android:text="-- anni"
-                        android:textSize="20sp" />
+                        android:textColor="@color/muz_on_surface"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/syne_regular"
+                        android:letterSpacing="0.12"
+                        android:text="@string/profile_gender_label"
+                        android:textColor="@color/muz_on_surface_variant"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_modifica_profilo"
-            style="@style/MuzFit.Button.Skeuo"
+        <!-- ============== ACTION ROW (Edit + Goals) ============== -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginTop="48dp"
-            android:text="Modifica Profilo"
-            app:layout_constraintTop_toBottomOf="@+id/card_physique" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_obiettivi"
-            style="@style/MuzFit.Button.Skeuo"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginTop="16dp"
-            android:text="Imposta Obiettivi"
-            app:layout_constraintTop_toBottomOf="@+id/btn_modifica_profilo" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_modifica_profilo"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="@color/muz_primary_lime"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/profile_edit_button"
+                android:textColor="@color/muz_surface_l0"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_lucide_pencil"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="16dp"
+                app:iconTint="@color/muz_surface_l0" />
 
-        <!-- Goals Card (Glassmorphism) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_obiettivi"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/profile_goals_button"
+                android:textColor="@color/muz_on_surface"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_lucide_target"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="16dp"
+                app:iconTint="@color/muz_on_surface"
+                app:strokeColor="@color/muz_glass_border" />
+        </LinearLayout>
+
+        <!-- ============== GOALS CARD ============== -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_goals"
             style="@style/MuzFit.Card.Glass"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="64dp"
-            app:layout_constraintTop_toBottomOf="@+id/btn_obiettivi">
+            android:layout_marginTop="18dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:orientation="vertical"
-                android:padding="24dp">
-
-                <TextView
-                    style="@style/MuzFit.Text.Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Kcal Quotidiane" />
-
-                <TextView
-                    android:id="@+id/tv_obiettivo_kcal"
-                    style="@style/MuzFit.Text.Display"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="OB = 2000"
-                    android:textSize="24sp" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="20dp"
-                    android:background="@color/muz_glass_border" />
+                android:padding="22dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/tv_carbo"
-                        style="@style/HorizontalStatText"
-                        android:text="Carbo\n-- g" />
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="Kcal target"
+                        android:src="@drawable/ic_lucide_flame"
+                        app:tint="@color/muz_primary_lime" />
 
                     <TextView
-                        android:id="@+id/tv_proteine"
-                        style="@style/HorizontalStatText"
-                        android:text="Proteine\n-- g" />
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/syne_regular"
+                        android:letterSpacing="0.12"
+                        android:text="@string/profile_kcal_daily_label"
+                        android:textColor="@color/muz_on_surface_variant"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tv_grassi"
-                        style="@style/HorizontalStatText"
-                        android:text="Grassi\n-- g" />
+                <TextView
+                    android:id="@+id/tv_obiettivo_kcal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="@font/syne_regular"
+                    android:text="OB = 2000 kcal"
+                    android:textColor="@color/muz_on_surface"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="18dp"
+                    android:background="@color/muz_glass_border" />
+
+                <!-- Macros: Carbo / Proteine / Grassi rows -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="Carbs"
+                            android:src="@drawable/ic_lucide_wheat"
+                            app:tint="@color/muz_on_surface_variant" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/syne_regular"
+                            android:text="@string/profile_carbs_label"
+                            android:textColor="@color/muz_on_surface"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_carbo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/syne_regular"
+                            android:text="-- g"
+                            android:textColor="@color/muz_on_surface"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="Proteins"
+                            android:src="@drawable/ic_lucide_beef"
+                            app:tint="@color/muz_on_surface_variant" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/syne_regular"
+                            android:text="@string/profile_protein_label"
+                            android:textColor="@color/muz_on_surface"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_proteine"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/syne_regular"
+                            android:text="-- g"
+                            android:textColor="@color/muz_on_surface"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="Fats"
+                            android:src="@drawable/ic_lucide_butter"
+                            app:tint="@color/muz_on_surface_variant" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/syne_regular"
+                            android:text="@string/profile_fats_label"
+                            android:textColor="@color/muz_on_surface"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_grassi"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/syne_regular"
+                            android:text="-- g"
+                            android:textColor="@color/muz_on_surface"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- ============== LOGOUT ============== -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_logout"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="52dp"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
+            android:fontFamily="@font/syne_regular"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/logout_button"
             android:textColor="@color/activity_low"
-            app:layout_constraintTop_toBottomOf="@+id/card_goals"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_lucide_log_out"
+            app:iconGravity="textStart"
+            app:iconPadding="6dp"
+            app:iconSize="16dp"
+            app:iconTint="@color/activity_low"
             app:strokeColor="@color/activity_low" />
 
         <!-- Dynamic Spacer to prevent overlap with Floating Navbar -->
         <View
             android:id="@+id/nav_spacer"
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            app:layout_constraintTop_toBottomOf="@+id/btn_logout" />
+            android:layout_height="60dp" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </androidx.core.widget.NestedScrollView>

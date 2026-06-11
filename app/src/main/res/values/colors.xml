@@ -8,6 +8,8 @@
     <color name="muz_surface_l0">#0f0e0f</color>
     <color name="muz_container_l2">#1a1b1b</color>
     <color name="muz_overlay_dim">#99000000</color>
+    <color name="muz_primary_lime_tint">#33c5f701</color> <!-- muz_primary_lime @ 20% — ripple for quick action -->
+    <color name="muz_quick_action_bg">#B30F0E0F</color> <!-- dark glass for quick action buttons (subtle dim) -->
 
     <!-- Glassmorphism Surface -->
     <color name="muz_glass_bg">#991a1b1b</color>

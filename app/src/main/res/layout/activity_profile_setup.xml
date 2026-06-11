@@ -249,11 +249,18 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/profile_setup_save"
-                        style="@style/MuzFit.Button.Skeuo"
+                        style="@style/Widget.Material3.Button"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
+                        android:layout_height="52dp"
                         android:layout_marginTop="20dp"
-                        android:text="@string/profile_setup_save" />
+                        android:backgroundTint="@color/muz_primary_lime"
+                        android:fontFamily="@font/syne_regular"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="@string/profile_setup_save"
+                        android:textColor="@color/muz_surface_l0"
+                        android:textStyle="bold"
+                        app:cornerRadius="14dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
