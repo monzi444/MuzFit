@@ -291,7 +291,7 @@ fun MealSectionsContent(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         MealSection(
-            title = "Colazione",
+            title = "Breakfast",
             items = colazione,
             emptyStateLabel = "Add breakfast",
             onDelete = onDelete,
@@ -299,7 +299,7 @@ fun MealSectionsContent(
         )
         Spacer(modifier = Modifier.height(20.dp))
         MealSection(
-            title = "Pranzo",
+            title = "Lunch",
             items = pranzo,
             emptyStateLabel = "Add lunch",
             onDelete = onDelete,
@@ -307,7 +307,7 @@ fun MealSectionsContent(
         )
         Spacer(modifier = Modifier.height(20.dp))
         MealSection(
-            title = "Cena",
+            title = "Dinner",
             items = cena,
             emptyStateLabel = "Add dinner",
             onDelete = onDelete,

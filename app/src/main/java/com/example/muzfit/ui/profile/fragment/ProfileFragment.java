@@ -186,7 +186,7 @@ public class ProfileFragment extends Fragment {
                 : getString(R.string.profile_name_fallback);
         tvNomeUtente.setText(displayName);
         if (tvEmailUtente.getText().toString().isEmpty()
-                || tvEmailUtente.getText().toString().equals("utente@example.com")) {
+                || tvEmailUtente.getText().toString().equals("user@example.com")) {
             tvEmailUtente.setText(formatUidHandle(user.getUid()));
         }
         tvPeso.setText(getString(R.string.profile_weight_format, user.getWeight()));

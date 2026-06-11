@@ -354,7 +354,7 @@ public class WorkoutFragment extends Fragment {
                     Toast.makeText(getContext(), getString(R.string.routine_created_toast), Toast.LENGTH_SHORT).show();
                 } else {
                     String msg = ((Result.Error<Void>) result).getMessage();
-                    Toast.makeText(getContext(), "Errore salvataggio: " + msg, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Save error: " + msg, Toast.LENGTH_SHORT).show();
                 }
             });
         });
@@ -471,11 +471,11 @@ public class WorkoutFragment extends Fragment {
         for (int i = 0; i < checked.length; i++) checked[i] = true;
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Riepilogo Esercizi (deseleziona per rimuovere)")
+                .setTitle(getString(R.string.workout_exercise_summary))
                 .setMultiChoiceItems(names, checked, (dialog, which, isChecked) -> {
                     checked[which] = isChecked;
                 })
-                .setPositiveButton("Conferma", (dialog, which) -> {
+                .setPositiveButton(getString(R.string.workout_confirm_button), (dialog, which) -> {
                     for (int i = checked.length - 1; i >= 0; i--) {
                         if (!checked[i]) {
                             selectedExercises.remove(i);

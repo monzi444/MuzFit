@@ -510,7 +510,7 @@ public class HomeFragment extends Fragment {
                     Collections.sort(weightEntries, (e1, e2) -> Long.compare(e2.getDateMillis(), e1.getDateMillis()));
                     emptyView.setVisibility(View.GONE);
                 } else {
-                    emptyView.setText("Nessun peso registrato");
+                    emptyView.setText(getString(R.string.weight_history_empty));
                     emptyView.setVisibility(View.VISIBLE);
                 }
                 adapter.notifyDataSetChanged();

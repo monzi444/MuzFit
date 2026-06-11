@@ -4,9 +4,9 @@
   Layout sections, top to bottom:
     1. Sticky top bar with screen label + theme toggle (in a glass chip)
     2. Hero: avatar 120dp + name 28sp Syne bold + email label
-    3. Physique stats card (Peso, Altezza, Età/Gender) — Lucide icons + values
+    3. Physique stats card (Weight, Height, Age/Gender) — Lucide icons + values
     4. Action row: Edit profile + Set goals (lime primary, in-card)
-    5. Goals card: Kcal target big number + Carbo/Proteine/Grassi rows
+    5. Goals card: Kcal target big number + Carbs/Protein/Fats rows
     6. Footer action: Logout (red outlined)
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
@@ -119,7 +119,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:fontFamily="@font/syne_regular"
-                android:text="Nome Utente"
+                android:text="User Name"
                 android:textColor="@color/muz_on_surface"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -131,7 +131,7 @@
                 android:layout_marginTop="2dp"
                 android:fontFamily="@font/syne_regular"
                 android:letterSpacing="0.05"
-                android:text="utente@example.com"
+                android:text="user@example.com"
                 android:textColor="@color/muz_on_surface_variant"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -263,7 +263,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:fontFamily="@font/syne_regular"
-                        android:text="-- anni"
+                        android:text="-- years"
                         android:textColor="@color/muz_on_surface"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -380,7 +380,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:fontFamily="@font/syne_regular"
-                    android:text="OB = 2000 kcal"
+                    android:text="2000 kcal"
                     android:textColor="@color/muz_on_surface"
                     android:textSize="32sp"
                     android:textStyle="bold" />

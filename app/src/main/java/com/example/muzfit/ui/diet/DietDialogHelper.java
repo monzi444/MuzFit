@@ -409,7 +409,7 @@ public class DietDialogHelper {
     }
 
     private CharSequence resolveCatalogDeleteError(String message) {
-        return message != null ? message : "Errore catalogo";
+        return message != null ? message : "Catalog error";
     }
 
     private void dismissChooseMealDialog() {

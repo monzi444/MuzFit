@@ -16,7 +16,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Obiettivo Nutrizionale"
+            android:text="Nutrition Goals"
             android:textSize="18sp"
             android:textStyle="bold"
             android:fontFamily="@font/syne"
@@ -186,7 +186,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="Calorie Assunte Settimanali"
+            android:text="Weekly Calories Consumed"
             android:fontFamily="@font/syne"
             android:textSize="18sp"
             android:textStyle="bold"
