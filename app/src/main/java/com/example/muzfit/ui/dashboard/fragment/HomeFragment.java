@@ -5,6 +5,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
@@ -45,6 +46,10 @@ import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.MuzFitToast;
 import com.example.muzfit.utils.ServiceLocator;
 import com.google.android.material.button.MaterialButton;
+
+import eightbitlab.com.blurview.BlurAlgorithm;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderEffectBlur;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -382,6 +387,8 @@ public class HomeFragment extends Fragment {
 
     private void showWeightManagementDialog() {
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_profile_generic, null);
+        // Wire the BlurView for the dialog backdrop (Android 12+).
+        setupProfileDialogBlur(dialogView);
         TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
         LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
         MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
@@ -417,8 +424,10 @@ public class HomeFragment extends Fragment {
         layoutParams.setMargins(0, (int) (4 * getResources().getDisplayMetrics().density), 0, 0);
         btnHistory.setLayoutParams(layoutParams);
 
-        // Add to the root layout of the dialog, after btnSave
-        LinearLayout rootLayout = (LinearLayout) dialogView;
+        // Add to the root layout of the dialog, after btnSave.
+        // The dialog_profile_generic root is a FrameLayout, not a LinearLayout,
+        // so we cast to ViewGroup and use indexOfChild/insertView semantics.
+        android.view.ViewGroup rootLayout = (android.view.ViewGroup) dialogView;
         int saveIndex = rootLayout.indexOfChild(btnSave);
         rootLayout.addView(btnHistory, saveIndex + 1);
 
@@ -510,5 +519,42 @@ public class HomeFragment extends Fragment {
 
         dialogView.findViewById(R.id.btnCancelChooseMeal).setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+    }
+
+    /**
+     * Wires the dialog_profile_generic BlurView (Android 12+) for the
+     * showWeightManagementDialog backdrop.
+     */
+    private void setupProfileDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.profile_generic_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = requireActivity().findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /**
+     * Clips the given BlurView to a 28dp rounded rectangle. The XML
+     * `bg_dialog_blur_rounded` background + clipToOutline combo is
+     * unreliable for BlurView (which extends ConstraintLayout) on
+     * some devices/emulators, so we also set a programmatic outline
+     * provider. The two are belt-and-braces and both yield the same
+     * 28dp corner radius as the glass card on top.
+     */
+    private void applyRoundedOutline(BlurView blurView) {
+        if (blurView == null) return;
+        final float radiusPx = 28f * blurView.getResources().getDisplayMetrics().density;
+        blurView.setOutlineProvider(new android.view.ViewOutlineProvider() {
+            @Override
+            public void getOutline(android.view.View view, android.graphics.Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+            }
+        });
+        blurView.setClipToOutline(true);
     }
 }

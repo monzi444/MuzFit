@@ -40,10 +40,14 @@
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
-            style="@style/MuzFit.Text.Label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/instructions_label"
+            android:fontFamily="@font/syne_regular"
+            android:letterSpacing="0.12"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
         <com.google.android.material.card.MaterialCardView

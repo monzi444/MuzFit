@@ -2,6 +2,7 @@ package com.example.muzfit.ui.profile;
 
 import android.app.AlertDialog;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +24,10 @@ import com.example.muzfit.utils.MuzFitToast;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import eightbitlab.com.blurview.BlurAlgorithm;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderEffectBlur;
+
 public class ProfileDialogHelper {
 
     private final FragmentActivity activity;
@@ -41,6 +46,7 @@ public class ProfileDialogHelper {
         }
 
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_profile_generic, null);
+        setupProfileDialogBlur(dialogView);
         TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
         LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
         
@@ -92,6 +98,7 @@ public class ProfileDialogHelper {
         }
 
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_profile_generic, null);
+        setupProfileDialogBlur(dialogView);
         TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
         LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
 
@@ -136,6 +143,7 @@ public class ProfileDialogHelper {
 
     public void showWeightEntryDialog() {
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_profile_generic, null);
+        setupProfileDialogBlur(dialogView);
         TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
         LinearLayout container = dialogView.findViewById(R.id.llInputContainer);
 
@@ -238,5 +246,43 @@ public class ProfileDialogHelper {
         copy.setProteinGoal(source.getProteinGoal());
         copy.setFatGoal(source.getFatGoal());
         return copy;
+    }
+
+    /**
+     * Wires the dialog_profile_generic BlurView (Android 12+). On older devices the
+     * BlurView remains transparent and the translucent glass background still
+     * gives a soft frosted look.
+     */
+    private void setupProfileDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.profile_generic_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = activity.findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /**
+     * Clips the given BlurView to a 28dp rounded rectangle. The XML
+     * `bg_dialog_blur_rounded` background + clipToOutline combo is
+     * unreliable for BlurView (which extends ConstraintLayout) on
+     * some devices/emulators, so we also set a programmatic outline
+     * provider. The two are belt-and-braces and both yield the same
+     * 28dp corner radius as the glass card on top.
+     */
+    private void applyRoundedOutline(BlurView blurView) {
+        if (blurView == null) return;
+        final float radiusPx = 28f * blurView.getResources().getDisplayMetrics().density;
+        blurView.setOutlineProvider(new android.view.ViewOutlineProvider() {
+            @Override
+            public void getOutline(android.view.View view, android.graphics.Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+            }
+        });
+        blurView.setClipToOutline(true);
     }
 }

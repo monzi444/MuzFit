@@ -64,6 +64,8 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.activity.compose)
+    // Lucide icon set for Compose — tree-shakeable, no font files
+    implementation("com.composables:icons-lucide:1.0.0")
 
     testImplementation(libs.junit)
     testImplementation("org.mockito:mockito-core:5.14.2")

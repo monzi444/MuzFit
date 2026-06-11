@@ -11,7 +11,7 @@
         android:id="@+id/ivReorderHandle"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:src="@android:drawable/ic_menu_sort_by_size"
+        android:src="@drawable/ic_lucide_grip_vertical"
         android:contentDescription="Drag handle"
         android:alpha="0.5" />
 

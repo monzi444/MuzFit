@@ -58,7 +58,7 @@
                         android:id="@+id/ivTimerIcon"
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@android:drawable/ic_menu_recent_history"
+                        android:src="@drawable/ic_lucide_history"
                         app:tint="@color/muz_primary_lime"
                         android:contentDescription="Timer" />
 
@@ -129,12 +129,19 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAddSet"
-                style="@style/MuzFit.Button.Skeuo"
+                style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="24dp"
-                android:text="@string/add_set" />
+                android:backgroundTint="@color/muz_primary_lime"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/add_set"
+                android:textColor="@color/muz_surface_l0"
+                android:textStyle="bold"
+                app:cornerRadius="14dp" />
 
         </LinearLayout>
     </ScrollView>
@@ -184,7 +191,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_alignParentEnd="true"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:src="@drawable/ic_lucide_x"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         app:tint="@color/muz_on_surface_variant"
                         android:contentDescription="Close" />
@@ -308,7 +315,7 @@
                         android:id="@+id/btnResetTimer"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@android:drawable/ic_menu_revert"
+                        android:src="@drawable/ic_lucide_arrow_left"
                         android:background="@drawable/muzfit_category_card_bg"
                         android:backgroundTint="@color/muz_container_l2"
                         app:tint="@color/muz_on_surface"
@@ -319,7 +326,7 @@
                         android:id="@+id/btnPauseResumeTimer"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@android:drawable/ic_media_play"
+                        android:src="@drawable/ic_lucide_play"
                         android:background="@drawable/muzfit_category_card_bg"
                         android:backgroundTint="@color/muz_primary_lime"
                         app:tint="@color/muz_surface_l0"

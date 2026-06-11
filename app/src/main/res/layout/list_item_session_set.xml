@@ -67,7 +67,7 @@
             android:id="@+id/btnDeleteSet"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@android:drawable/ic_menu_delete"
+            android:src="@drawable/ic_lucide_trash"
             android:background="?attr/selectableItemBackgroundBorderless"
             app:tint="@color/muz_on_surface_variant"
             android:contentDescription="Delete set" />

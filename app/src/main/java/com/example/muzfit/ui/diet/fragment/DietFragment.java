@@ -76,6 +76,7 @@ public class DietFragment extends Fragment {
     private DietViewModel viewModel;
     private ProfileViewModel profileViewModel;
     private TextView tvCaloriesRemaining;
+    private TextView tvGreetingDate;
     private ComposeView weekCalendarCompose;
     private ComposeView mealSectionsCompose;
     private TextView tvTotalCalories, tvTotalCarbs, tvTotalProtein, tvTotalFat;
@@ -94,6 +95,10 @@ public class DietFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_diet, container, false);
 
         TextView tvGreeting = view.findViewById(R.id.tvGreeting);
+        tvGreetingDate = view.findViewById(R.id.tvGreetingDate);
+        // Static: today's date, formatted in English. Set once per view lifecycle;
+        // we don't refresh it on every user-data callback.
+        tvGreetingDate.setText(formatTodayDate());
         weekCalendarCompose = view.findViewById(R.id.weekCalendarCompose);
         mealSectionsCompose = view.findViewById(R.id.mealSectionsCompose);
 
@@ -342,5 +347,17 @@ public class DietFragment extends Fragment {
                 + " "
                 + getString(R.string.meal_entry_kcal_unit)
                 + ")";
+    }
+
+    /**
+     * Returns today's date formatted in English, e.g. "Wednesday, 11 June".
+     * Used as a subtle subtitle under the "Hi, {name}!" greeting on the meal
+     * page. Locale is forced to ENGLISH so the format is stable regardless
+     * of the device language (the rest of the app may be in Italian).
+     */
+    private String formatTodayDate() {
+        java.text.SimpleDateFormat fmt =
+                new java.text.SimpleDateFormat("EEEE, d MMMM", java.util.Locale.ENGLISH);
+        return fmt.format(new java.util.Date());
     }
 }

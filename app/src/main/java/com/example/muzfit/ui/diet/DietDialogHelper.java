@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -17,7 +18,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +41,11 @@ import com.example.muzfit.service.dto.openfoodfacts.OpenFoodFactsMapper;
 import com.example.muzfit.ui.diet.viewmodel.DietViewModel;
 import com.example.muzfit.utils.Constants;
 import com.example.muzfit.utils.MuzFitToast;
+
+import eightbitlab.com.blurview.BlurAlgorithm;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderEffectBlur;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -93,6 +99,9 @@ public class DietDialogHelper {
         }
 
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_choose_meal, null);
+        // Wire the BlurView (Android 12+). On older devices it stays transparent
+        // and the translucent glass background still gives a soft frosted look.
+        setupDialogBlur(dialogView);
         ListView listView = dialogView.findViewById(R.id.lvChooseMeal);
         TextView emptyView = dialogView.findViewById(R.id.tvChooseMealEmpty);
         EditText searchField = dialogView.findViewById(R.id.etChooseMealSearch);
@@ -125,30 +134,20 @@ public class DietDialogHelper {
         sortField.setText(sortLabels[0], false);
 
         ArrayAdapter<Meal>[] listAdapterRef = new ArrayAdapter[1];
-        listAdapterRef[0] = new ArrayAdapter<Meal>(activity, R.layout.list_item_food, new ArrayList<>()) {
+        listAdapterRef[0] = new ArrayAdapter<Meal>(activity, R.layout.item_choose_meal, new ArrayList<>()) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
                 if (convertView == null) {
-                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_food, parent, false);
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_choose_meal, parent, false);
                 }
                 Meal meal = getItem(position);
-                TextView nameTv = convertView.findViewById(R.id.foodNameTextView);
-                ImageButton deleteBtn = convertView.findViewById(R.id.deleteFoodButton);
+                TextView nameTv = convertView.findViewById(R.id.mealItemName);
+                TextView kcalTv = convertView.findViewById(R.id.mealItemKcal);
 
                 if (meal != null) {
-                    nameTv.setText(formatMealEntry(meal));
-                    deleteBtn.setOnClickListener(v -> {
-                        viewModel.deleteMealFromCatalog(meal).observe(lifecycleOwner, result -> {
-                            if (result.isSuccess()) {
-                                masterMeals.remove(meal);
-                                refreshChooseMealList(masterMeals, listAdapterRef[0], searchField, selectedSort[0], emptyView, listView);
-                                MuzFitToast.show(getContext(), R.string.catalog_food_removed_toast);
-                            } else if (result.isError()) {
-                                MuzFitToast.showError(getContext(), resolveCatalogDeleteError(((Result.Error<?>) result).getMessage()));
-                            }
-                        });
-                    });
+                    nameTv.setText(meal.getFoodName() != null ? meal.getFoodName() : "");
+                    kcalTv.setText(String.format(Locale.getDefault(), "%d kcal", Math.round(meal.getCalories())));
 
                     convertView.setOnClickListener(v -> {
                         dialog.dismiss();
@@ -215,6 +214,8 @@ public class DietDialogHelper {
     private void showCategorySelectionDialog(Meal template, boolean backToAddFood) {
         dismissAddFoodDialog();
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_meal_category, null);
+        // Wire the BlurView for the dialog backdrop (Android 12+).
+        setupCategoryDialogBlur(dialogView);
         MaterialCardView cardColazione = dialogView.findViewById(R.id.cardColazione);
         MaterialCardView cardPranzo = dialogView.findViewById(R.id.cardPranzo);
         MaterialCardView cardCena = dialogView.findViewById(R.id.cardCena);
@@ -258,10 +259,31 @@ public class DietDialogHelper {
         card.setStrokeWidth(selected ? 2 : 1);
         int color = ContextCompat.getColor(activity, selected ? R.color.muz_primary_lime : R.color.muz_glass_border);
         card.setStrokeColor(ColorStateList.valueOf(color));
+        // Recolor the leading icon: walk into the card's first child (the row LinearLayout)
+        // and pick its first child (the ImageView). Lime when selected, on-surface-variant otherwise.
+        ImageView icon = findLeadingIcon(card);
+        if (icon != null) {
+            icon.setColorFilter(ContextCompat.getColor(activity,
+                    selected ? R.color.muz_primary_lime : R.color.muz_on_surface_variant));
+        }
+    }
+
+    /**
+     * Walks the card tree to find the leading icon (the first ImageView in the first
+     * child LinearLayout of the card). Returns null if the structure is unexpected.
+     */
+    private ImageView findLeadingIcon(MaterialCardView card) {
+        if (card.getChildCount() < 1) return null;
+        View row = card.getChildAt(0);
+        if (!(row instanceof ViewGroup)) return null;
+        if (((ViewGroup) row).getChildCount() < 1) return null;
+        View first = ((ViewGroup) row).getChildAt(0);
+        return (first instanceof ImageView) ? (ImageView) first : null;
     }
 
     private void showAddFoodDialog() {
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_add_food_search, null);
+        setupSearchDialogBlur(dialogView);
         EditText etSearchFood = dialogView.findViewById(R.id.etSearchFood);
         RecyclerView rvFoodResults = dialogView.findViewById(R.id.rvFoodResults);
         activeSearchLoadingContainer = dialogView.findViewById(R.id.searchLoadingContainer);
@@ -345,6 +367,7 @@ public class DietDialogHelper {
 
     private void showManualFoodDialog() {
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_add_food_manual, null);
+        setupManualFoodDialogBlur(dialogView);
         EditText nameEt = dialogView.findViewById(R.id.editTextFoodName);
         EditText calEt = dialogView.findViewById(R.id.editTextCalories);
         EditText carbEt = dialogView.findViewById(R.id.editTextCarbs);
@@ -365,6 +388,7 @@ public class DietDialogHelper {
 
     private void showFoodConfirmDialog(Meal meal, Runnable onConfirm) {
         View dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_food_confirm, null);
+        setupFoodConfirmDialogBlur(dialogView);
         TextView tvName = dialogView.findViewById(R.id.tvConfirmFoodName);
         TextView tvDetails = dialogView.findViewById(R.id.tvConfirmFoodDetails);
         tvName.setText(meal.getFoodName());
@@ -438,6 +462,105 @@ public class DietDialogHelper {
 
     private void applyDialogWindowStyle(AlertDialog dialog) {
         if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+    }
+
+    /**
+     * Clips the given BlurView to a 28dp rounded rectangle. The XML
+     * `bg_dialog_blur_rounded` background + clipToOutline combo is
+     * unreliable for BlurView (which extends ConstraintLayout) on
+     * some devices/emulators, so we also set a programmatic outline
+     * provider. The two are belt-and-braces and both yield the same
+     * 28dp corner radius as the glass card on top.
+     */
+    private void applyRoundedOutline(BlurView blurView) {
+        if (blurView == null) return;
+        final float radiusPx = 28f * blurView.getResources().getDisplayMetrics().density;
+        blurView.setOutlineProvider(new android.view.ViewOutlineProvider() {
+            @Override
+            public void getOutline(android.view.View view, android.graphics.Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+            }
+        });
+        blurView.setClipToOutline(true);
+    }
+
+    /**
+     * Wires the dialog's BlurView to the activity's content root so the backdrop
+     * of the dialog shows a real gaussian blur of whatever is behind it.
+     * Uses RenderEffectBlur on Android 12+ (API 31+). On older devices the
+     * BlurView remains transparent and the translucent glass background
+     * ({@code muzfit_dialog_glass_translucent}) still gives a soft frosted look.
+     */
+    private void setupDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.choose_meal_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = activity.findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /**
+     * Same as {@link #setupDialogBlur(View)} but for the meal-category dialog.
+     * Same blur radius (30f) for visual consistency across the two dialogs.
+     */
+    private void setupCategoryDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.meal_category_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = activity.findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /** Blur for dialog_add_food_search (Open Food Facts search). */
+    private void setupSearchDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.add_food_search_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = activity.findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /** Blur for dialog_add_food_manual (manual food entry). */
+    private void setupManualFoodDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.add_food_manual_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = activity.findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
+    }
+
+    /** Blur for dialog_food_confirm (confirm a food). */
+    private void setupFoodConfirmDialogBlur(View dialogView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        BlurView blurView = dialogView.findViewById(R.id.food_confirm_blur);
+        if (blurView == null) return;
+        applyRoundedOutline(blurView);
+        ViewGroup rootView = activity.findViewById(android.R.id.content);
+        if (!(rootView instanceof ViewGroup)) return;
+        BlurAlgorithm algorithm = new RenderEffectBlur();
+        blurView.setupWith(rootView, algorithm)
+                .setBlurRadius(30f)
+                .setBlurAutoUpdate(true);
     }
 
     private void applyLargeDialogWindowStyle(AlertDialog dialog) {

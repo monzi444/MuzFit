@@ -153,7 +153,7 @@ private fun MealItemCardContent(
             .padding(vertical = 14.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Meal name
+        // Meal name — fills the left side, pushes kcal + delete to the right.
         Text(
             text = data.name,
             color = OnSurfaceColor,
@@ -163,16 +163,15 @@ private fun MealItemCardContent(
             modifier = Modifier.weight(1f)
         )
 
-        // Kcal value (monospace, dim)
+        // Kcal value (monospace, dim) — right-aligned with the delete button.
         Text(
             text = "${data.kcal} kcal",
             color = OnSurfaceDim,
             fontSize = 12.sp,
-            fontFamily = FontFamily.Monospace,
-            modifier = Modifier
-                .weight(1f, fill = false)
-                .padding(end = 12.dp)
+            fontFamily = FontFamily.Monospace
         )
+
+        Spacer(modifier = Modifier.width(12.dp))
 
         // Delete button
         Box(

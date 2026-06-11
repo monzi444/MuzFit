@@ -249,10 +249,19 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadAvatar(String imageUri) {
+        if (imageUri == null || imageUri.trim().isEmpty()
+                || "null".equalsIgnoreCase(imageUri.trim())) {
+            // No avatar stored: keep the XML placeholder visible. Do NOT
+            // trigger Glide with a bogus URI — that would briefly show a
+            // black square as Glide's error/placeholder drawable.
+            Glide.with(this).clear(ivAvatar);
+            ivAvatar.setImageResource(R.drawable.bg_profile_avatar_placeholder);
+            return;
+        }
         Glide.with(this)
                 .load(Uri.parse(imageUri))
-                .placeholder(R.drawable.ic_launcher_background)
-                .error(R.drawable.ic_launcher_background)
+                .placeholder(R.drawable.bg_profile_avatar_placeholder)
+                .error(R.drawable.bg_profile_avatar_placeholder)
                 .into(ivAvatar);
     }
 
