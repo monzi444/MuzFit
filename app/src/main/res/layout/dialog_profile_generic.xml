@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dialog: generic profile / goals update. Host code adds input fields programmatically
+  into llInputContainer. Title is set by host code via @id/tvDialogTitle.
+  Same look as dialog_choose_meal: BlurView backdrop + translucent glass content.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/profile_generic_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_dialog_blur_rounded"
+        android:clipToOutline="true" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/muzfit_dialog_glass_translucent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Header label uppercase -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/syne_regular"
+            android:letterSpacing="0.12"
+            android:text="@string/profile_generic_label"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Title display Syne. Kept @id/tvDialogTitle for backward compat with host code. -->
+        <TextView
+            android:id="@+id/tvDialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/syne_regular"
+            android:text="@string/profile_generic_title_placeholder"
+            android:textColor="@color/muz_on_surface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Input fields container (populated programmatically) -->
+        <LinearLayout
+            android:id="@+id/llInputContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical" />
+
+        <!-- Action row: cancel (text) + save (lime with check icon) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/cancel"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSave"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="2"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="@color/muz_primary_lime"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/save"
+                android:textColor="@color/muz_surface_l0"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_lucide_check"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/muz_surface_l0" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

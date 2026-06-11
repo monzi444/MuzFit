@@ -1,5 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- MuzFit v3.0 Official Palette (Dark — default) -->
+    <color name="muz_primary_lime">#c5f701</color>
+    <color name="muz_on_surface">#fefeff</color>
+    <color name="muz_on_surface_border">#1ffefeff</color> <!-- muz_on_surface @ 12% — calendar card border -->
+    <color name="muz_on_surface_variant">#9a9b9b</color>
+    <color name="muz_surface_l0">#0f0e0f</color>
+    <color name="muz_container_l2">#1a1b1b</color>
+    <color name="muz_overlay_dim">#99000000</color>
+    <color name="muz_primary_lime_tint">#33c5f701</color> <!-- muz_primary_lime @ 20% — ripple for quick action -->
+    <color name="muz_quick_action_bg">#B30F0E0F</color> <!-- dark glass for quick action buttons (subtle dim) -->
+
+    <!-- Glassmorphism Surface -->
+    <color name="muz_glass_bg">#991a1b1b</color>
+    <color name="muz_glass_border">#3a3b3b</color>
+
+    <!-- Skeuomorphic Physical Shadows -->
+    <color name="muz_skeuo_shadow_dark">#E6000000</color>
+    <color name="muz_skeuo_shadow_light">#353636</color>
+
+    <!-- Compatibility/Legacy -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="bg_gradient_start">#0f0e0f</color>
+    <color name="bg_gradient_center">#1a1b1b</color>
+    <color name="bg_gradient_end">#0f0e0f</color>
+    <color name="glass_white_15">#26fefeff</color>
+    <color name="glass_white_30">#4Dfefeff</color>
+    <color name="glass_border">#3a3b3b</color>
+    <color name="skeuo_base">#1a1b1b</color>
+    <color name="skeuo_shadow_dark">#E6000000</color>
+    <color name="skeuo_shadow_light">#353636</color>
+    <color name="neon_cyan">#c5f701</color>
+
+    <color name="protein_color">#4CAF50</color>
+    <color name="protein_overflow">#1B5E20</color>
+    <color name="carbs_color">#FF9800</color>
+    <color name="carbs_overflow">#E65100</color>
+    <color name="fat_color">#F44336</color>
+    <color name="fat_overflow">#B71C1C</color>
+    <color name="calorie_color">#2196F3</color>
+    <color name="calorie_overflow">#0D47A1</color>
+    <color name="square_empty">#222222</color>
+    <color name="square_filled">#2E7D32</color>
+    <color name="graph_line">@color/muz_primary_lime</color>
+    <color name="graph_dot">@color/muz_primary_lime</color>
+    <color name="graph_grid">#333333</color>
+
+    <!-- Activity Status Colors (Calendar Style) - Coherent with MuzFit Palette -->
+    <color name="activity_high">@color/muz_primary_lime</color>
+    <color name="activity_high_bg">#33c5f701</color> <!-- 20% Lime -->
+    <color name="activity_goal_day_bg">#66c5f701</color> <!-- 40% Lime -->
+
+    <color name="activity_low">#FF4B4B</color> <!-- Coherent Red -->
+    <color name="activity_low_bg">#33FF4B4B</color> <!-- 20% Red -->
+    <color name="activity_overflow_day_bg">#66FF9800</color> <!-- 40% Orange -->
+
+    <color name="activity_medium">#FF9800</color>
+    <color name="activity_medium_bg">#33FF9800</color>
+
+    <!-- Selection Strokes -->
+    <color name="activity_selection_lime">@color/muz_primary_lime</color>
+    <color name="activity_selection_green">#8EB301</color> <!-- Darker Lime/Green -->
+    <color name="activity_selection_orange">#E65100</color> <!-- Darker Orange -->
+    <color name="activity_selection_white">#FFFFFF</color>
+    <color name="activity_selection_red">#FF4B4B</color>
+
+    <color name="text_grey">#9E9E9E</color>
 </resources>

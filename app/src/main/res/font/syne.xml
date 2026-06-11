@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Syne font family. This is a variable font (single .ttf file with all 5 weights: 400, 500, 600, 700, 800).
+  - For Android Views: use android:fontFamily="@font/syne" (uses the default 400 weight).
+    For specific weights from XML, you need separate files or use programmatic Typeface APIs.
+  - For Compose: use Font(R.font.syne_regular, FontWeight.Normal / Medium / SemiBold / Bold / ExtraBold).
+-->
+<font-family xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font
+        android:font="@font/syne_regular"
+        android:fontStyle="normal"
+        android:fontWeight="400" />
+</font-family>

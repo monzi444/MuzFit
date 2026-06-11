@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "24585237676",
+    "project_id": "muzfit",
+    "storage_bucket": "muzfit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:24585237676:android:c0d05344bd39b945b55b09",
+        "android_client_info": {
+          "package_name": "com.example.muzfit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "24585237676-3d6aqp0j38nah9anq5jn5hceoco9ae88.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.muzfit",
+            "certificate_hash": "65861295af151612c91abfd492de860afdd453c4"
+          }
+        },
+        {
+          "client_id": "24585237676-3s3com24rl6vo9tha1ga4hdur3jk563i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9ELa6wdDboMaJ3lkNfgaVxOpzFBnQTP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "24585237676-3s3com24rl6vo9tha1ga4hdur3jk563i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

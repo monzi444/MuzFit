@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Quick menu — bottom sheet style with a 2×2 grid of action cards.
+  The whole sheet is a single MaterialCardView (MuzFit.Card.Glass) with
+  28dp top corners, so it reads as a floating surface, not a stack of
+  loose buttons.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/quick_overlay_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone">
+
+    <!-- Scrim: 40% black for a soft backdrop. -->
+    <View
+        android:id="@+id/quick_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#66000000"
+        android:contentDescription="@string/quick_scrim_description" />
+
+    <!-- BlurView (Dimezis) — captures activity content and gaussian-blurs it.
+         The host fragment wires setupWith(rootView) at runtime. Falls back
+         to a plain scrim if blur can't be applied (API < 31). -->
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/quick_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- The action sheet itself: bottom-anchored glass card. -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/quick_actions_panel"
+        style="@style/MuzFit.Card.Glass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="110dp"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="18dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="22dp">
+
+            <!-- ============ HEADER ============ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/syne_regular"
+                        android:letterSpacing="0.18"
+                        android:text="@string/quick_menu_title"
+                        android:textAllCaps="true"
+                        android:textColor="@color/muz_on_surface_variant"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/btn_quick_close"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/quick_close_description"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_lucide_x"
+                    app:tint="@color/muz_on_surface_variant" />
+            </LinearLayout>
+
+            <!-- Top divider (subtle) -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginBottom="18dp"
+                android:background="@color/muz_glass_border" />
+
+            <!-- ============ GRID 2×2 ============ -->
+            <!-- Row 1: Add Quick Meal  |  Start Workout -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <include
+                    android:id="@+id/btn_quick_meal"
+                    layout="@layout/include_quick_action_card"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="match_parent" />
+
+                <include
+                    android:id="@+id/btn_start_workout"
+                    layout="@layout/include_quick_action_card"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <!-- Row 2: Log Body Weight |  Update Goal -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <include
+                    android:id="@+id/btn_log_weight"
+                    layout="@layout/include_quick_action_card"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="match_parent" />
+
+                <include
+                    android:id="@+id/btn_update_goal"
+                    layout="@layout/include_quick_action_card"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The root FrameLayout hosts a BlurView (Dimezis) at the back so the dialog
+  background shows a real gaussian blur of whatever is behind the dialog
+  (the home page). On top of the blur sits the actual content LinearLayout
+  with all the controls.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Blurred backdrop. The host activity wires setupWith(rootView) at
+         runtime, otherwise this stays transparent and the static
+         muzfit_dialog_glass drawable is used as a fallback. -->
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/choose_meal_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_dialog_blur_rounded"
+        android:clipToOutline="true" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/muzfit_dialog_glass_translucent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Header label uppercase -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/syne_regular"
+            android:letterSpacing="0.12"
+            android:text="@string/choose_meal_label"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Title display Syne. Kept @id/choose_meal_title for backward compatibility
+             with the few legacy dialogs (weight history, start workout) that look it up. -->
+        <TextView
+            android:id="@+id/choose_meal_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/syne_regular"
+            android:text="@string/choose_meal_title"
+            android:textColor="@color/muz_on_surface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Search field with leading icon — matches the rest of the app's input style -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_input_glass"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingVertical="2dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lucide_search"
+                app:tint="@color/muz_on_surface_variant" />
+
+            <EditText
+                android:id="@+id/etChooseMealSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/syne_regular"
+                android:hint="@string/choose_meal_search_hint"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                android:paddingVertical="14dp"
+                android:singleLine="true"
+                android:textColor="@color/muz_on_surface"
+                android:textColorHint="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Sort dropdown — kept small, on the right of the search row for compactness.
+             Uses the same input glass style as the search field. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilChooseMealSort"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:hint="@string/choose_meal_sort_hint"
+                app:boxBackgroundColor="@color/muz_surface_l0"
+                app:boxStrokeColor="@color/muz_primary_lime"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="@color/muz_on_surface_variant">
+
+                <AutoCompleteTextView
+                    android:id="@+id/actvChooseMealSort"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/syne_regular"
+                    android:inputType="none"
+                    android:textColor="@color/muz_on_surface"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- List of saved meals -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="14dp"
+            android:layout_weight="1">
+
+            <ListView
+                android:id="@+id/lvChooseMeal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:cacheColorHint="@android:color/transparent"
+                android:divider="@null"
+                android:dividerHeight="8dp"
+                android:padding="2dp"
+                android:scrollbarStyle="outsideOverlay" />
+
+            <TextView
+                android:id="@+id/tvChooseMealEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="@font/syne_regular"
+                android:gravity="center"
+                android:padding="24dp"
+                android:text="@string/choose_meal_empty"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- Action row: cancel (text) + add a new meal (primary, with Lucide + icon) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelChooseMeal"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/cancel"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddFoodFromPicker"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="2"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="@color/muz_primary_lime"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/add_food_button"
+                android:textColor="@color/muz_surface_l0"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_lucide_plus"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/muz_surface_l0" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

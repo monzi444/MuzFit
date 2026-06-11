@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dialog: routine options (Edit / Delete).
+  Same look as dialog_choose_meal: BlurView backdrop + translucent glass content.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- Blurred backdrop -->
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/routine_options_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_dialog_blur_rounded"
+        android:clipToOutline="true" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/muzfit_dialog_glass_translucent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Header label uppercase -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/syne_regular"
+            android:letterSpacing="0.12"
+            android:text="@string/routine_options_label"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Title: routine name (set programmatically) -->
+        <TextView
+            android:id="@+id/tvRoutineOptionsName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/syne_regular"
+            android:text="Routine"
+            android:textColor="@color/muz_on_surface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Options list: Edit (listicles) and Delete (trash) -->
+        <LinearLayout
+            android:id="@+id/llOptionEdit"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_meal_list_item"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="Edit"
+                android:src="@drawable/ic_lucide_list_checks"
+                app:tint="@color/muz_primary_lime" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/syne_regular"
+                android:text="@string/edit"
+                android:textColor="@color/muz_on_surface"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:contentDescription="Edit"
+                android:src="@drawable/ic_lucide_arrow_left"
+                android:rotation="180"
+                app:tint="@color/muz_on_surface_variant" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llOptionDelete"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_meal_list_item"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="Delete"
+                android:src="@drawable/ic_lucide_trash"
+                app:tint="@color/activity_low" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/syne_regular"
+                android:text="@string/delete"
+                android:textColor="@color/activity_low"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:contentDescription="Delete"
+                android:src="@drawable/ic_lucide_arrow_left"
+                android:rotation="180"
+                app:tint="@color/activity_low" />
+        </LinearLayout>
+
+        <!-- Cancel row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelRoutineOptions"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/cancel"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

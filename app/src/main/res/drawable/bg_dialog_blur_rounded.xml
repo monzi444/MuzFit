@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fully transparent shape with rounded corners (28dp). Used as the
+  background of a Dimezis BlurView so that, when combined with
+  android:clipToOutline="true", the gaussian blur is clipped to the
+  same rounded rectangle as the glass card that sits on top of it.
+  Without this, the BlurView would render as a full-width square and
+  you could see rectangular "wings" of blur peeking out past the
+  glass border on the sides.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#00000000" />
+    <corners android:radius="28dp" />
+</shape>

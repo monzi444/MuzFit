@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dialog for "Start Workout" — opened from the quick menu's
+  "Start Workout" action. Shows a list of saved workout routines
+  that the user can tap to begin a session.
+
+  Same visual pattern as dialog_choose_meal:
+    - BlurView backdrop (28dp rounded corners via bg_dialog_blur_rounded)
+    - Glass card content (muzfit_dialog_glass_translucent)
+    - Header label + title (workout-themed)
+    - Search bar with Lucide search icon
+    - List of routines
+    - Cancel button
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Blurred backdrop. Wired at runtime by TrainingDialogHelper;
+         falls back to the glass drawable if blur is unavailable. -->
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/choose_workout_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_dialog_blur_rounded"
+        android:clipToOutline="true" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/muzfit_dialog_glass_translucent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Header label uppercase -->
+        <TextView
+            android:id="@+id/choose_workout_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/syne_regular"
+            android:letterSpacing="0.12"
+            android:text="@string/choose_workout_label"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/choose_workout_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/syne_regular"
+            android:text="@string/choose_workout_title"
+            android:textColor="@color/muz_on_surface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Search field -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_input_glass"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingVertical="2dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lucide_search"
+                app:tint="@color/muz_on_surface_variant" />
+
+            <EditText
+                android:id="@+id/etChooseWorkoutSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/syne_regular"
+                android:hint="@string/choose_workout_search_hint"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                android:paddingVertical="14dp"
+                android:singleLine="true"
+                android:textColor="@color/muz_on_surface"
+                android:textColorHint="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Routine list -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="14dp"
+            android:layout_weight="1">
+
+            <ListView
+                android:id="@+id/lvChooseWorkout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:cacheColorHint="@android:color/transparent"
+                android:divider="@null"
+                android:dividerHeight="8dp"
+                android:padding="2dp"
+                android:scrollbarStyle="outsideOverlay" />
+
+            <TextView
+                android:id="@+id/tvChooseWorkoutEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="@font/syne_regular"
+                android:gravity="center"
+                android:padding="24dp"
+                android:text="@string/choose_workout_empty"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- Cancel button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelChooseWorkout"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/syne_regular"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/cancel"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</FrameLayout>

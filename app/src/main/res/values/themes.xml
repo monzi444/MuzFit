@@ -1,9 +1,189 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme (Dark — default). -->
     <style name="Base.Theme.MuzFit" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="android:windowBackground">@color/muz_surface_l0</item>
+        <item name="colorPrimary">@color/muz_primary_lime</item>
+        <item name="colorSurface">@color/muz_surface_l0</item>
+        <!-- Apply Syne as the default font for every TextView, Button, EditText in the app. -->
+        <item name="android:fontFamily">@font/syne</item>
+        <item name="fontFamily">@font/syne</item>
     </style>
 
-    <style name="Theme.MuzFit" parent="Base.Theme.MuzFit" />
+    <style name="Theme.MuzFit" parent="Base.Theme.MuzFit">
+        <item name="materialAlertDialogTheme">@style/Theme.MuzFit.Dialog</item>
+    </style>
+
+    <!-- Splash / cold-start theme — matches launcher icon background (#000000) -->
+    <style name="Theme.MuzFit.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/black</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.MuzFit</item>
+    </style>
+
+    <style name="Theme.MuzFit.Dialog" parent="ThemeOverlay.Material3.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/muzfit_dialog_background</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="colorSurface">@color/muz_container_l2</item>
+        <item name="colorOnSurface">@color/muz_on_surface</item>
+        <item name="android:textColorPrimary">@color/muz_on_surface</item>
+        <item name="android:textColorSecondary">@color/muz_on_surface_variant</item>
+        <item name="colorPrimary">@color/muz_primary_lime</item>
+    </style>
+
+    <style name="Theme.MuzFit.Dialog.Glass" parent="Theme.MuzFit.Dialog">
+        <item name="android:windowBackground">@drawable/muzfit_dialog_glass</item>
+    </style>
+
+    <style name="CircleAppearance">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- MuzFit v3.0 Typography -->
+    <style name="MuzFit.Text.Display" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textColor">@color/muz_on_surface</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/syne</item>
+    </style>
+
+    <style name="MuzFit.Text.Label" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textColor">@color/muz_on_surface_variant</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:fontFamily">@font/syne</item>
+    </style>
+
+    <!-- MuzFit v3.0 Components -->
+    <style name="MuzFit.Card.Glass" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">@color/muz_glass_bg</item>
+        <item name="cardCornerRadius">22dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <!-- Card for chart views (weight graph, calorie histogram) — matches calendar style -->
+    <style name="MuzFit.Card.Graph" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">@color/muz_surface_l0</item>
+        <item name="strokeColor">@color/muz_on_surface_border</item>
+        <item name="strokeWidth">2dp</item>
+    </style>
+
+    <style name="MuzFit.Button.Skeuo" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/muzfit_skeuo_btn</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:textColor">@color/muz_primary_lime</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:paddingTop">11dp</item>
+        <item name="android:paddingBottom">11dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- Quick-action button: subtle dark glass card, 18dp corner, centered icon + text,
+         lime border + bg on press. All-caps disabled because Syne is already distinctive. -->
+    <style name="MuzFit.QuickAction" parent="Widget.Material3.Button.TextButton">
+        <item name="android:background">@drawable/bg_quick_action</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:textColor">@color/muz_on_surface</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">@font/syne_regular</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="iconSize">22dp</item>
+        <item name="iconPadding">14dp</item>
+        <item name="iconGravity">textStart</item>
+        <item name="iconTint">@color/muz_primary_lime</item>
+    </style>
+
+    <!-- Glass card hosting the whole quick actions panel -->
+    <style name="MuzFit.QuickActionPanel" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">@color/muz_glass_bg</item>
+        <item name="strokeColor">@color/muz_glass_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardCornerRadius">24dp</item>
+    </style>
+
+    <!-- Layout Helpers -->
+    <style name="VerticalStatBox">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="HorizontalStatText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/muz_on_surface</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="MuzFitDietStatCard" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">@color/muz_surface_l0</item>
+        <item name="strokeColor">@color/muz_on_surface_border</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="cardCornerRadius">16dp</item>
+    </style>
+
+    <style name="MuzFitDietStatLabel" parent="MuzFit.Text.Label">
+        <item name="android:textSize">10sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <!-- Big number, e.g. "320" -->
+    <style name="MuzFitDietStatValue">
+        <item name="android:textSize">26sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/muz_primary_lime</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <!-- Small unit, e.g. "g" or "kcal" -->
+    <style name="MuzFitDietStatUnit">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">@color/muz_on_surface_variant</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="MuzFitDietStatValueCarbs" parent="MuzFitDietStatValue">
+        <item name="android:textColor">@color/carbs_color</item>
+    </style>
+
+    <style name="MuzFitDietStatValueProtein" parent="MuzFitDietStatValue">
+        <item name="android:textColor">@color/protein_color</item>
+    </style>
+
+    <style name="MuzFitDietStatValueFat" parent="MuzFitDietStatValue">
+        <item name="android:textColor">@color/fat_color</item>
+    </style>
+
+    <style name="MuzFitNumberPicker">
+        <item name="android:textColorPrimary">@color/muz_on_surface</item>
+        <item name="android:editTextColor">@color/muz_on_surface</item>
+    </style>
+
 </resources>

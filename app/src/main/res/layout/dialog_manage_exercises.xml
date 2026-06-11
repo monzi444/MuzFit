@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dialog: edit a workout routine (name + selected exercises).
+  Same look as dialog_choose_meal: BlurView backdrop + translucent glass content.
+  Save / Cancel buttons are added programmatically via AlertDialog.Builder
+  (so we only style the body of the dialog here).
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/manage_exercises_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_dialog_blur_rounded"
+        android:clipToOutline="true" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/muzfit_dialog_glass_translucent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Header label uppercase -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/syne_regular"
+            android:letterSpacing="0.12"
+            android:text="@string/edit_routine_label"
+            android:textColor="@color/muz_on_surface_variant"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Title display Syne -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/syne_regular"
+            android:text="@string/edit_routine_title"
+            android:textColor="@color/muz_on_surface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Routine name input with leading icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_input_glass"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingVertical="2dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lucide_dumbbell"
+                app:tint="@color/muz_on_surface_variant" />
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etRoutineName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/syne_regular"
+                android:hint="@string/routine_name_hint"
+                android:inputType="textCapWords"
+                android:paddingVertical="14dp"
+                android:singleLine="true"
+                android:textColor="@color/muz_on_surface"
+                android:textColorHint="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Section header: exercises in this routine -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lucide_list_checks"
+                app:tint="@color/muz_on_surface_variant" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/syne_regular"
+                android:text="Exercises in this routine"
+                android:textColor="@color/muz_on_surface"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Selected exercises list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvSelectedExercises"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:minHeight="200dp"
+            android:background="@drawable/bg_input_glass"
+            android:padding="6dp" />
+
+        <!-- Add new exercise button (still uses the system Button style for
+             backward compatibility with host code: findViewById returns Button) -->
+        <Button
+            android:id="@+id/btnAddNewExercise"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="14dp"
+            android:drawableStart="@drawable/ic_lucide_plus"
+            android:drawablePadding="8dp"
+            android:fontFamily="@font/syne_regular"
+            android:text="Add New Exercise"
+            android:textColor="@color/muz_on_surface" />
+
+        <!-- Action row: cancel (text) + save (lime, with check icon) — both
+             live inside the glass card so the dialog looks like a single
+             coherent panel rather than glass-inside-system-buttons. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelManage"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/cancel"
+                android:textColor="@color/muz_on_surface_variant"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveManage"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="2"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="@color/muz_primary_lime"
+                android:fontFamily="@font/syne_regular"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/save"
+                android:textColor="@color/muz_surface_l0"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_lucide_check"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/muz_surface_l0" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>
